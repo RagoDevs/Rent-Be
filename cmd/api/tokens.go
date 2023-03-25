@@ -33,7 +33,7 @@ func (app *application) createAuthenticationTokenHandler(w http.ResponseWriter, 
 
 	var user *data.User
 
-	user, err = app.models.Users.GetByEmail(user.Email)
+	user, err = app.models.Users.GetByEmail(input.Email)
 
 	if err != nil {
 		switch {
