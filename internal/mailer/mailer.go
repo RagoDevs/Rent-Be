@@ -23,6 +23,8 @@ func New(yourDomain, privateAPIKey, sender string) Mailer {
 
 	mg := mailgun.NewMailgun(yourDomain, privateAPIKey)
 
+	mg.SetAPIBase("https://api.eu.mailgun.net/v3")
+
 	return Mailer{
 		mg:     mg,
 		sender: sender,
