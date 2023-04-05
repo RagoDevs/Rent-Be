@@ -53,10 +53,10 @@ func (app *application) showHousesHandler(w http.ResponseWriter, r *http.Request
 
 func (app *application) createHouseHandler(w http.ResponseWriter, r *http.Request) {
 	var input struct {
-		location  string
-		block     string
-		partition string
-		occupied  bool
+		Location  string `json:"location"`
+		Block     string `json:"block"`
+		Partition string `json:"partition"`
+		Occupied  bool   `json:"occupied"`
 	}
 
 	err := app.readJSON(w, r, &input)
@@ -66,10 +66,10 @@ func (app *application) createHouseHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 	house := &data.House{
-		Location:  input.location,
-		Block:     input.block,
-		Partition: input.partition,
-		Occupied:  input.occupied,
+		Location:  input.Location,
+		Block:     input.Block,
+		Partition: input.Partition,
+		Occupied:  input.Occupied,
 	}
 
 	err = app.models.Houses.Insert(house)
@@ -80,10 +80,8 @@ func (app *application) createHouseHandler(w http.ResponseWriter, r *http.Reques
 
 	err = app.writeJSON(w, http.StatusOK, envelope{"house": house}, nil)
 
-
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
 	}
-
 
 }
