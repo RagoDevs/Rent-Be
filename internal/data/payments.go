@@ -21,13 +21,13 @@ type PaymentModel struct {
 }
 
 func (p PaymentModel) Insert(payment *Payment) error {
-	query := fmt.Sprintf(`INSERT INTO payments (payment_id,tenant_id,period,start_date,end_date) VALUES (%s,tenant_id,period,start_date,end_date)`, "uuid_generate_v4()")
+	query := fmt.Sprintf(`INSERT INTO payments (payment_id,tenant_id,period,start_date,end_date) VALUES (%s,$1,$2,$3,$4)`, "uuid_generate_v4()")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 
 	defer cancel()
 
-	args := []interface{}{payment.PaymentId, payment.TenantId, payment.Period, payment.StartDate, payment.EndDate}
+	args := []interface{}{payment.TenantId, payment.Period, payment.StartDate, payment.EndDate}
 
 	_, err := p.DB.ExecContext(ctx, query, args...)
 
@@ -74,7 +74,7 @@ func (p PaymentModel) Get(payment_id string) (*Payment, error) {
 
 func (p PaymentModel) Update(payment Payment) error {
 	query := `UPDATE payments
-	SET period = $1, payment.EndDate = $2
+	SET period = $1, end_date = $2
 	WHERE payment_id = $3`
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
