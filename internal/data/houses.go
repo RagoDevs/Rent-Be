@@ -13,7 +13,7 @@ type House struct {
 	Location  string `json:"location"`
 	Block     string `json:"block"`
 	Partition string `json:"partition"`
-	Occupied  bool   `json:occupied"`
+	Occupied  bool   `json:"occupied"`
 }
 
 type HouseModel struct {
