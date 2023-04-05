@@ -78,4 +78,12 @@ func (app *application) createHouseHandler(w http.ResponseWriter, r *http.Reques
 		app.serverErrorResponse(w, r, err)
 	}
 
+	err = app.writeJSON(w, http.StatusOK, envelope{"house": house}, nil)
+
+
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+	}
+
+
 }
