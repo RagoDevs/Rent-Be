@@ -53,7 +53,6 @@ func (app *application) showHousesHandler(w http.ResponseWriter, r *http.Request
 
 func (app *application) createHouseHandler(w http.ResponseWriter, r *http.Request) {
 	var input struct {
-		house_id  string
 		location  string
 		block     string
 		partition string
