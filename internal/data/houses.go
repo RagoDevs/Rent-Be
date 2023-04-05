@@ -39,6 +39,49 @@ func (h HouseModel) Insert(house *House) error {
 
 }
 
+func (h HouseModel) GetAll() ([]*House, error) {
+	query := `SELECT house_id,location, block, partition , Occupied FROM houses`
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+
+	defer cancel()
+
+	rows, err := h.DB.QueryContext(ctx, query)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	houses := []*House{}
+
+	for rows.Next() {
+		var house House
+
+		err := rows.Scan(
+			&house.HouseId,
+			&house.Location,
+			&house.Block,
+			&house.Partition,
+			&house.Occupied,
+		)
+
+		if err != nil {
+			return nil, err
+		}
+
+		houses = append(houses, &house)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return houses, nil
+
+}
+
 func (h HouseModel) Get(house_id string) (*House, error) {
 	query := `SELECT house_id,location, block, partition , Occupied FROM houses
 	WHERE house_id = $1`

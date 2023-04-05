@@ -36,6 +36,11 @@ func (app *application) routes() http.Handler {
 	router.HandlerFunc(http.MethodPost, "/v1/tokens/passwordreset", app.createPasswordResetTokenHandler)
 	router.HandlerFunc(http.MethodPut, "/v1/users/password", app.updateUserPasswordHandler)
 
+	// houses
+
+	router.HandlerFunc(http.MethodGet, "/v1/houses/", app.requireActivatedUser(app.listHousesHandler))
+	router.HandlerFunc(http.MethodGet, "/v1/houses/:uuid", app.requireActivatedUser(app.showHousesHandler))
+
 	return app.metrics(app.recoverPanic(app.enableCORS(app.rateLimit(app.authenticate(router)))))
 
 }
