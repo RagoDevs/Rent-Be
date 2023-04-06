@@ -40,7 +40,7 @@ func (h HouseModel) Insert(house *House) error {
 }
 
 func (h HouseModel) GetAll() ([]*House, error) {
-	query := `SELECT house_id,location, block, partition , Occupied FROM houses`
+	query := `SELECT house_id,location, block, partition , occupied FROM houses`
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 
