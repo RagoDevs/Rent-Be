@@ -86,8 +86,6 @@ func (app *application) createHouseHandler(w http.ResponseWriter, r *http.Reques
 
 }
 
-
-
 func (app *application) updateHouseHandler(w http.ResponseWriter, r *http.Request) {
 	uuid, err := app.readIDParam(r)
 	if err != nil {
@@ -109,8 +107,7 @@ func (app *application) updateHouseHandler(w http.ResponseWriter, r *http.Reques
 	}
 
 	var input struct {
-		
-		Occupied  bool   `json:"occupied"`
+		Occupied bool `json:"occupied"`
 	}
 
 	err = app.readJSON(w, r, &input)
@@ -119,10 +116,8 @@ func (app *application) updateHouseHandler(w http.ResponseWriter, r *http.Reques
 		app.badRequestResponse(w, r, err)
 		return
 	}
-	
 
 	house.Occupied = input.Occupied
-	
 
 	err = app.models.Houses.Update(house)
 
@@ -131,6 +126,31 @@ func (app *application) updateHouseHandler(w http.ResponseWriter, r *http.Reques
 	}
 
 	err = app.writeJSON(w, http.StatusOK, envelope{"house": house}, nil)
+
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+	}
+
+}
+
+func (app *application) bulkHousesHandler(w http.ResponseWriter, r *http.Request) {
+
+	type house struct {
+		Location  string `json:"location"`
+		Block     string `json:"block"`
+		Partition string `json:"partition"`
+		Occupied  bool   `json:"occupied"`
+	}
+
+	var houses []house
+
+	err := app.readBulKJSON(w, r, houses)
+
+	if err != nil {
+		app.badRequestResponse(w, r, err)
+	}
+
+	err = app.writeJSON(w, http.StatusOK, envelope{"houses": houses}, nil)
 
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
