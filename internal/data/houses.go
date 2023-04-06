@@ -21,7 +21,7 @@ type HouseModel struct {
 }
 
 func (h HouseModel) Insert(house *House) error {
-	query := fmt.Sprintf(`INSERT INTO houses (house_id,location,block,partition, Occupied) VALUES (%s,$1,$2,$3,$4)`, "uuid_generate_v4()")
+	query := fmt.Sprintf(`INSERT INTO houses (house_id,location,block,partition, Occupied) VALUES (%s,$1,$2,$3,$4) RETURNING house_id`, "uuid_generate_v4()")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 
@@ -29,7 +29,7 @@ func (h HouseModel) Insert(house *House) error {
 
 	args := []interface{}{house.Location, house.Block, house.Partition, house.Occupied}
 
-	_, err := h.DB.ExecContext(ctx, query, args...)
+	err := h.DB.QueryRowContext(ctx, query, args...).Scan(&house.HouseId)
 
 	if err != nil {
 		return err
