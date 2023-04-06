@@ -142,3 +142,21 @@ func (app *application) background(fn func()) {
 		fn()
 	}()
 }
+
+
+func (app *application) readBulKJSON(w http.ResponseWriter, r *http.Request, dst interface{}) error {
+
+	maxBytes := 1_048_576
+	r.Body = http.MaxBytesReader(w, r.Body, int64(maxBytes))
+	dec := json.NewDecoder(r.Body)
+	dec.DisallowUnknownFields()
+
+	err := dec.Decode(dst)
+	
+	if err != nil{
+		return err
+	}
+
+	
+	return nil
+}
