@@ -144,10 +144,11 @@ func (app *application) bulkHousesHandler(w http.ResponseWriter, r *http.Request
 
 	var houses []house
 
-	err := app.readBulKJSON(w, r, houses)
+	err := app.readBulKJSON(w, r, &houses)
 
 	if err != nil {
 		app.badRequestResponse(w, r, err)
+		return
 	}
 
 	err = app.writeJSON(w, http.StatusOK, envelope{"houses": houses}, nil)
