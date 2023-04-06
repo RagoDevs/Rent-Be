@@ -40,6 +40,7 @@ func (app *application) routes() http.Handler {
 
 	router.HandlerFunc(http.MethodGet, "/v1/houses", app.requireActivatedUser(app.listHousesHandler))
 	router.HandlerFunc(http.MethodPost, "/v1/houses", app.requireActivatedUser(app.createHouseHandler))
+	router.HandlerFunc(http.MethodPost, "/v1/bulk/houses", app.requireActivatedUser(app.bulkHousesHandler))
 	router.HandlerFunc(http.MethodGet, "/v1/houses/:uuid", app.requireActivatedUser(app.showHousesHandler))
 	router.HandlerFunc(http.MethodPut, "/v1/houses/:uuid", app.requireActivatedUser(app.updateHouseHandler))
 
