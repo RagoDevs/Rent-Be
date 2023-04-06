@@ -39,8 +39,9 @@ func (app *application) routes() http.Handler {
 	// houses
 
 	router.HandlerFunc(http.MethodGet, "/v1/houses", app.requireActivatedUser(app.listHousesHandler))
-	router.HandlerFunc(http.MethodGet, "/v1/houses/:uuid", app.requireActivatedUser(app.showHousesHandler))
 	router.HandlerFunc(http.MethodPost, "/v1/houses", app.requireActivatedUser(app.createHouseHandler))
+	router.HandlerFunc(http.MethodGet, "/v1/houses/:uuid", app.requireActivatedUser(app.showHousesHandler))
+	router.HandlerFunc(http.MethodPut, "/v1/houses/:uuid", app.requireActivatedUser(app.updateHouseHandler))
 
 	return app.metrics(app.recoverPanic(app.enableCORS(app.rateLimit(app.authenticate(router)))))
 

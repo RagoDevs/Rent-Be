@@ -115,7 +115,7 @@ func (h HouseModel) Get(house_id string) (*House, error) {
 
 }
 
-func (h HouseModel) Update(house House) error {
+func (h HouseModel) Update(house *House) error {
 	query := `UPDATE houses
 	SET occupied = $1
 	WHERE house_id = $2`
