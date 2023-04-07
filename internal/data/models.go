@@ -5,7 +5,7 @@ import (
 )
 
 type Models struct {
-	Users    UserModel
+	Admins   AdminModel
 	Tokens   TokenModel
 	Houses   HouseModel
 	Payments PaymentModel
@@ -15,7 +15,7 @@ type Models struct {
 func NewModels(db *sql.DB) Models {
 	return Models{
 		Tokens:   TokenModel{DB: db},
-		Users:    UserModel{DB: db},
+		Admins:   AdminModel{DB: db},
 		Houses:   HouseModel{DB: db},
 		Payments: PaymentModel{DB: db},
 		Tenants:  TenantModel{DB: db},

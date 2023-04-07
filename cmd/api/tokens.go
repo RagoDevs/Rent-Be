@@ -31,9 +31,9 @@ func (app *application) createAuthenticationTokenHandler(w http.ResponseWriter, 
 		return
 	}
 
-	var user *data.User
+	var admin *data.Admin
 
-	user, err = app.models.Users.GetByEmail(input.Email)
+	admin, err = app.models.Admins.GetByEmail(input.Email)
 
 	if err != nil {
 		switch {
@@ -45,7 +45,7 @@ func (app *application) createAuthenticationTokenHandler(w http.ResponseWriter, 
 		return
 	}
 
-	match, err := user.Password.Matches(input.Password)
+	match, err := admin.Password.Matches(input.Password)
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
 		return
@@ -56,7 +56,7 @@ func (app *application) createAuthenticationTokenHandler(w http.ResponseWriter, 
 		return
 	}
 
-	token, err := app.models.Tokens.New(user.UUID, 3*24*time.Hour, data.ScopeAuthentication)
+	token, err := app.models.Tokens.New(admin.AdminID, 3*24*time.Hour, data.ScopeAuthentication)
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
 		return
@@ -86,7 +86,7 @@ func (app *application) createPasswordResetTokenHandler(w http.ResponseWriter, r
 	}
 	// Try to retrieve the corresponding user record for the email address. If it can't
 	// be found, return an error message to the client.
-	user, err := app.models.Users.GetByEmail(input.Email)
+	admin, err := app.models.Admins.GetByEmail(input.Email)
 	if err != nil {
 		switch {
 		case errors.Is(err, data.ErrRecordNotFound):
@@ -98,13 +98,13 @@ func (app *application) createPasswordResetTokenHandler(w http.ResponseWriter, r
 		return
 	}
 	// Return an error message if the user is not activated.
-	if !user.Activated {
-		v.AddError("email", "user account must be activated")
+	if !admin.Activated {
+		v.AddError("email", "admin account must be activated")
 		app.failedValidationResponse(w, r, v.Errors)
 		return
 	}
 	// Otherwise, create a new password reset token with a 45-minute expiry time.
-	token, err := app.models.Tokens.New(user.UUID, 45*time.Minute, data.ScopePasswordReset)
+	token, err := app.models.Tokens.New(admin.AdminID, 45*time.Minute, data.ScopePasswordReset)
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
 		return
@@ -117,7 +117,7 @@ func (app *application) createPasswordResetTokenHandler(w http.ResponseWriter, r
 		// Since email addresses MAY be case sensitive, notice that we are sending this
 		// email using the address stored in our database for the user --- not to the
 		// input.Email address provided by the client in this request.
-		err = app.mailer.Send(user.Email, "token_password_reset.tmpl", data)
+		err = app.mailer.Send(admin.Email, "token_password_reset.tmpl", data)
 		if err != nil {
 			app.logger.PrintError(err, nil)
 		}
@@ -147,7 +147,7 @@ func (app *application) createActivationTokenHandler(w http.ResponseWriter, r *h
 	}
 	// Try to retrieve the corresponding user record for the email address. If it can't
 	// be found, return an error message to the client.
-	user, err := app.models.Users.GetByEmail(input.Email)
+	admin, err := app.models.Admins.GetByEmail(input.Email)
 	if err != nil {
 		switch {
 		case errors.Is(err, data.ErrRecordNotFound):
@@ -159,13 +159,13 @@ func (app *application) createActivationTokenHandler(w http.ResponseWriter, r *h
 		return
 	}
 	// Return an error if the user has already been activated.
-	if user.Activated {
-		v.AddError("email", "user has already been activated")
+	if admin.Activated {
+		v.AddError("email", "admin has already been activated")
 		app.failedValidationResponse(w, r, v.Errors)
 		return
 	}
 	// Otherwise, create a new activation token.
-	token, err := app.models.Tokens.New(user.UUID, 3*24*time.Hour, data.ScopeActivation)
+	token, err := app.models.Tokens.New(admin.AdminID, 3*24*time.Hour, data.ScopeActivation)
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
 		return
@@ -178,7 +178,7 @@ func (app *application) createActivationTokenHandler(w http.ResponseWriter, r *h
 		// Since email addresses MAY be case sensitive, notice that we are sending this
 		// email using the address stored in our database for the user --- not to the
 		// input.Email address provided by the client in this request.
-		err = app.mailer.Send(user.Email, "token_activation.tmpl", data)
+		err = app.mailer.Send(admin.Email, "token_activation.tmpl", data)
 		if err != nil {
 			app.logger.PrintError(err, nil)
 		}

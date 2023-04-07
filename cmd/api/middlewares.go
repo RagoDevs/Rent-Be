@@ -10,11 +10,11 @@ import (
 	"sync"
 	"time"
 
-	"hmgt.hopertz.me/internal/data"
-	"hmgt.hopertz.me/internal/validator"
 	"github.com/felixge/httpsnoop"
 	"github.com/tomasen/realip"
 	"golang.org/x/time/rate"
+	"hmgt.hopertz.me/internal/data"
+	"hmgt.hopertz.me/internal/validator"
 )
 
 func (app *application) recoverPanic(next http.Handler) http.Handler {
@@ -88,7 +88,7 @@ func (app *application) authenticate(next http.Handler) http.Handler {
 		authorizationHeader := r.Header.Get("Authorization")
 
 		if authorizationHeader == "" {
-			r = app.contextSetUser(r, data.AnonymousUser)
+			r = app.contextSetAdmin(r, data.AnonymousAdmin)
 			next.ServeHTTP(w, r)
 			return
 		}
@@ -108,7 +108,7 @@ func (app *application) authenticate(next http.Handler) http.Handler {
 			return
 		}
 
-		user, err := app.models.Users.GetForToken(data.ScopeAuthentication, token)
+		admin, err := app.models.Admins.GetForToken(data.ScopeAuthentication, token)
 		if err != nil {
 			switch {
 			case errors.Is(err, data.ErrRecordNotFound):
@@ -119,7 +119,7 @@ func (app *application) authenticate(next http.Handler) http.Handler {
 			return
 		}
 
-		r = app.contextSetUser(r, user)
+		r = app.contextSetAdmin(r, admin)
 
 		next.ServeHTTP(w, r)
 	})
@@ -127,8 +127,8 @@ func (app *application) authenticate(next http.Handler) http.Handler {
 
 func (app *application) requireAuthenticatedUser(next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		user := app.contextGetUser(r)
-		if user.IsAnonymous() {
+		admin := app.contextGetAdmin(r)
+		if admin.IsAnonymous() {
 			app.authenticationRequiredResponse(w, r)
 			return
 		}
@@ -139,9 +139,9 @@ func (app *application) requireAuthenticatedUser(next http.HandlerFunc) http.Han
 func (app *application) requireActivatedUser(next http.HandlerFunc) http.HandlerFunc {
 
 	fn := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		user := app.contextGetUser(r)
+		admin := app.contextGetAdmin(r)
 
-		if !user.Activated {
+		if !admin.Activated {
 			app.inactiveAccountResponse(w, r)
 			return
 		}

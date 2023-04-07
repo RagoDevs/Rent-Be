@@ -20,16 +20,16 @@ const (
 type Token struct {
 	Plaintext string    `json:"token"`
 	Hash      []byte    `json:"-"`
-	UUID      string    `json:"-"`
+	AdminID   string    `json:"-"`
 	Expiry    time.Time `json:"expiry"`
 	Scope     string    `json:"-"`
 }
 
-func generateToken(UUID string, ttl time.Duration, scope string) (*Token, error) {
+func generateToken(admin_id string, ttl time.Duration, scope string) (*Token, error) {
 	token := &Token{
-		UUID:   UUID,
-		Expiry: time.Now().Add(ttl),
-		Scope:  scope,
+		AdminID: admin_id,
+		Expiry:  time.Now().Add(ttl),
+		Scope:   scope,
 	}
 
 	// A byte slice of length 16 is created using the make function to store random bytes that will be
@@ -57,8 +57,8 @@ type TokenModel struct {
 	DB *sql.DB
 }
 
-func (m TokenModel) New(UUID string, ttl time.Duration, scope string) (*Token, error) {
-	token, err := generateToken(UUID, ttl, scope)
+func (m TokenModel) New(admin_id string, ttl time.Duration, scope string) (*Token, error) {
+	token, err := generateToken(admin_id, ttl, scope)
 	if err != nil {
 		return nil, err
 	}
@@ -68,21 +68,21 @@ func (m TokenModel) New(UUID string, ttl time.Duration, scope string) (*Token, e
 
 func (m TokenModel) Insert(token *Token) error {
 	query := `
-	INSERT INTO tokens (hash, uuid, expiry, scope)
+	INSERT INTO tokens (hash, token_id, expiry, scope)
 	VALUES ($1, $2, $3, $4)`
-	args := []interface{}{token.Hash, token.UUID, token.Expiry, token.Scope}
+	args := []interface{}{token.Hash, token.AdminID, token.Expiry, token.Scope}
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 	_, err := m.DB.ExecContext(ctx, query, args...)
 	return err
 }
 
-func (m TokenModel) DeleteAllForUser(scope string, UUID string) error {
+func (m TokenModel) DeleteAllForAdmin(scope string, admin_id string) error {
 	query := `
 	DELETE FROM tokens
-	WHERE scope = $1 AND uuid = $2`
+	WHERE scope = $1 AND token_id = $2`
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
-	_, err := m.DB.ExecContext(ctx, query, scope, UUID)
+	_, err := m.DB.ExecContext(ctx, query, scope, admin_id)
 	return err
 }

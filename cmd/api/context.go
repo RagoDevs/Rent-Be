@@ -9,17 +9,17 @@ import (
 
 type contextKey string
 
-const userContextKey = contextKey("user")
+const adminContextKey = contextKey("admin")
 
-func (app *application) contextSetUser(r *http.Request, user *data.User) *http.Request {
-	ctx := context.WithValue(r.Context(), userContextKey, user)
+func (app *application) contextSetAdmin(r *http.Request, admin *data.Admin) *http.Request {
+	ctx := context.WithValue(r.Context(), adminContextKey, admin)
 	return r.WithContext(ctx)
 }
 
-func (app *application) contextGetUser(r *http.Request) *data.User {
-	user, ok := r.Context().Value(userContextKey).(*data.User)
+func (app *application) contextGetAdmin(r *http.Request) *data.Admin {
+	admin, ok := r.Context().Value(adminContextKey).(*data.Admin)
 	if !ok {
-		panic("missing user value in request context")
+		panic("missing admin value in request context")
 	}
-	return user
+	return admin
 }

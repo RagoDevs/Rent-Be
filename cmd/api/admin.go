@@ -22,12 +22,12 @@ func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	user := &data.User{
+	admin := &data.Admin{
 		Email:     input.Email,
 		Activated: false,
 	}
 
-	err = user.Password.Set(input.Password)
+	err = admin.Password.Set(input.Password)
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
 		return
@@ -35,17 +35,17 @@ func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 
 	v := validator.New()
 
-	if data.ValidateUser(v, user); !v.Valid() {
+	if data.ValidateUser(v, admin); !v.Valid() {
 		app.failedValidationResponse(w, r, v.Errors)
 		return
 	}
 
-	err = app.models.Users.Insert(user)
+	err = app.models.Admins.Insert(admin)
 	if err != nil {
 		switch {
 
 		case errors.Is(err, data.ErrDuplicateEmail):
-			v.AddError("email", "a user with this email address already exists")
+			v.AddError("email", "an admin with this email address already exists")
 			app.failedValidationResponse(w, r, v.Errors)
 
 		default:
@@ -54,7 +54,7 @@ func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	token, err := app.models.Tokens.New(user.UUID, 3*24*time.Hour, data.ScopeActivation)
+	token, err := app.models.Tokens.New(admin.AdminID, 3*24*time.Hour, data.ScopeActivation)
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
 		return
@@ -63,17 +63,17 @@ func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 	app.background(func() {
 		data := map[string]interface{}{
 			"activationToken": token.Plaintext,
-			"userID":          user.UUID,
+			"adminID":          admin.AdminID,
 
 		}
 
-		err = app.mailer.Send(user.Email, "user_welcome.tmpl", data)
+		err = app.mailer.Send(admin.Email, "admin_welcome.tmpl", data)
 		if err != nil {
 			app.logger.PrintError(err, nil)
 		}
 	})
 
-	err = app.writeJSON(w, http.StatusAccepted, envelope{"user": user}, nil)
+	err = app.writeJSON(w, http.StatusAccepted, envelope{"admin": admin}, nil)
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
 	}
@@ -96,7 +96,7 @@ func (app *application) activateUserHandler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	user, err := app.models.Users.GetForToken(data.ScopeActivation, input.TokenPlaintext)
+	admin, err := app.models.Admins.GetForToken(data.ScopeActivation, input.TokenPlaintext)
 	if err != nil {
 		switch {
 		case errors.Is(err, data.ErrRecordNotFound):
@@ -108,9 +108,9 @@ func (app *application) activateUserHandler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	user.Activated = true
+	admin.Activated = true
 
-	err = app.models.Users.Update(user)
+	err = app.models.Admins.Update(admin)
 	if err != nil {
 		switch {
 		case errors.Is(err, data.ErrEditConflict):
@@ -121,21 +121,21 @@ func (app *application) activateUserHandler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	err = app.models.Tokens.DeleteAllForUser(data.ScopeActivation, user.UUID)
+	err = app.models.Tokens.DeleteAllForAdmin(data.ScopeActivation, admin.AdminID)
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
 		return
 	}
 
-	err = app.writeJSON(w, http.StatusOK, envelope{"user": user}, nil)
+	err = app.writeJSON(w, http.StatusOK, envelope{"admin": admin}, nil)
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
 	}
 }
 
-// Verify the password reset token and set a new password for the user.
+// Verify the password reset token and set a new password for the admin.
 func (app *application) updateUserPasswordHandler(w http.ResponseWriter, r *http.Request) {
-	// Parse and validate the user's new password and password reset token.
+	// Parse and validate the admins's new password and password reset token.
 	var input struct {
 		Password       string `json:"password"`
 		TokenPlaintext string `json:"token"`
@@ -152,29 +152,29 @@ func (app *application) updateUserPasswordHandler(w http.ResponseWriter, r *http
 		app.failedValidationResponse(w, r, v.Errors)
 		return
 	}
-	// Retrieve the details of the user associated with the password reset token,
+	// Retrieve the details of the admin associated with the password reset token,
 	// returning an error message if no matching record was found.
 	// returning an error message if no matching record was found.
-	user, err := app.models.Users.GetForToken(data.ScopePasswordReset, input.TokenPlaintext)
+	admin, err := app.models.Admins.GetForToken(data.ScopePasswordReset, input.TokenPlaintext)
 	if err != nil {
 		switch {
 		case errors.Is(err, data.ErrRecordNotFound):
-			v.AddError("token", "invalid or expired password reset token")
+			v.AddError("token", "Invalid or expired password reset token")
 			app.failedValidationResponse(w, r, v.Errors)
 		default:
 			app.serverErrorResponse(w, r, err)
 		}
 		return
 	}
-	// Set the new password for the user.
-	err = user.Password.Set(input.Password)
+	// Set the new password for the admin.
+	err = admin.Password.Set(input.Password)
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
 		return
 	}
 	// Save the updated user record in our database, checking for any edit conflicts as
 	// normal.
-	err = app.models.Users.Update(user)
+	err = app.models.Admins.Update(admin)
 	if err != nil {
 		switch {
 		case errors.Is(err, data.ErrEditConflict):
@@ -184,8 +184,8 @@ func (app *application) updateUserPasswordHandler(w http.ResponseWriter, r *http
 		}
 		return
 	}
-	// If everything was successful, then delete all password reset tokens for the user.
-	err = app.models.Tokens.DeleteAllForUser(data.ScopePasswordReset, user.UUID)
+	// If everything was successful, then delete all password reset tokens for the admin.
+	err = app.models.Tokens.DeleteAllForAdmin(data.ScopePasswordReset, admin.AdminID)
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
 		return

@@ -17,10 +17,10 @@ var (
 	ErrRecordNotFound = errors.New("record not found")
 )
 
-var AnonymousUser = &User{}
+var AnonymousAdmin = &Admin{}
 
-type User struct {
-	UUID      string    `json:"uuid"`
+type Admin struct {
+	AdminID   string    `json:"admin_id"`
 	CreatedAt time.Time `json:"created_at"`
 	Email     string    `json:"email"`
 	Password  password  `json:"-"`
@@ -71,37 +71,36 @@ func ValidatePasswordPlaintext(v *validator.Validator, password string) {
 	v.Check(len(password) >= 8, "password", "must be at least 8 bytes long")
 	v.Check(len(password) <= 72, "password", "must not be more than 72 bytes long")
 }
-func ValidateUser(v *validator.Validator, user *User) {
+func ValidateUser(v *validator.Validator, admin *Admin) {
 
-	ValidateEmail(v, user.Email)
-	if user.Password.plaintext != nil {
-		ValidatePasswordPlaintext(v, *user.Password.plaintext)
+	ValidateEmail(v, admin.Email)
+	if admin.Password.plaintext != nil {
+		ValidatePasswordPlaintext(v, *admin.Password.plaintext)
 	}
 
-	if user.Password.hash == nil {
-		panic("missing password hash for user")
+	if admin.Password.hash == nil {
+		panic("missing password hash for admin ")
 	}
 }
 
-type UserModel struct {
+type AdminModel struct {
 	DB *sql.DB
 }
 
-// uuid_generate_v4()
-func (m UserModel) Insert(user *User) error {
+func (a AdminModel) Insert(admin *Admin) error {
 	query := `
-	INSERT INTO users (email, password_hash, activated)
+	INSERT INTO admins (email, password_hash, activated)
 	VALUES ($1, $2, $3 )
-	RETURNING uuid, created_at, version`
+	RETURNING admin_id, created_at, version`
 
-	args := []interface{}{user.Email, user.Password.hash, user.Activated}
+	args := []interface{}{admin.Email, admin.Password.hash, admin.Activated}
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	err := m.DB.QueryRowContext(ctx, query, args...).Scan(&user.UUID, &user.CreatedAt, &user.Version)
+	err := a.DB.QueryRowContext(ctx, query, args...).Scan(&admin.AdminID, &admin.CreatedAt, &admin.Version)
 	if err != nil {
 		switch {
-		case err.Error() == `pq: duplicate key value violates unique constraint "users_email_key"`:
+		case err.Error() == `pq: duplicate key value violates unique constraint "admins_email_key"`:
 			return ErrDuplicateEmail
 		default:
 			return err
@@ -111,21 +110,21 @@ func (m UserModel) Insert(user *User) error {
 
 }
 
-func (m UserModel) GetByEmail(email string) (*User, error) {
+func (a AdminModel) GetByEmail(email string) (*Admin, error) {
 	query := `
 SELECT uuid, created_at, email, password_hash, activated, version
-FROM users
+FROM admins
 WHERE email = $1`
-	var user User
+	var admin Admin
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
-	err := m.DB.QueryRowContext(ctx, query, email).Scan(
-		&user.UUID,
-		&user.CreatedAt,
-		&user.Email,
-		&user.Password.hash,
-		&user.Activated,
-		&user.Version,
+	err := a.DB.QueryRowContext(ctx, query, email).Scan(
+		&admin.AdminID,
+		&admin.CreatedAt,
+		&admin.Email,
+		&admin.Password.hash,
+		&admin.Activated,
+		&admin.Version,
 	)
 	if err != nil {
 		switch {
@@ -135,28 +134,28 @@ WHERE email = $1`
 			return nil, err
 		}
 	}
-	return &user, nil
+	return &admin, nil
 }
 
-func (m UserModel) Update(user *User) error {
+func (a AdminModel) Update(admin *Admin) error {
 	query := `
-UPDATE users
+UPDATE admins
 SET email = $1, password_hash = $2, activated = $3, version = version + 1
 WHERE uuid = $4 AND version = $5
 RETURNING version`
 	args := []interface{}{
-		user.Email,
-		user.Password.hash,
-		user.Activated,
-		user.UUID,
-		user.Version,
+		admin.Email,
+		admin.Password.hash,
+		admin.Activated,
+		admin.AdminID,
+		admin.Version,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
-	err := m.DB.QueryRowContext(ctx, query, args...).Scan(&user.Version)
+	err := a.DB.QueryRowContext(ctx, query, args...).Scan(&admin.Version)
 	if err != nil {
 		switch {
-		case err.Error() == `pq: duplicate key value violates unique constraint "users_email_key"`:
+		case err.Error() == `pq: duplicate key value violates unique constraint "admins_email_key"`:
 			return ErrDuplicateEmail
 		case errors.Is(err, sql.ErrNoRows):
 			return ErrEditConflict
@@ -167,31 +166,31 @@ RETURNING version`
 	return nil
 }
 
-func (m UserModel) GetForToken(tokenScope, tokenPlaintext string) (*User, error) {
+func (a AdminModel) GetForToken(tokenScope, tokenPlaintext string) (*Admin, error) {
 
 	tokenHash := sha256.Sum256([]byte(tokenPlaintext))
 	// Set up the SQL query.
 	query := `
-	SELECT users.uuid, users.created_at,users.email, users.password_hash, users.activated, users.version
-	FROM users
+	SELECT admins.admin_id, admins.created_at,admins.email, admins.password_hash, admins.activated, admins.version
+	FROM 
 	INNER JOIN tokens
-	ON users.uuid = tokens.uuid
+	ON admins.admin_id = tokens.token_id
 	WHERE tokens.hash = $1
 	AND tokens.scope = $2
 	AND tokens.expiry > $3`
 
 	args := []interface{}{tokenHash[:], tokenScope, time.Now()}
-	var user User
+	var admin Admin
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	err := m.DB.QueryRowContext(ctx, query, args...).Scan(
-		&user.UUID,
-		&user.CreatedAt,
-		&user.Email,
-		&user.Password.hash,
-		&user.Activated,
-		&user.Version,
+	err := a.DB.QueryRowContext(ctx, query, args...).Scan(
+		&admin.AdminID,
+		&admin.CreatedAt,
+		&admin.Email,
+		&admin.Password.hash,
+		&admin.Activated,
+		&admin.Version,
 	)
 	if err != nil {
 		switch {
@@ -202,9 +201,9 @@ func (m UserModel) GetForToken(tokenScope, tokenPlaintext string) (*User, error)
 		}
 	}
 
-	return &user, nil
+	return &admin, nil
 }
 
-func (u *User) IsAnonymous() bool {
-	return u == AnonymousUser
+func (a *Admin) IsAnonymous() bool {
+	return a == AnonymousAdmin
 }
