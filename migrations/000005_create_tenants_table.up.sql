@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS tenants (
   personal_id TEXT NOT NULL,
   photo BYTEA ,
   active BOOL NOT NULL ,
+  soc DATE NOT NULL,
   eos DATE NOT NULL
 
 ); 
