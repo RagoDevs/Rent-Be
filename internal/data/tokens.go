@@ -68,7 +68,7 @@ func (m TokenModel) New(admin_id string, ttl time.Duration, scope string) (*Toke
 
 func (m TokenModel) Insert(token *Token) error {
 	query := `
-	INSERT INTO tokens (hash, token_id, expiry, scope)
+	INSERT INTO tokens (hash, admin_id, expiry, scope)
 	VALUES ($1, $2, $3, $4)`
 	args := []interface{}{token.Hash, token.AdminID, token.Expiry, token.Scope}
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
@@ -80,7 +80,7 @@ func (m TokenModel) Insert(token *Token) error {
 func (m TokenModel) DeleteAllForAdmin(scope string, admin_id string) error {
 	query := `
 	DELETE FROM tokens
-	WHERE scope = $1 AND token_id = $2`
+	WHERE scope = $1 AND admin_id = $2`
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 	_, err := m.DB.ExecContext(ctx, query, scope, admin_id)
