@@ -112,7 +112,7 @@ func (a AdminModel) Insert(admin *Admin) error {
 
 func (a AdminModel) GetByEmail(email string) (*Admin, error) {
 	query := `
-SELECT uuid, created_at, email, password_hash, activated, version
+SELECT admin_id, created_at, email, password_hash, activated, version
 FROM admins
 WHERE email = $1`
 	var admin Admin
