@@ -174,7 +174,7 @@ func (a AdminModel) GetForToken(tokenScope, tokenPlaintext string) (*Admin, erro
 	SELECT admins.admin_id, admins.created_at,admins.email, admins.password_hash, admins.activated, admins.version
 	FROM 
 	INNER JOIN tokens
-	ON admins.admin_id = tokens.token_id
+	ON admins.admin_id = tokens.admin_id
 	WHERE tokens.hash = $1
 	AND tokens.scope = $2
 	AND tokens.expiry > $3`
