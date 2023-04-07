@@ -1,5 +1,5 @@
 CREATE TABLE IF NOT EXISTS tenants (
-  tenant_id UUID PRIMARY KEY NOT NULL,
+  tenant_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
   first_name TEXT NOT NULL,
   last_name TEXT NOT NULL,
   phone TEXT NOT NULL,
