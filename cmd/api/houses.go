@@ -1,9 +1,7 @@
 package main
 
 import (
-	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 
 	"hmgt.hopertz.me/internal/data"
@@ -144,83 +142,14 @@ func (app *application) bulkHousesHandler(w http.ResponseWriter, r *http.Request
 		Occupied  bool   `json:"occupied"`
 	}
 
-	type HouseData struct {
-		Location  string     `json:"location"`
-		Block     []string   `json:"block"`
-		Partition [][]string `json:"partition"`
-	}
-
-	type DBHouse struct {
-		Location  string `json:"location"`
-		Block     string `json:"block"`
-		Partition string `json:"partition"`
-		Occupied  bool   `json:"occupied"`
-	}
-
-	house_data := `[
-
-	{
-	  "location": "Chanika",
-	  "block":["A", "B"], 
-	  "partition" : [["1","2"], ["1"]]
-	},
-	
-	{
-	  "location": "Taliani",
-	  "block":["A", "B"],  
-	  "partition" : [["1","2"], ["1"]]
-	 },
-	
-	{
-	  "location": "Kivule",
-	  "block":["A", "B"],  
-	  "partition" : [["1","2","3","4","5","6"], ["1","2","3","4"]]
-	},
-	
-	{
-	  "location": "Machimbo",
-	  "block":["A", "B", "C", "D"],  
-	  "partition" : [["1","2","3","4","5"], ["1","2","3","4","5"],["1","2","3","4","5","6","7","8"], ["1","2","3"]]
-	},
-	
-	{
-	  "location": "UKonga",
-	  "block":["A", "B","C","D"],  
-	  "partition" : [["1","2"], ["1"], ["1"] ,["1","2"]]
-	}
-	
-]`
-
-	var houseDB []HouseData
-	var dbHouses []DBHouse
-
-	err := json.Unmarshal([]byte(house_data), &houseDB)
-
-	if err != nil {
-		fmt.Println("Fuck the error", err)
-	}
-
-	for _, house := range houseDB {
-
-		for i, block := range house.Block {
-
-			for _, pt := range house.Partition[i] {
-
-				dbHouses = append(dbHouses, DBHouse{house.Location, block, pt, false})
-			}
-		}
-	}
-
 	var houses []house
-
-	err = app.readBulKJSON(w, r, &houses)
+	err := app.readBulKJSON(w, r, &houses)
 
 	if err != nil {
 		app.badRequestResponse(w, r, err)
-		return
 	}
 
-	err = app.writeJSON(w, http.StatusOK, envelope{"houses": dbHouses}, nil)
+	err = app.writeJSON(w, http.StatusOK, envelope{"houses": houses}, nil)
 
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
