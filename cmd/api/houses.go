@@ -154,6 +154,7 @@ func (app *application) bulkHousesHandler(w http.ResponseWriter, r *http.Request
 		Location  string `json:"location"`
 		Block     string `json:"block"`
 		Partition string `json:"partition"`
+		Occupied  bool   `json:"occupied"`
 	}
 
 	house_data := `[
@@ -205,12 +206,10 @@ func (app *application) bulkHousesHandler(w http.ResponseWriter, r *http.Request
 
 			for _, pt := range house.Partition[i] {
 
-				dbHouses = append(dbHouses, DBHouse{house.Location, block, pt})
+				dbHouses = append(dbHouses, DBHouse{house.Location, block, pt, false})
 			}
 		}
 	}
-
-		
 
 	var houses []house
 

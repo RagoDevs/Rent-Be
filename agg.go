@@ -15,6 +15,7 @@ type DBHouse struct {
 	Location  string `json:"location"`
 	Block     string `json:"block"`
 	Partition string `json:"partition"`
+	Occupied   bool  `json:"occupied"`
 }
 
 func main() {
@@ -67,7 +68,7 @@ func main() {
 
 			for _, pt := range house.Partition[i] {
 
-				dbHouses = append(dbHouses, DBHouse{house.Location, block, pt})
+				dbHouses = append(dbHouses, DBHouse{house.Location, block, pt,false})
 			}
 		}
 	}
