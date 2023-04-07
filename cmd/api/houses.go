@@ -193,7 +193,7 @@ func (app *application) magicbulkHousesHandler(w http.ResponseWriter, r *http.Re
 	{
 	  "location": "Kivule",
 	  "block":["A", "B"],  
-	  "partition" : [[1,2,3,4,5,6,], [1,2,3,4]]
+	  "partition" : [[1,2,3,4,5,6], [1,2,3,4]]
 	},
 	
 	{
