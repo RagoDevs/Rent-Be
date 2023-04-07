@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"fmt"
 	"time"
 )
 
@@ -21,7 +20,7 @@ type HouseModel struct {
 }
 
 func (h HouseModel) Insert(house *House) error {
-	query := fmt.Sprintf(`INSERT INTO houses (house_id,location,block,partition, Occupied) VALUES (%s,$1,$2,$3,$4) RETURNING house_id`, "uuid_generate_v4()")
+	query := `INSERT INTO houses (location,block,partition, Occupied) VALUES ($1,$2,$3,$4) RETURNING house_id`
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 

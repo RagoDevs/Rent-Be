@@ -5,7 +5,6 @@ import (
 	"crypto/sha256"
 	"database/sql"
 	"errors"
-	"fmt"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
@@ -90,10 +89,10 @@ type UserModel struct {
 
 // uuid_generate_v4()
 func (m UserModel) Insert(user *User) error {
-	query := fmt.Sprintf(`
-	INSERT INTO users (uuid ,email, password_hash, activated)
-	VALUES (%s, $1, $2, $3 )
-	RETURNING uuid, created_at, version`, "uuid_generate_v4()")
+	query := `
+	INSERT INTO users (email, password_hash, activated)
+	VALUES ($1, $2, $3 )
+	RETURNING uuid, created_at, version`
 
 	args := []interface{}{user.Email, user.Password.hash, user.Activated}
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)

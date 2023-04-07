@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"fmt"
 	"time"
 )
 
@@ -30,7 +29,7 @@ type TenantModel struct {
 }
 
 func (t TenantModel) Insert(tenant *Tenant) error {
-	query := fmt.Sprintf(`INSERT INTO TENANTS (tenant_id,house_id,phone,personal_id_type,personal_id,active,eos) VALUES (%s, $1, $2, $3, $4, $5, $6)`, "uuid_generate_v4()")
+	query := `INSERT INTO TENANTS (house_id,phone,personal_id_type,personal_id,active,eos) VALUES ($1, $2, $3, $4, $5, $6)`
 
 	args := []interface{}{tenant.HouseId, tenant.Phone, tenant.PersonalIdType, tenant.PersonalId, tenant.Active, tenant.Eos}
 

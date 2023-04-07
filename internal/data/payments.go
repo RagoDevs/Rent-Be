@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"fmt"
 	"time"
 )
 
@@ -21,7 +20,7 @@ type PaymentModel struct {
 }
 
 func (p PaymentModel) Insert(payment *Payment) error {
-	query := fmt.Sprintf(`INSERT INTO payments (payment_id,tenant_id,period,start_date,end_date) VALUES (%s,$1,$2,$3,$4)`, "uuid_generate_v4()")
+	query := `INSERT INTO payments (tenant_id,period,start_date,end_date) VALUES ($1,$2,$3,$4)`
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 
