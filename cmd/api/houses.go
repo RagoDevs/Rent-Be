@@ -55,7 +55,7 @@ func (app *application) createHouseHandler(w http.ResponseWriter, r *http.Reques
 	var input struct {
 		Location  string `json:"location"`
 		Block     string `json:"block"`
-		Partition string `json:"partition"`
+		Partition int `json:"partition"`
 		Occupied  bool   `json:"occupied"`
 	}
 
@@ -138,7 +138,7 @@ func (app *application) bulkHousesHandler(w http.ResponseWriter, r *http.Request
 	type house struct {
 		Location  string `json:"location"`
 		Block     string `json:"block"`
-		Partition string `json:"partition"`
+		Partition int `json:"partition"`
 		Occupied  bool   `json:"occupied"`
 	}
 

@@ -11,7 +11,7 @@ type House struct {
 	HouseId   string `json:"house_id"`
 	Location  string `json:"location"`
 	Block     string `json:"block"`
-	Partition string `json:"partition"`
+	Partition int `json:"partition"`
 	Occupied  bool   `json:"occupied"`
 }
 
