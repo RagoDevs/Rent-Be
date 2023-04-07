@@ -172,7 +172,7 @@ func (a AdminModel) GetForToken(tokenScope, tokenPlaintext string) (*Admin, erro
 	// Set up the SQL query.
 	query := `
 	SELECT admins.admin_id, admins.created_at,admins.email, admins.password_hash, admins.activated, admins.version
-	FROM 
+	FROM admins
 	INNER JOIN tokens
 	ON admins.admin_id = tokens.admin_id
 	WHERE tokens.hash = $1
