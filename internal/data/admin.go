@@ -141,7 +141,7 @@ func (a AdminModel) Update(admin *Admin) error {
 	query := `
 UPDATE admins
 SET email = $1, password_hash = $2, activated = $3, version = version + 1
-WHERE uuid = $4 AND version = $5
+WHERE admin_id = $4 AND version = $5
 RETURNING version`
 	args := []interface{}{
 		admin.Email,
