@@ -135,18 +135,18 @@ func (app *application) updateHouseHandler(w http.ResponseWriter, r *http.Reques
 
 func (app *application) bulkHousesHandler(w http.ResponseWriter, r *http.Request) {
 
-	type house struct {
-		Location  string `json:"location"`
-		Block     string `json:"block"`
-		Partition int    `json:"partition"`
-		Occupied  bool   `json:"occupied"`
-	}
-
-	var houses []house
+	var houses []data.House
 	err := app.readBulKJSON(w, r, &houses)
 
 	if err != nil {
 		app.badRequestResponse(w, r, err)
+		return
+	}
+
+	err = app.models.Houses.BulkInsert(houses)
+
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
 		return
 	}
 

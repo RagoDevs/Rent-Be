@@ -5,13 +5,23 @@ import (
 	"database/sql"
 	"errors"
 	"time"
+
+	"github.com/lib/pq"
+)
+
+var (
+	ErrStartOFTranscation = errors.New("error at beginning of  transaction")
+	ErrExecStmt           = errors.New("error executing a statement")
+	ErrPreparingStmt      = errors.New("error preparing statement")
+	ErrClosingStmt        = errors.New("error closing the statement ")
+	ErrCommitStmt         = errors.New("error commiting the statement")
 )
 
 type House struct {
 	HouseId   string `json:"house_id"`
 	Location  string `json:"location"`
 	Block     string `json:"block"`
-	Partition int `json:"partition"`
+	Partition int    `json:"partition"`
 	Occupied  bool   `json:"occupied"`
 }
 
@@ -20,7 +30,7 @@ type HouseModel struct {
 }
 
 func (h HouseModel) Insert(house *House) error {
-	query := `INSERT INTO houses (location,block,partition, Occupied) VALUES ($1,$2,$3,$4) RETURNING house_id`
+	query := `INSERT INTO houses (location,block,partition, occupied) VALUES ($1,$2,$3,$4) RETURNING house_id`
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 
@@ -32,6 +42,50 @@ func (h HouseModel) Insert(house *House) error {
 
 	if err != nil {
 		return err
+	}
+
+	return nil
+
+}
+
+func (h HouseModel) BulkInsert(houses []House) error {
+	txn, err := h.DB.Begin()
+
+	if err != nil {
+		return ErrStartOFTranscation
+	}
+
+	defer func() {
+		if err != nil {
+			txn.Rollback()
+		}
+	}()
+	stmt, err := txn.Prepare(pq.CopyIn("houses", "location", "block", "partition", "occupied"))
+
+	if err != nil {
+		return ErrPreparingStmt
+	}
+
+	for _, house := range houses {
+		_, err = stmt.Exec(house.Location, house.Block, house.Partition, house.Occupied)
+		if err != nil {
+			return ErrExecStmt
+		}
+	}
+
+	_, err = stmt.Exec()
+	if err != nil {
+		return ErrExecStmt
+	}
+
+	err = stmt.Close()
+	if err != nil {
+		return ErrClosingStmt
+	}
+
+	err = txn.Commit()
+	if err != nil {
+		return ErrCommitStmt
 	}
 
 	return nil
