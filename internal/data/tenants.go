@@ -21,6 +21,7 @@ type Tenant struct {
 	PersonalId     string    `json:"personal_id"`
 	Photo          byte      `json:"photo"`
 	Active         bool      `json:"active"`
+	Sos            time.Time `json:"Sos"`
 	Eos            time.Time `json:"eos"`
 }
 
@@ -29,9 +30,9 @@ type TenantModel struct {
 }
 
 func (t TenantModel) Insert(tenant *Tenant) error {
-	query := `INSERT INTO TENANTS (house_id,phone,personal_id_type,personal_id,active,eos) VALUES ($1, $2, $3, $4, $5, $6)`
+	query := `INSERT INTO TENANTS (first_name, last_name, house_id, phone, personal_id_type,personal_id,active,sos,eos) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`
 
-	args := []interface{}{tenant.HouseId, tenant.Phone, tenant.PersonalIdType, tenant.PersonalId, tenant.Active, tenant.Eos}
+	args := []interface{}{tenant.FirstName, tenant.LastName, tenant.HouseId, tenant.Phone, tenant.PersonalIdType, tenant.PersonalId, tenant.Active, tenant.Sos, tenant.Eos}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
@@ -52,7 +53,7 @@ func (t TenantModel) Insert(tenant *Tenant) error {
 
 func (t TenantModel) Get(tenant_id string) (*Tenant, error) {
 	query := `
-	    SELECT tenant_id,house_id,phone,personal_id_type,personal_id,active,eos FROM
+	    SELECT first_name, last_name, house_id, phone, personal_id_type,personal_id,active,sos,eos FROM
 		tenants
 		WHERE tenant_id = $1`
 
@@ -62,11 +63,14 @@ func (t TenantModel) Get(tenant_id string) (*Tenant, error) {
 	defer cancel()
 
 	err := t.DB.QueryRowContext(ctx, query, tenant_id).Scan(
-		&tenant.TenantId,
+		&tenant.FirstName,
+		&tenant.LastName,
 		&tenant.HouseId,
 		&tenant.Phone,
 		&tenant.PersonalIdType,
+		&tenant.PersonalId,
 		&tenant.Active,
+		&tenant.Sos,
 		&tenant.Eos,
 	)
 
