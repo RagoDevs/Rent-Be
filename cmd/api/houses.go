@@ -147,6 +147,7 @@ func (app *application) bulkHousesHandler(w http.ResponseWriter, r *http.Request
 
 	if err != nil {
 		app.badRequestResponse(w, r, err)
+		return
 	}
 
 	err = app.writeJSON(w, http.StatusOK, envelope{"houses": houses}, nil)
