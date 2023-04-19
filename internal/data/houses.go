@@ -168,7 +168,7 @@ func (h HouseModel) Get(house_id string) (*House, error) {
 
 }
 
-func (h HouseModel) Update(house *House) error {
+func (h HouseModel) Update(house_id string, occupied bool) error {
 	query := `UPDATE houses
 	SET occupied = $1
 	WHERE house_id = $2`
@@ -177,7 +177,7 @@ func (h HouseModel) Update(house *House) error {
 
 	defer cancel()
 
-	args := []interface{}{house.Occupied, house.HouseId}
+	args := []interface{}{occupied, house_id}
 
 	_, err := h.DB.ExecContext(ctx, query, args...)
 

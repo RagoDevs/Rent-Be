@@ -89,6 +89,12 @@ func (app *application) createTenantHandler(w http.ResponseWriter, r *http.Reque
 		app.serverErrorResponse(w, r, err)
 	}
 
+	err = app.models.Houses.Update(tenant.HouseId, true)
+
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+	}
+
 	err = app.writeJSON(w, http.StatusOK, envelope{"tenant": tenant}, nil)
 
 	if err != nil {

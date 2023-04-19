@@ -119,7 +119,7 @@ func (app *application) updateHouseHandler(w http.ResponseWriter, r *http.Reques
 
 	house.Occupied = input.Occupied
 
-	err = app.models.Houses.Update(house)
+	err = app.models.Houses.Update(house.HouseId, house.Occupied)
 
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
