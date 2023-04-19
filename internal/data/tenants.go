@@ -21,7 +21,7 @@ type Tenant struct {
 	PersonalId     string    `json:"personal_id"`
 	Photo          byte      `json:"photo"`
 	Active         bool      `json:"active"`
-	Sos            time.Time `json:"Sos"`
+	Sos            time.Time `json:"sos"`
 	Eos            time.Time `json:"eos"`
 }
 
@@ -87,15 +87,63 @@ func (t TenantModel) Get(tenant_id string) (*Tenant, error) {
 
 }
 
+func (t TenantModel) GetAll() ([]*Tenant, error) {
+	query := `SELECT first_name, last_name, house_id, phone, personal_id_type,personal_id,active,sos,eos FROM
+	tenants`
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+
+	defer cancel()
+
+	rows, err := t.DB.QueryContext(ctx, query)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	tenants := []*Tenant{}
+
+	for rows.Next() {
+		var tenant Tenant
+
+		err := rows.Scan(
+			&tenant.FirstName,
+			&tenant.LastName,
+			&tenant.HouseId,
+			&tenant.Phone,
+			&tenant.PersonalIdType,
+			&tenant.PersonalId,
+			&tenant.Active,
+			&tenant.Sos,
+			&tenant.Eos,
+		)
+
+		if err != nil {
+			return nil, err
+		}
+
+		tenants = append(tenants, &tenant)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return tenants, nil
+
+}
+
 func (t TenantModel) Update(tenant *Tenant) error {
 
 	query := `
 	UPDATE tenants 
-	SET phone = $1 ,personal_id_type = $2 ,personal_id = $3 ,active = $4, eos = $5
+	SET first_name = $1, last_name = $2 ,house_id = $3, phone = $4 ,personal_id_type = $5 ,personal_id = $6 ,active = $7, sos=$8 ,eos = $9
 	WHERE tenant_id = $6
 	`
 
-	args := []interface{}{tenant.Phone, tenant.PersonalIdType, tenant.PersonalId, tenant.Active, tenant.Eos}
+	args := []interface{}{tenant.FirstName, tenant.LastName, tenant.HouseId, tenant.Phone, tenant.PersonalIdType, tenant.PersonalId, tenant.Active, tenant.Sos, tenant.Eos}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 
