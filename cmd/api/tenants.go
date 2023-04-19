@@ -191,3 +191,21 @@ func (app *application) updateTenantsHandler(w http.ResponseWriter, r *http.Requ
 	}
 
 }
+
+
+func (app *application) removeTenant(w http.ResponseWriter, r *http.Request){
+	uuid, err := app.readIDParam(r)
+
+	if err != nil {
+		app.notFoundResponse(w, r)
+		return
+	}
+
+	err =  app.models.Houses.Update(uuid,false)
+
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+	}
+
+
+}
