@@ -44,6 +44,13 @@ func (app *application) routes() http.Handler {
 	router.HandlerFunc(http.MethodGet, "/v1/houses/:uuid", app.requireActivatedUser(app.showHousesHandler))
 	router.HandlerFunc(http.MethodPut, "/v1/houses/:uuid", app.requireActivatedUser(app.updateHouseHandler))
 
+	// tenants
+	router.HandlerFunc(http.MethodGet, "/v1/tenants", app.requireActivatedUser(app.listTenantsHandler))
+	router.HandlerFunc(http.MethodPost, "/v1/tenants", app.requireActivatedUser(app.createTenantHandler))
+	router.HandlerFunc(http.MethodGet, "/v1/tenants/:uuid", app.requireActivatedUser(app.showTenantsHandler))
+	router.HandlerFunc(http.MethodPut, "/v1/houses/:uuid", app.requireActivatedUser(app.updateTenantsHandler))
+	router.HandlerFunc(http.MethodGet, "/v1/tenants/:uuid", app.requireActivatedUser(app.removeTenant))
+
 	//do magic send bulk imports back
 	//router.HandlerFunc(http.MethodPost, "/v1/bulk/houses", app.magicbulkHousesHandler)
 

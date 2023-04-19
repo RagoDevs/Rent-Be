@@ -192,8 +192,7 @@ func (app *application) updateTenantsHandler(w http.ResponseWriter, r *http.Requ
 
 }
 
-
-func (app *application) removeTenant(w http.ResponseWriter, r *http.Request){
+func (app *application) removeTenant(w http.ResponseWriter, r *http.Request) {
 	uuid, err := app.readIDParam(r)
 
 	if err != nil {
@@ -201,11 +200,25 @@ func (app *application) removeTenant(w http.ResponseWriter, r *http.Request){
 		return
 	}
 
-	err =  app.models.Houses.Update(uuid,false)
+	tenant, err := app.models.Tenants.Get(uuid)
+
+	if err != nil {
+		app.notFoundResponse(w, r)
+		return
+	}
+
+	tenant.Active = false
+
+	err = app.models.Tenants.Update(tenant)
 
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
 	}
 
+	err = app.models.Houses.Update(tenant.HouseId, false)
+
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+	}
 
 }
