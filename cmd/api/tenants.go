@@ -99,12 +99,14 @@ func (app *application) createTenantHandler(w http.ResponseWriter, r *http.Reque
 
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
+		return
 	}
 
 	err = app.models.Houses.Update(tenant.HouseId, true)
 
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
+		return
 	}
 
 	err = app.writeJSON(w, http.StatusOK, envelope{"tenant": tenant}, nil)
@@ -194,6 +196,7 @@ func (app *application) updateTenantsHandler(w http.ResponseWriter, r *http.Requ
 
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
+		return
 	}
 
 	err = app.writeJSON(w, http.StatusOK, envelope{"tenant": tenant}, nil)
@@ -225,6 +228,7 @@ func (app *application) removeTenant(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
+		return
 	}
 
 	err = app.models.Houses.Update(tenant.HouseId, false)
