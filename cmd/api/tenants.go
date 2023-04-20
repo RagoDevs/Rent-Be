@@ -61,7 +61,7 @@ func (app *application) createTenantHandler(w http.ResponseWriter, r *http.Reque
 		PersonalIdType string    `json:"personal_id_type"`
 		PersonalId     string    `json:"personal_id"`
 		Active         bool      `json:"active"`
-		Sos            time.Time `json:"Sos"`
+		Sos            time.Time `json:"sos"`
 		Eos            time.Time `json:"eos"`
 	}
 
@@ -80,7 +80,7 @@ func (app *application) createTenantHandler(w http.ResponseWriter, r *http.Reque
 		PersonalId:     input.PersonalId,
 		Active:         input.Active,
 		Sos:            input.Sos,
-		Eos:            input.Sos,
+		Eos:            input.Eos,
 	}
 
 	err = app.models.Tenants.Insert(tenant)
