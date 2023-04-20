@@ -98,6 +98,11 @@ func (app *application) createTenantHandler(w http.ResponseWriter, r *http.Reque
 	err = app.models.Tenants.Insert(tenant)
 
 	if err != nil {
+		if err == data.ErrDuplicatePhoneNumber {
+			app.badRequestResponse(w, r, err)
+			return
+		}
+
 		app.serverErrorResponse(w, r, err)
 		return
 	}
