@@ -61,8 +61,8 @@ func (app *application) createTenantHandler(w http.ResponseWriter, r *http.Reque
 		PersonalIdType string    `json:"personal_id_type"`
 		PersonalId     string    `json:"personal_id"`
 		Active         bool      `json:"active"`
-		Sos            time.Time `json:"sos"`
-		Eos            time.Time `json:"eos"`
+		Sos            time.Time `json:"sos" time_format:"2006-01-02"`
+		Eos            time.Time `json:"eos" time_format:"2006-01-02"`
 	}
 
 	err := app.readJSON(w, r, &input)
@@ -131,8 +131,8 @@ func (app *application) updateTenantsHandler(w http.ResponseWriter, r *http.Requ
 		PersonalIdType *string    `json:"personal_id_type"`
 		PersonalId     *string    `json:"personal_id"`
 		Active         *bool      `json:"active"`
-		Sos            *time.Time `json:"sos"`
-		Eos            *time.Time `json:"eos"`
+		Sos            *time.Time `json:"sos" time_format:"2006-01-02"`
+		Eos            *time.Time `json:"eos" time_format:"2006-01-02"`
 	}
 
 	err = app.readJSON(w, r, &input)

@@ -21,8 +21,8 @@ type Tenant struct {
 	PersonalId     string    `json:"personal_id"`
 	Photo          byte      `json:"photo"`
 	Active         bool      `json:"active"`
-	Sos            time.Time `json:"sos"`
-	Eos            time.Time `json:"eos"`
+	Sos            time.Time `json:"sos" time_format:"2006-01-02"`
+	Eos            time.Time `json:"eos" time_format:"2006-01-02"`
 }
 
 type TenantModel struct {
