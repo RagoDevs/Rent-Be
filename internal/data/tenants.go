@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	ErrDuplicatePhoneNumber = errors.New("duplicate phone number")
+	ErrDuplicatePhoneNumber = errors.New("phone number arleady exists")
 )
 
 type Tenant struct {
@@ -41,7 +41,7 @@ func (t TenantModel) Insert(tenant *Tenant) error {
 
 	if err != nil {
 		switch {
-		case err.Error() == `pq: duplicate key value violates unique constraint "tenants_phone_key`:
+		case err.Error() == `pq: duplicate key value violates unique constraint "unique_tenants_phone"`:
 			return ErrDuplicatePhoneNumber
 		default:
 			return err

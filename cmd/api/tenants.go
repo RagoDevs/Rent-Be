@@ -71,6 +71,18 @@ func (app *application) createTenantHandler(w http.ResponseWriter, r *http.Reque
 		app.badRequestResponse(w, r, err)
 		return
 	}
+
+	house, err := app.models.Houses.Get(input.HouseId)
+
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+	}
+
+	if house.Occupied {
+		app.badRequestResponse(w, r, errors.New("the house is arleady occupied"))
+		return
+	}
+
 	tenant := &data.Tenant{
 		FirstName:      input.FirstName,
 		LastName:       input.LastName,
