@@ -142,10 +142,9 @@ func (t TenantModel) Update(tenant *Tenant) error {
 	query := `
 	UPDATE tenants 
 	SET first_name = $1, last_name = $2 ,house_id = $3, phone = $4 ,personal_id_type = $5 ,personal_id = $6 ,active = $7, sos=$8 ,eos = $9
-	WHERE tenant_id = $6
-	`
+	WHERE tenant_id = $10 `
 
-	args := []interface{}{tenant.FirstName, tenant.LastName, tenant.HouseId, tenant.Phone, tenant.PersonalIdType, tenant.PersonalId, tenant.Active, tenant.Sos, tenant.Eos}
+	args := []interface{}{tenant.FirstName, tenant.LastName, tenant.HouseId, tenant.Phone, tenant.PersonalIdType, tenant.PersonalId, tenant.Active, tenant.Sos, tenant.Eos, tenant.TenantId}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 
@@ -155,7 +154,7 @@ func (t TenantModel) Update(tenant *Tenant) error {
 
 	if err != nil {
 		switch {
-		case err.Error() == `pq: duplicate key value violates unique constraint "tenants_phone_key`:
+		case err.Error() == `pq: duplicate key value violates unique constraint "unique_tenants_phone"`:
 			return ErrDuplicatePhoneNumber
 
 		default:

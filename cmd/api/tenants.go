@@ -200,6 +200,11 @@ func (app *application) updateTenantsHandler(w http.ResponseWriter, r *http.Requ
 	err = app.models.Tenants.Update(tenant)
 
 	if err != nil {
+		if err == data.ErrDuplicatePhoneNumber {
+			app.badRequestResponse(w, r, err)
+			return
+		}
+
 		app.serverErrorResponse(w, r, err)
 		return
 	}
