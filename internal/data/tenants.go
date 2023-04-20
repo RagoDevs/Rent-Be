@@ -53,7 +53,7 @@ func (t TenantModel) Insert(tenant *Tenant) error {
 
 func (t TenantModel) Get(tenant_id string) (*Tenant, error) {
 	query := `
-	    SELECT first_name, last_name, house_id, phone, personal_id_type,personal_id,active,sos,eos FROM
+	    SELECT tenant_id, first_name, last_name, house_id, phone, personal_id_type,personal_id,active,sos,eos FROM
 		tenants
 		WHERE tenant_id = $1`
 
@@ -63,6 +63,7 @@ func (t TenantModel) Get(tenant_id string) (*Tenant, error) {
 	defer cancel()
 
 	err := t.DB.QueryRowContext(ctx, query, tenant_id).Scan(
+		&tenant.TenantId,
 		&tenant.FirstName,
 		&tenant.LastName,
 		&tenant.HouseId,
@@ -88,7 +89,7 @@ func (t TenantModel) Get(tenant_id string) (*Tenant, error) {
 }
 
 func (t TenantModel) GetAll() ([]*Tenant, error) {
-	query := `SELECT first_name, last_name, house_id, phone, personal_id_type,personal_id,active,sos,eos FROM
+	query := `SELECT tenant_id, first_name, last_name, house_id, phone, personal_id_type,personal_id,active,sos,eos FROM
 	tenants`
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
@@ -109,6 +110,7 @@ func (t TenantModel) GetAll() ([]*Tenant, error) {
 		var tenant Tenant
 
 		err := rows.Scan(
+			&tenant.TenantId,
 			&tenant.FirstName,
 			&tenant.LastName,
 			&tenant.HouseId,
