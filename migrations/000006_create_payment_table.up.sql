@@ -3,5 +3,6 @@ CREATE TABLE IF NOT EXISTS payments (
     tenant_id  UUID NOT NULL REFERENCES tenants ON DELETE CASCADE,
     period int NOT NULL,
     start_date DATE NOT NULL,
+    renewed BOOL NOT NULL,
     end_date DATE NOT NULL
 );
