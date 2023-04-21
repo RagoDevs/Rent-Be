@@ -13,6 +13,7 @@ type Payment struct {
 	Period    int       `json:"period"`
 	StartDate time.Time `json:"start_date"`
 	EndDate   time.Time `json:"end_date"`
+	Renewed   bool      `json:"renewed"`
 }
 
 type PaymentModel struct {
@@ -20,13 +21,13 @@ type PaymentModel struct {
 }
 
 func (p PaymentModel) Insert(payment *Payment) error {
-	query := `INSERT INTO payments (tenant_id,period,start_date,end_date) VALUES ($1,$2,$3,$4)`
+	query := `INSERT INTO payments (tenant_id,period,start_date,end_date, renewed) VALUES ($1,$2,$3,$4,$5)`
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 
 	defer cancel()
 
-	args := []interface{}{payment.TenantId, payment.Period, payment.StartDate, payment.EndDate}
+	args := []interface{}{payment.TenantId, payment.Period, payment.StartDate, payment.EndDate, payment.Renewed}
 
 	_, err := p.DB.ExecContext(ctx, query, args...)
 
@@ -39,7 +40,7 @@ func (p PaymentModel) Insert(payment *Payment) error {
 }
 
 func (p PaymentModel) Get(payment_id string) (*Payment, error) {
-	query := `SELECT payment_id,tenant_id, period, start_date, end_date FROM payments 
+	query := `SELECT payment_id,tenant_id, period, start_date, end_date, renewed FROM payments 
 	WHERE payment_id = $1`
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
@@ -54,6 +55,7 @@ func (p PaymentModel) Get(payment_id string) (*Payment, error) {
 		&payment.Period,
 		&payment.StartDate,
 		&payment.EndDate,
+		&payment.Renewed,
 	)
 
 	if err != nil {
@@ -73,14 +75,14 @@ func (p PaymentModel) Get(payment_id string) (*Payment, error) {
 
 func (p PaymentModel) Update(payment Payment) error {
 	query := `UPDATE payments
-	SET period = $1, start_date = $2, end_date = $3
-	WHERE payment_id = $4`
+	SET period = $1, start_date = $2, end_date = $3, renewed = $4
+	WHERE payment_id = $5`
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 
 	defer cancel()
 
-	args := []interface{}{payment.Period, payment.StartDate, payment.EndDate, payment.PaymentId}
+	args := []interface{}{payment.Period, payment.StartDate, payment.EndDate, payment.Renewed, payment.PaymentId}
 
 	_, err := p.DB.ExecContext(ctx, query, args...)
 
