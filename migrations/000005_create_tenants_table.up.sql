@@ -12,3 +12,7 @@ CREATE TABLE IF NOT EXISTS tenants (
   eos DATE NOT NULL
 
 ); 
+
+CREATE UNIQUE INDEX CONCURRENTLY tenants_phone ON tenants (phone);
+
+ALTER TABLE tenants ADD CONSTRAINT unique_tenants_phone UNIQUE USING INDEX tenants_phone;
