@@ -68,13 +68,36 @@ func (app *application) createPaymentHandler(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	_, err = app.models.Tenants.Get(input.TenantId)
+	tenant, err := app.models.Tenants.Get(input.TenantId)
 
 	if err != nil {
 		if err == data.ErrRecordNotFound {
 			app.badRequestResponse(w, r, errors.New("tenant cannot be found"))
 			return
 		}
+
+	}
+
+	IsEqual := tenant.Eos.Equal(input.EndDate)
+
+	IsBefore := tenant.Eos.Before(input.EndDate)
+
+	if !IsEqual || !IsBefore {
+
+		app.badRequestResponse(w, r, errors.New("end of stay should be less or equal to end date of payment"))
+
+		return
+	}
+
+	tenant.Eos = input.EndDate
+
+	err = app.models.Tenants.Update(tenant)
+
+	if err != nil {
+
+		app.badRequestResponse(w, r, errors.New("cannot update end of stay for tenant"))
+
+		return
 
 	}
 
@@ -190,5 +213,3 @@ func (app *application) updatPaymentHandler(w http.ResponseWriter, r *http.Reque
 	}
 
 }
-
-
