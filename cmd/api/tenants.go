@@ -76,6 +76,7 @@ func (app *application) createTenantHandler(w http.ResponseWriter, r *http.Reque
 
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
+		return
 	}
 
 	if house.Occupied {
