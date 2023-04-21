@@ -78,16 +78,16 @@ func (app *application) createPaymentHandler(w http.ResponseWriter, r *http.Requ
 
 	}
 
-	IsEqual := tenant.Eos.Equal(input.EndDate)
+	// IsEqual := tenant.Eos.Equal(input.EndDate)
 
-	IsBefore := tenant.Eos.Before(input.EndDate)
+	// IsBefore := tenant.Eos.Before(input.EndDate)
 
-	if !IsEqual || !IsBefore {
+	// if !IsEqual || !IsBefore {
 
-		app.badRequestResponse(w, r, errors.New("end of stay should be less or equal to end date of payment"))
+	// 	app.badRequestResponse(w, r, errors.New("end of stay should be less or equal to end date of payment"))
 
-		return
-	}
+	// 	return
+	// }
 
 	tenant.Eos = input.EndDate
 
