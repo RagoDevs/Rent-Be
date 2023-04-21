@@ -53,9 +53,9 @@ func (app *application) routes() http.Handler {
 
 	// Payments
 	router.HandlerFunc(http.MethodGet, "/v1/payments", app.requireActivatedUser(app.listPaymentsHandler))
-	router.HandlerFunc(http.MethodPost, "/v1/payments", app.requireActivatedUser(app.createPaymentsHandler))
-	router.HandlerFunc(http.MethodGet, "/v1/payments/:uuid", app.requireActivatedUser(app.showPaymentstsHandler))
-	router.HandlerFunc(http.MethodPut, "/v1/payments/:uuid", app.requireActivatedUser(app.updatPaymentsHandler))
+	router.HandlerFunc(http.MethodPost, "/v1/payments", app.requireActivatedUser(app.createPaymentHandler))
+	router.HandlerFunc(http.MethodGet, "/v1/payments/:uuid", app.requireActivatedUser(app.showPaymentHandler))
+	router.HandlerFunc(http.MethodPut, "/v1/payments/:uuid", app.requireActivatedUser(app.updatPaymentHandler))
 	router.HandlerFunc(http.MethodDelete, "/v1/payments/:uuid", app.requireActivatedUser(app.deletePaymentHandler))
 
 	//do magic send bulk imports back
