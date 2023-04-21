@@ -73,14 +73,14 @@ func (p PaymentModel) Get(payment_id string) (*Payment, error) {
 
 func (p PaymentModel) Update(payment Payment) error {
 	query := `UPDATE payments
-	SET period = $1, end_date = $2
-	WHERE payment_id = $3`
+	SET period = $1, start_date = $2, end_date = $3
+	WHERE payment_id = $4`
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 
 	defer cancel()
 
-	args := []interface{}{payment.Period, payment.EndDate, payment.PaymentId}
+	args := []interface{}{payment.Period, payment.StartDate, payment.EndDate, payment.PaymentId}
 
 	_, err := p.DB.ExecContext(ctx, query, args...)
 
