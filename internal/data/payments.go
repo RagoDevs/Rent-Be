@@ -172,14 +172,14 @@ func (p PaymentModel) Update(payment Payment) error {
 	return nil
 }
 
-func (p PaymentModel) DELETE(payment Payment) error {
+func (p PaymentModel) DELETE(payment_id string) error {
 	query := `DELETE FROM payments WHERE payment_id = $1`
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 
 	defer cancel()
 
-	_, err := p.DB.ExecContext(ctx, query, payment.PaymentId)
+	_, err := p.DB.ExecContext(ctx, query, payment_id)
 
 	if err != nil {
 		return err

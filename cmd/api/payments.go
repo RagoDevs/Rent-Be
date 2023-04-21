@@ -58,6 +58,7 @@ func (app *application) createPaymentHandler(w http.ResponseWriter, r *http.Requ
 		Period    int       `json:"period"`
 		StartDate time.Time `json:"start_date"`
 		EndDate   time.Time `json:"end_date"`
+		Renewed   bool      `json:"renewed"`
 	}
 
 	err := app.readJSON(w, r, &input)
@@ -67,19 +68,42 @@ func (app *application) createPaymentHandler(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	tenant, err := app.models.Tenants.Get(input.TenantId)
+	_, err = app.models.Tenants.Get(input.TenantId)
 
 	if err != nil {
-		app.badRequestResponse(w, r, errors.New("tenant cannot be found"))
-		return
+		if err == data.ErrRecordNotFound {
+			app.badRequestResponse(w, r, errors.New("tenant cannot be found"))
+			return
+		}
+
 	}
 
-	payment := &data.Payment{
+	payment, err := app.models.Payments.GetUnrenewed(input.TenantId)
+
+	if err != nil {
+		if err != data.ErrRecordNotFound {
+			app.serverErrorResponse(w, r, err)
+			return
+		}
+
+	}
+
+	if payment != nil {
+		payment.Renewed = true
+		err = app.models.Payments.Update(*payment)
+		if err != nil {
+			app.serverErrorResponse(w, r, err)
+			return
+		}
+	}
+
+	payment = &data.Payment{
 
 		TenantId:  input.TenantId,
 		Period:    input.Period,
 		StartDate: input.StartDate,
 		EndDate:   input.EndDate,
+		Renewed:   input.Renewed,
 	}
 
 	err = app.models.Payments.Insert(payment)
@@ -89,14 +113,7 @@ func (app *application) createPaymentHandler(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	err = app.models.Houses.Update(tenant.HouseId, true)
-
-	if err != nil {
-		app.serverErrorResponse(w, r, err)
-		return
-	}
-
-	err = app.writeJSON(w, http.StatusOK, envelope{"tenant": tenant}, nil)
+	err = app.writeJSON(w, http.StatusOK, envelope{"payment": payment}, nil)
 
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
@@ -104,129 +121,74 @@ func (app *application) createPaymentHandler(w http.ResponseWriter, r *http.Requ
 
 }
 
-// func (app *application) updateTenantsHandler(w http.ResponseWriter, r *http.Request) {
-// 	uuid, err := app.readIDParam(r)
-// 	if err != nil {
-// 		app.notFoundResponse(w, r)
-// 		return
-// 	}
+func (app *application) updatPaymentHandler(w http.ResponseWriter, r *http.Request) {
+	uuid, err := app.readIDParam(r)
+	if err != nil {
+		app.notFoundResponse(w, r)
+		return
+	}
 
-// 	tenant, err := app.models.Tenants.Get(uuid)
+	payment, err := app.models.Payments.Get(uuid)
 
-// 	if err != nil {
-// 		switch {
-// 		case errors.Is(err, data.ErrRecordNotFound):
-// 			app.notFoundResponse(w, r)
+	if err != nil {
+		switch {
+		case errors.Is(err, data.ErrRecordNotFound):
+			app.notFoundResponse(w, r)
 
-// 		default:
-// 			app.serverErrorResponse(w, r, err)
-// 		}
-// 		return
-// 	}
+		default:
+			app.serverErrorResponse(w, r, err)
+		}
+		return
+	}
 
-// 	var input struct {
-// 		FirstName      *string    `json:"first_name"`
-// 		LastName       *string    `json:"last_name"`
-// 		Phone          *string    `json:"phone"`
-// 		HouseId        *string    `json:"house_id"`
-// 		PersonalIdType *string    `json:"personal_id_type"`
-// 		PersonalId     *string    `json:"personal_id"`
-// 		Active         *bool      `json:"active"`
-// 		Sos            *time.Time `json:"sos"`
-// 		Eos            *time.Time `json:"eos"`
-// 	}
+	var input struct {
+		TenantId  *string    `json:"tenant_id"`
+		Period    *int       `json:"period"`
+		StartDate *time.Time `json:"start_date"`
+		EndDate   *time.Time `json:"end_date"`
+		Renewed   *bool      `json:"renewed"`
+	}
 
-// 	err = app.readJSON(w, r, &input)
+	err = app.readJSON(w, r, &input)
 
-// 	if err != nil {
-// 		app.badRequestResponse(w, r, err)
-// 		return
-// 	}
+	if err != nil {
+		app.badRequestResponse(w, r, err)
+		return
+	}
 
-// 	if input.FirstName != nil {
-// 		tenant.FirstName = *input.FirstName
-// 	}
+	if input.TenantId != nil {
+		payment.TenantId = *input.TenantId
+	}
 
-// 	if input.LastName != nil {
-// 		tenant.LastName = *input.LastName
-// 	}
+	if input.Period != nil {
+		payment.Period = *input.Period
+	}
 
-// 	if input.Phone != nil {
-// 		tenant.Phone = *input.Phone
-// 	}
+	if input.StartDate != nil {
+		payment.StartDate = *input.StartDate
+	}
 
-// 	if input.HouseId != nil {
-// 		tenant.HouseId = *input.HouseId
-// 	}
+	if input.EndDate != nil {
+		payment.EndDate = *input.EndDate
+	}
 
-// 	if input.PersonalIdType != nil {
-// 		tenant.PersonalIdType = *input.PersonalIdType
-// 	}
+	if input.Renewed != nil {
+		payment.Renewed = *input.Renewed
+	}
 
-// 	if input.PersonalId != nil {
-// 		tenant.PersonalId = *input.PersonalId
-// 	}
+	err = app.models.Payments.Update(*payment)
 
-// 	if input.Active != nil {
-// 		tenant.Active = *input.Active
-// 	}
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+		return
+	}
 
-// 	if input.Sos != nil {
-// 		tenant.Sos = *input.Sos
-// 	}
+	err = app.writeJSON(w, http.StatusOK, envelope{"payment": payment}, nil)
 
-// 	if input.Eos != nil {
-// 		tenant.Eos = *input.Eos
-// 	}
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+	}
 
-// 	err = app.models.Tenants.Update(tenant)
+}
 
-// 	if err != nil {
-// 		if err == data.ErrDuplicatePhoneNumber {
-// 			app.badRequestResponse(w, r, err)
-// 			return
-// 		}
 
-// 		app.serverErrorResponse(w, r, err)
-// 		return
-// 	}
-
-// 	err = app.writeJSON(w, http.StatusOK, envelope{"tenant": tenant}, nil)
-
-// 	if err != nil {
-// 		app.serverErrorResponse(w, r, err)
-// 	}
-
-// }
-
-// func (app *application) removeTenant(w http.ResponseWriter, r *http.Request) {
-// 	uuid, err := app.readIDParam(r)
-
-// 	if err != nil {
-// 		app.notFoundResponse(w, r)
-// 		return
-// 	}
-
-// 	tenant, err := app.models.Tenants.Get(uuid)
-
-// 	if err != nil {
-// 		app.notFoundResponse(w, r)
-// 		return
-// 	}
-
-// 	tenant.Active = false
-
-// 	err = app.models.Tenants.Update(tenant)
-
-// 	if err != nil {
-// 		app.serverErrorResponse(w, r, err)
-// 		return
-// 	}
-
-// 	err = app.models.Houses.Update(tenant.HouseId, false)
-
-// 	if err != nil {
-// 		app.serverErrorResponse(w, r, err)
-// 	}
-
-// }
