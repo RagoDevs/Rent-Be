@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	"hmgt.hopertz.me/internal/data"
+	"github.com/Hopertz/rmgmt/internal/data"
 )
 
 type contextKey string

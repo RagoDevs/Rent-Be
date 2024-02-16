@@ -4,7 +4,7 @@ import (
 	"errors"
 	"net/http"
 
-	"hmgt.hopertz.me/internal/data"
+	"github.com/Hopertz/rmgmt/internal/data"
 )
 
 func (app *application) listHousesHandler(w http.ResponseWriter, r *http.Request) {

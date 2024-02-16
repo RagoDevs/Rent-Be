@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"hmgt.hopertz.me/internal/data"
+	"github.com/Hopertz/rmgmt/internal/data"
 )
 
 func (app *application) listPaymentsHandler(w http.ResponseWriter, r *http.Request) {

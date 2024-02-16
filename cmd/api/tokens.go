@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"time"
 
-	"hmgt.hopertz.me/internal/data"
-	"hmgt.hopertz.me/internal/validator"
+	"github.com/Hopertz/rmgmt/internal/data"
+	"github.com/Hopertz/rmgmt/internal/validator"
 )
 
 func (app *application) createAuthenticationTokenHandler(w http.ResponseWriter, r *http.Request) {

@@ -13,8 +13,8 @@ import (
 	"github.com/felixge/httpsnoop"
 	"github.com/tomasen/realip"
 	"golang.org/x/time/rate"
-	"hmgt.hopertz.me/internal/data"
-	"hmgt.hopertz.me/internal/validator"
+	"github.com/Hopertz/rmgmt/internal/data"
+	"github.com/Hopertz/rmgmt/internal/validator"
 )
 
 func (app *application) recoverPanic(next http.Handler) http.Handler {

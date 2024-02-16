@@ -8,7 +8,7 @@ import (
 	"encoding/base32"
 	"time"
 
-	"hmgt.hopertz.me/internal/validator"
+	"github.com/Hopertz/rmgmt/internal/validator"
 )
 
 const (

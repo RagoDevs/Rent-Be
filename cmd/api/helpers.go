@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"strings"
 
-	"hmgt.hopertz.me/internal/validator"
+	"github.com/Hopertz/rmgmt/internal/validator"
 	"github.com/google/uuid"
 	"github.com/julienschmidt/httprouter"
 )

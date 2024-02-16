@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
-	"hmgt.hopertz.me/internal/validator"
+	"github.com/Hopertz/rmgmt/internal/validator"
 )
 
 var (
