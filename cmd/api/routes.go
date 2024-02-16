@@ -1,65 +1,73 @@
 package main
 
 import (
-	"expvar"
 	"net/http"
 
-	"github.com/julienschmidt/httprouter"
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 )
 
 func (app *application) routes() http.Handler {
-	router := httprouter.New()
 
-	router.NotFound = http.HandlerFunc(app.notFoundResponse)
-	router.MethodNotAllowed = http.HandlerFunc(app.methodNotAllowedResponse)
-	router.HandlerFunc(http.MethodGet, "/", app.home)
-	router.HandlerFunc(http.MethodGet, "/v1/ping", app.ping)
+	e := echo.New()
+	e.Use(middleware.Logger())
+	e.Use(middleware.Recover())
 
-	// test
+	DefaultCORSConfig := middleware.CORSConfig{
+		Skipper:      middleware.DefaultSkipper,
+		AllowOrigins: []string{"*"},
+		AllowMethods: []string{http.MethodGet, http.MethodHead, http.MethodPut, http.MethodPatch, http.MethodPost, http.MethodDelete},
+	}
 
-	router.HandlerFunc(http.MethodGet, "/v1/test", app.requireActivatedUser(app.test))
+	e.Use(middleware.CORSWithConfig(DefaultCORSConfig))
+
+	e.GET("/v1/ping", app.ping)
 
 	// User Routes
 
-	router.HandlerFunc(http.MethodPost, "/v1/users", app.registerUserHandler)
-	router.HandlerFunc(http.MethodPut, "/v1/users/activated", app.activateUserHandler)
-	router.HandlerFunc(http.MethodPost, "/v1/tokens/authentication", app.createAuthenticationTokenHandler)
+	e.POST("/v1/users", app.registerUserHandler)
+	e.PUT("/v1/users/activated", app.activateUserHandler)
+	e.POST("/v1/tokens/authentication", app.createAuthenticationTokenHandler)
+	e.POST("/v1/tokens/activation", app.createActivationTokenHandler)
 
-	// Resend user token route
-	router.HandlerFunc(http.MethodPost, "/v1/tokens/activation", app.createActivationTokenHandler)
 
-	// Metrics Routes
-	router.Handler(http.MethodGet, "/v1/metrics", expvar.Handler())
+	g := e.Group("/v1/auth")
 
-	//password management
+	g.Use(app.authenticate)
 
-	router.HandlerFunc(http.MethodPost, "/v1/tokens/passwordreset", app.createPasswordResetTokenHandler)
-	router.HandlerFunc(http.MethodPut, "/v1/users/password", app.updateUserPasswordHandler)
+	g.GET("/test", app.test, app.requireAuthenticatedUser)
+
+	// User Routes
+
+	g.POST("/v1/users", app.registerUserHandler)
+	g.PUT("/v1/users/activated", app.activateUserHandler)
+	g.POST("/v1/tokens/authentication", app.createAuthenticationTokenHandler)
+	g.POST("/v1/tokens/activation", app.createActivationTokenHandler)
 
 	// houses
-
-	router.HandlerFunc(http.MethodGet, "/v1/houses", app.requireActivatedUser(app.listHousesHandler))
-	router.HandlerFunc(http.MethodPost, "/v1/houses", app.requireActivatedUser(app.createHouseHandler))
-	router.HandlerFunc(http.MethodPost, "/v1/bulk/houses", app.requireActivatedUser(app.bulkHousesHandler))
-	router.HandlerFunc(http.MethodGet, "/v1/houses/:uuid", app.requireActivatedUser(app.showHousesHandler))
-	router.HandlerFunc(http.MethodPut, "/v1/houses/:uuid", app.requireActivatedUser(app.updateHouseHandler))
+	g.GET("/houses", app.listHousesHandler)
+	g.POST("/houses", app.createHouseHandler)
+	g.POST("/bulk/houses", app.bulkHousesHandler)
+	g.GET("/houses/:uuid", app.showHousesHandler)
+	g.PUT("/houses/:uuid", app.updateHouseHandler)
 
 	// tenants
-	router.HandlerFunc(http.MethodGet, "/v1/tenants", app.requireActivatedUser(app.listTenantsHandler))
-	router.HandlerFunc(http.MethodPost, "/v1/tenants", app.requireActivatedUser(app.createTenantHandler))
-	router.HandlerFunc(http.MethodGet, "/v1/tenants/:uuid", app.requireActivatedUser(app.showTenantsHandler))
-	router.HandlerFunc(http.MethodPut, "/v1/tenants/:uuid", app.requireActivatedUser(app.updateTenantsHandler))
-	router.HandlerFunc(http.MethodDelete, "/v1/tenants/:uuid", app.requireActivatedUser(app.removeTenant))
+	g.GET("/v1/tenants", app.listTenantsHandler)
+	g.POST("/v1/tenants", app.createTenantHandler)
+	g.GET("/v1/tenants/:uuid", app.showTenantsHandler)
+	g.PUT("/v1/tenants/:uuid", app.updateTenantsHandler)
+	g.DELETE("/v1/tenants/:uuid", app.removeTenant)
 
 	// Payments
-	router.HandlerFunc(http.MethodGet, "/v1/payments", app.requireActivatedUser(app.listPaymentsHandler))
-	router.HandlerFunc(http.MethodPost, "/v1/payments", app.requireActivatedUser(app.createPaymentHandler))
-	router.HandlerFunc(http.MethodGet, "/v1/payments/:uuid", app.requireActivatedUser(app.showPaymentHandler))
-	router.HandlerFunc(http.MethodPut, "/v1/payments/:uuid", app.requireActivatedUser(app.updatPaymentHandler))
+	g.GET("/v1/payments", app.listPaymentsHandler)
+	g.POST("/v1/payments", app.createPaymentHandler)
+	g.GET("/v1/payments/:uuid", app.showPaymentHandler)
+	g.PUT("/v1/payments/:uuid", app.updatPaymentHandler)
 
-	//do magic send bulk imports back
-	//router.HandlerFunc(http.MethodPost, "/v1/bulk/houses", app.magicbulkHousesHandler)
+	//password management
+	g.GET("/v1/tokens/passwordreset", app.createPasswordResetTokenHandler)
+	g.PUT("/v1/users/password", app.updateUserPasswordHandler)
 
-	return app.metrics(app.recoverPanic(app.enableCORS(app.rateLimit(app.authenticate(router)))))
+	return e
 
 }

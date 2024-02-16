@@ -2,9 +2,11 @@ package main
 
 import (
 	"net/http"
+
+	"github.com/labstack/echo/v4"
 )
 
-func (app *application) ping(w http.ResponseWriter, r *http.Request) {
+func (app *application) ping(c echo.Context) error {
 
 	env := envelope{
 		"status": "available",
@@ -13,9 +15,6 @@ func (app *application) ping(w http.ResponseWriter, r *http.Request) {
 			"version":     version,
 		},
 	}
-	err := app.writeJSON(w, http.StatusOK, env, nil)
-	if err != nil {
-		app.serverErrorResponse(w, r, err)
-	}
+	return c.JSON(http.StatusOK, env)
 
 }

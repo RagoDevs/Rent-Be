@@ -5,53 +5,38 @@ import (
 	"net/http"
 
 	"github.com/Hopertz/rmgmt/internal/data"
+	"github.com/labstack/echo/v4"
 )
 
-func (app *application) listHousesHandler(w http.ResponseWriter, r *http.Request) {
+func (app *application) listHousesHandler(c echo.Context) error {
 	houses, err := app.models.Houses.GetAll()
 
 	if err != nil {
-		app.serverErrorResponse(w, r, err)
-		return
+		return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 	}
 
-	err = app.writeJSON(w, http.StatusOK, envelope{"houses": houses}, nil)
-
-	if err != nil {
-		app.serverErrorResponse(w, r, err)
-		return
-	}
+	return c.JSON(http.StatusOK, envelope{"houses": houses})
 
 }
 
-func (app *application) showHousesHandler(w http.ResponseWriter, r *http.Request) {
-	uuid, err := app.readIDParam(r)
-	if err != nil {
-		app.notFoundResponse(w, r)
-		return
-	}
-
+func (app *application) showHousesHandler(c echo.Context) error {
+	uuid := c.Param("uuid")
 	house, err := app.models.Houses.Get(uuid)
 
 	if err != nil {
 		switch {
 		case errors.Is(err, data.ErrRecordNotFound):
-			app.notFoundResponse(w, r)
-
+			return c.JSON(http.StatusNotFound, envelope{"error": "house not found"})
 		default:
-			app.serverErrorResponse(w, r, err)
+			return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 		}
-		return
+
 	}
 
-	err = app.writeJSON(w, http.StatusOK, envelope{"house": house}, nil)
-
-	if err != nil {
-		app.serverErrorResponse(w, r, err)
-	}
+	return c.JSON(http.StatusOK, envelope{"house": house})
 }
 
-func (app *application) createHouseHandler(w http.ResponseWriter, r *http.Request) {
+func (app *application) createHouseHandler(c echo.Context) error {
 	var input struct {
 		Location  string `json:"location"`
 		Block     string `json:"block"`
@@ -59,12 +44,10 @@ func (app *application) createHouseHandler(w http.ResponseWriter, r *http.Reques
 		Occupied  bool   `json:"occupied"`
 	}
 
-	err := app.readJSON(w, r, &input)
-
-	if err != nil {
-		app.badRequestResponse(w, r, err)
-		return
+	if err := c.Bind(&input); err != nil {
+		return err
 	}
+
 	house := &data.House{
 		Location:  input.Location,
 		Block:     input.Block,
@@ -72,50 +55,36 @@ func (app *application) createHouseHandler(w http.ResponseWriter, r *http.Reques
 		Occupied:  input.Occupied,
 	}
 
-	err = app.models.Houses.Insert(house)
+	err := app.models.Houses.Insert(house)
 
 	if err != nil {
-		app.serverErrorResponse(w, r, err)
-		return
+		return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 	}
 
-	err = app.writeJSON(w, http.StatusOK, envelope{"house": house}, nil)
-
-	if err != nil {
-		app.serverErrorResponse(w, r, err)
-	}
-
+	return c.JSON(http.StatusCreated, envelope{"house": house})
 }
 
-func (app *application) updateHouseHandler(w http.ResponseWriter, r *http.Request) {
-	uuid, err := app.readIDParam(r)
-	if err != nil {
-		app.notFoundResponse(w, r)
-		return
-	}
-
+func (app *application) updateHouseHandler(c echo.Context) error {
+	uuid := c.Param("uuid")
 	house, err := app.models.Houses.Get(uuid)
 
 	if err != nil {
 		switch {
 		case errors.Is(err, data.ErrRecordNotFound):
-			app.notFoundResponse(w, r)
+			return c.JSON(http.StatusNotFound, envelope{"error": "house not found"})
 
 		default:
-			app.serverErrorResponse(w, r, err)
+			return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 		}
-		return
+
 	}
 
 	var input struct {
 		Occupied bool `json:"occupied"`
 	}
 
-	err = app.readJSON(w, r, &input)
-
-	if err != nil {
-		app.badRequestResponse(w, r, err)
-		return
+	if err := c.Bind(&input); err != nil {
+		return err
 	}
 
 	house.Occupied = input.Occupied
@@ -123,40 +92,27 @@ func (app *application) updateHouseHandler(w http.ResponseWriter, r *http.Reques
 	err = app.models.Houses.Update(house.HouseId, house.Occupied)
 
 	if err != nil {
-		app.serverErrorResponse(w, r, err)
-		return
+		return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 	}
 
-	err = app.writeJSON(w, http.StatusOK, envelope{"house": house}, nil)
-
-	if err != nil {
-		app.serverErrorResponse(w, r, err)
-	}
-
+	return c.JSON(http.StatusOK, envelope{"house": house})
 }
 
-func (app *application) bulkHousesHandler(w http.ResponseWriter, r *http.Request) {
+func (app *application) bulkHousesHandler(c echo.Context) error {
 
 	var houses []data.House
-	err := app.readBulKJSON(w, r, &houses)
-
-	if err != nil {
-		app.badRequestResponse(w, r, err)
-		return
+	
+	if err := c.Bind(&houses); err != nil {
+		return c.JSON(http.StatusUnprocessableEntity, envelope{"error": "invalid request payload"})
 	}
 
-	err = app.models.Houses.BulkInsert(houses)
+	err := app.models.Houses.BulkInsert(houses)
 
 	if err != nil {
-		app.serverErrorResponse(w, r, err)
-		return
+		return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 	}
 
-	err = app.writeJSON(w, http.StatusOK, envelope{"houses": houses}, nil)
-
-	if err != nil {
-		app.serverErrorResponse(w, r, err)
-	}
+	return c.JSON(http.StatusCreated, envelope{"houses": houses})
 
 }
 

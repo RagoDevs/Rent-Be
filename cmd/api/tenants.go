@@ -6,53 +6,41 @@ import (
 	"time"
 
 	"github.com/Hopertz/rmgmt/internal/data"
+	"github.com/labstack/echo/v4"
 )
 
-func (app *application) listTenantsHandler(w http.ResponseWriter, r *http.Request) {
+func (app *application) listTenantsHandler(c echo.Context) error {
+
 	tenants, err := app.models.Tenants.GetAll()
 
 	if err != nil {
-		app.serverErrorResponse(w, r, err)
-		return
+		// log error above
+		return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 	}
 
-	err = app.writeJSON(w, http.StatusOK, envelope{"tenants": tenants}, nil)
-
-	if err != nil {
-		app.serverErrorResponse(w, r, err)
-		return
-	}
+	return c.JSON(http.StatusOK, envelope{"tenants": tenants})
 
 }
 
-func (app *application) showTenantsHandler(w http.ResponseWriter, r *http.Request) {
-	uuid, err := app.readIDParam(r)
-	if err != nil {
-		app.notFoundResponse(w, r)
-		return
-	}
-
+func (app *application) showTenantsHandler(c echo.Context) error {
+	uuid := c.Param("uuid")
 	tenant, err := app.models.Tenants.Get(uuid)
 
 	if err != nil {
 		switch {
 		case errors.Is(err, data.ErrRecordNotFound):
-			app.notFoundResponse(w, r)
+			return c.JSON(http.StatusNotFound, envelope{"error": "tenant not found"})
 
 		default:
-			app.serverErrorResponse(w, r, err)
+			// log error above
+			return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 		}
-		return
 	}
 
-	err = app.writeJSON(w, http.StatusOK, envelope{"tenant": tenant}, nil)
-
-	if err != nil {
-		app.serverErrorResponse(w, r, err)
-	}
+	return c.JSON(http.StatusOK, envelope{"tenant": tenant})
 }
 
-func (app *application) createTenantHandler(w http.ResponseWriter, r *http.Request) {
+func (app *application) createTenantHandler(c echo.Context) error {
 	var input struct {
 		FirstName      string    `json:"first_name"`
 		LastName       string    `json:"last_name"`
@@ -65,23 +53,17 @@ func (app *application) createTenantHandler(w http.ResponseWriter, r *http.Reque
 		Eos            time.Time `json:"eos"`
 	}
 
-	err := app.readJSON(w, r, &input)
-
-	if err != nil {
-		app.badRequestResponse(w, r, err)
-		return
+	if err := c.Bind(&input); err != nil {
+		return err
 	}
 
 	house, err := app.models.Houses.Get(input.HouseId)
 
 	if err != nil {
-		app.serverErrorResponse(w, r, err)
-		return
+		return c.JSON(http.StatusNotFound, envelope{"error": "house not found"})
 	}
-
 	if house.Occupied {
-		app.badRequestResponse(w, r, errors.New("the house is arleady occupied"))
-		return
+		return c.JSON(http.StatusConflict, envelope{"error": "house is already occupied"})
 	}
 
 	tenant := &data.Tenant{
@@ -100,47 +82,40 @@ func (app *application) createTenantHandler(w http.ResponseWriter, r *http.Reque
 
 	if err != nil {
 		if err == data.ErrDuplicatePhoneNumber {
-			app.badRequestResponse(w, r, err)
-			return
+			return c.JSON(http.StatusConflict, envelope{"error": "duplicate phone number"})
 		}
 
-		app.serverErrorResponse(w, r, err)
-		return
+		// log error above
+		return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 	}
 
 	err = app.models.Houses.Update(tenant.HouseId, true)
 
 	if err != nil {
-		app.serverErrorResponse(w, r, err)
-		return
+		// log error above
+		return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
+
 	}
 
-	err = app.writeJSON(w, http.StatusOK, envelope{"tenant": tenant}, nil)
-
-	if err != nil {
-		app.serverErrorResponse(w, r, err)
-	}
+	return c.JSON(http.StatusCreated, envelope{"tenant": tenant})
 
 }
 
-func (app *application) updateTenantsHandler(w http.ResponseWriter, r *http.Request) {
-	uuid, err := app.readIDParam(r)
-	if err != nil {
-		app.notFoundResponse(w, r)
-		return
-	}
+func (app *application) updateTenantsHandler(c echo.Context) error {
+
+	uuid := c.Param("uuid")
 
 	tenant, err := app.models.Tenants.Get(uuid)
 
 	if err != nil {
 		switch {
 		case errors.Is(err, data.ErrRecordNotFound):
-			app.notFoundResponse(w, r)
+			return c.JSON(http.StatusNotFound, envelope{"error": "tenant not found"})
 
 		default:
-			app.serverErrorResponse(w, r, err)
+			// log error above
+			return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 		}
-		return
 	}
 
 	var input struct {
@@ -155,11 +130,8 @@ func (app *application) updateTenantsHandler(w http.ResponseWriter, r *http.Requ
 		Eos            *time.Time `json:"eos"`
 	}
 
-	err = app.readJSON(w, r, &input)
-
-	if err != nil {
-		app.badRequestResponse(w, r, err)
-		return
+	if err := c.Bind(&input); err != nil {
+		return err
 	}
 
 	if input.FirstName != nil {
@@ -202,35 +174,30 @@ func (app *application) updateTenantsHandler(w http.ResponseWriter, r *http.Requ
 
 	if err != nil {
 		if err == data.ErrDuplicatePhoneNumber {
-			app.badRequestResponse(w, r, err)
-			return
+			return c.JSON(http.StatusConflict, envelope{"error": "duplicate phone number"})
 		}
 
-		app.serverErrorResponse(w, r, err)
-		return
+		// log error above
+		return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 	}
 
-	err = app.writeJSON(w, http.StatusOK, envelope{"tenant": tenant}, nil)
-
-	if err != nil {
-		app.serverErrorResponse(w, r, err)
-	}
+	return c.JSON(http.StatusOK, envelope{"tenant": tenant})
 
 }
 
-func (app *application) removeTenant(w http.ResponseWriter, r *http.Request) {
-	uuid, err := app.readIDParam(r)
-
-	if err != nil {
-		app.notFoundResponse(w, r)
-		return
-	}
+func (app *application) removeTenant(c echo.Context) error {
+	uuid := c.Param("uuid")
 
 	tenant, err := app.models.Tenants.Get(uuid)
 
 	if err != nil {
-		app.notFoundResponse(w, r)
-		return
+		switch {
+		case errors.Is(err, data.ErrRecordNotFound):
+			return c.JSON(http.StatusNotFound, envelope{"error": "tenant not found"})
+		default:
+			// log error above
+			return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
+		}
 	}
 
 	tenant.Active = false
@@ -238,14 +205,17 @@ func (app *application) removeTenant(w http.ResponseWriter, r *http.Request) {
 	err = app.models.Tenants.Update(tenant)
 
 	if err != nil {
-		app.serverErrorResponse(w, r, err)
-		return
+		// log error above
+		return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 	}
 
 	err = app.models.Houses.Update(tenant.HouseId, false)
 
 	if err != nil {
-		app.serverErrorResponse(w, r, err)
+		// log error above
+		return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 	}
+
+	return c.JSON(http.StatusOK, envelope{"tenant": tenant})
 
 }

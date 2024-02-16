@@ -6,53 +6,39 @@ import (
 	"time"
 
 	"github.com/Hopertz/rmgmt/internal/data"
+	"github.com/labstack/echo/v4"
 )
 
-func (app *application) listPaymentsHandler(w http.ResponseWriter, r *http.Request) {
+func (app *application) listPaymentsHandler(c echo.Context) error {
 	payments, err := app.models.Payments.GetAll()
 
 	if err != nil {
-		app.serverErrorResponse(w, r, err)
-		return
+		// log error above
+		return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 	}
 
-	err = app.writeJSON(w, http.StatusOK, envelope{"payments": payments}, nil)
-
-	if err != nil {
-		app.serverErrorResponse(w, r, err)
-		return
-	}
-
+	return c.JSON(http.StatusOK, envelope{"payments": payments})
 }
 
-func (app *application) showPaymentHandler(w http.ResponseWriter, r *http.Request) {
-	uuid, err := app.readIDParam(r)
-	if err != nil {
-		app.notFoundResponse(w, r)
-		return
-	}
-
+func (app *application) showPaymentHandler(c echo.Context) error {
+	uuid := c.Param("uuid")
 	payment, err := app.models.Payments.Get(uuid)
 
 	if err != nil {
 		switch {
 		case errors.Is(err, data.ErrRecordNotFound):
-			app.notFoundResponse(w, r)
+			return c.JSON(http.StatusNotFound, envelope{"error": "payment not found"})
 
 		default:
-			app.serverErrorResponse(w, r, err)
+			// log error above
+			return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 		}
-		return
 	}
 
-	err = app.writeJSON(w, http.StatusOK, envelope{"payment": payment}, nil)
-
-	if err != nil {
-		app.serverErrorResponse(w, r, err)
-	}
+	return c.JSON(http.StatusOK, envelope{"payment": payment})
 }
 
-func (app *application) createPaymentHandler(w http.ResponseWriter, r *http.Request) {
+func (app *application) createPaymentHandler(c echo.Context) error {
 	var input struct {
 		TenantId  string    `json:"tenant_id"`
 		Period    int       `json:"period"`
@@ -61,19 +47,15 @@ func (app *application) createPaymentHandler(w http.ResponseWriter, r *http.Requ
 		Renewed   bool      `json:"renewed"`
 	}
 
-	err := app.readJSON(w, r, &input)
-
-	if err != nil {
-		app.badRequestResponse(w, r, err)
-		return
+	if err := c.Bind(&input); err != nil {
+		return err
 	}
 
 	tenant, err := app.models.Tenants.Get(input.TenantId)
 
 	if err != nil {
 		if err == data.ErrRecordNotFound {
-			app.badRequestResponse(w, r, errors.New("tenant cannot be found"))
-			return
+			return c.JSON(http.StatusNotFound, envelope{"error": "tenant not found"})
 		}
 
 	}
@@ -95,18 +77,16 @@ func (app *application) createPaymentHandler(w http.ResponseWriter, r *http.Requ
 
 	if err != nil {
 
-		app.badRequestResponse(w, r, errors.New("cannot update end of stay for tenant"))
-
-		return
-
+		// log error above
+		return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 	}
 
 	payment, err := app.models.Payments.GetUnrenewed(input.TenantId)
 
 	if err != nil {
 		if err != data.ErrRecordNotFound {
-			app.serverErrorResponse(w, r, err)
-			return
+			// log error above
+			return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 		}
 
 	}
@@ -115,8 +95,8 @@ func (app *application) createPaymentHandler(w http.ResponseWriter, r *http.Requ
 		payment.Renewed = true
 		err = app.models.Payments.Update(*payment)
 		if err != nil {
-			app.serverErrorResponse(w, r, err)
-			return
+			// log error above
+			return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 		}
 	}
 
@@ -132,36 +112,29 @@ func (app *application) createPaymentHandler(w http.ResponseWriter, r *http.Requ
 	err = app.models.Payments.Insert(payment)
 
 	if err != nil {
-		app.serverErrorResponse(w, r, err)
-		return
+		// log error above
+		return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 	}
 
-	err = app.writeJSON(w, http.StatusOK, envelope{"payment": payment}, nil)
-
-	if err != nil {
-		app.serverErrorResponse(w, r, err)
-	}
+	return c.JSON(http.StatusOK, envelope{"payment": payment})
 
 }
 
-func (app *application) updatPaymentHandler(w http.ResponseWriter, r *http.Request) {
-	uuid, err := app.readIDParam(r)
-	if err != nil {
-		app.notFoundResponse(w, r)
-		return
-	}
+func (app *application) updatPaymentHandler(c echo.Context) error {
+	uuid := c.Param("uuid")
 
 	payment, err := app.models.Payments.Get(uuid)
 
 	if err != nil {
 		switch {
 		case errors.Is(err, data.ErrRecordNotFound):
-			app.notFoundResponse(w, r)
+			return c.JSON(http.StatusNotFound, envelope{"error": "payment not found"})
 
 		default:
-			app.serverErrorResponse(w, r, err)
+			// log error above
+			return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 		}
-		return
+
 	}
 
 	var input struct {
@@ -172,11 +145,8 @@ func (app *application) updatPaymentHandler(w http.ResponseWriter, r *http.Reque
 		Renewed   *bool      `json:"renewed"`
 	}
 
-	err = app.readJSON(w, r, &input)
-
-	if err != nil {
-		app.badRequestResponse(w, r, err)
-		return
+	if err := c.Bind(&input); err != nil {
+		return err
 	}
 
 	if input.TenantId != nil {
@@ -202,14 +172,10 @@ func (app *application) updatPaymentHandler(w http.ResponseWriter, r *http.Reque
 	err = app.models.Payments.Update(*payment)
 
 	if err != nil {
-		app.serverErrorResponse(w, r, err)
-		return
+		// log error above
+		return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 	}
 
-	err = app.writeJSON(w, http.StatusOK, envelope{"payment": payment}, nil)
-
-	if err != nil {
-		app.serverErrorResponse(w, r, err)
-	}
+	return c.JSON(http.StatusOK, envelope{"payment": payment})
 
 }
