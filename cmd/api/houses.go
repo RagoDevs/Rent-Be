@@ -12,10 +12,10 @@ func (app *application) listHousesHandler(c echo.Context) error {
 	houses, err := app.models.Houses.GetAll()
 
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
+		return c.JSON(http.StatusInternalServerError, map[string]interface{}{"error": "internal server error"})
 	}
 
-	return c.JSON(http.StatusOK, envelope{"houses": houses})
+	return c.JSON(http.StatusOK, map[string]interface{}{"houses": houses})
 
 }
 
@@ -26,14 +26,14 @@ func (app *application) showHousesHandler(c echo.Context) error {
 	if err != nil {
 		switch {
 		case errors.Is(err, data.ErrRecordNotFound):
-			return c.JSON(http.StatusNotFound, envelope{"error": "house not found"})
+			return c.JSON(http.StatusNotFound, map[string]interface{}{"error": "house not found"})
 		default:
-			return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
+			return c.JSON(http.StatusInternalServerError, map[string]interface{}{"error": "internal server error"})
 		}
 
 	}
 
-	return c.JSON(http.StatusOK, envelope{"house": house})
+	return c.JSON(http.StatusOK, map[string]interface{}{"house": house})
 }
 
 func (app *application) createHouseHandler(c echo.Context) error {
@@ -58,10 +58,10 @@ func (app *application) createHouseHandler(c echo.Context) error {
 	err := app.models.Houses.Insert(house)
 
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
+		return c.JSON(http.StatusInternalServerError, map[string]interface{}{"error": "internal server error"})
 	}
 
-	return c.JSON(http.StatusCreated, envelope{"house": house})
+	return c.JSON(http.StatusCreated, map[string]interface{}{"house": house})
 }
 
 func (app *application) updateHouseHandler(c echo.Context) error {
@@ -71,10 +71,10 @@ func (app *application) updateHouseHandler(c echo.Context) error {
 	if err != nil {
 		switch {
 		case errors.Is(err, data.ErrRecordNotFound):
-			return c.JSON(http.StatusNotFound, envelope{"error": "house not found"})
+			return c.JSON(http.StatusNotFound, map[string]interface{}{"error": "house not found"})
 
 		default:
-			return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
+			return c.JSON(http.StatusInternalServerError, map[string]interface{}{"error": "internal server error"})
 		}
 
 	}
@@ -92,10 +92,10 @@ func (app *application) updateHouseHandler(c echo.Context) error {
 	err = app.models.Houses.Update(house.HouseId, house.Occupied)
 
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
+		return c.JSON(http.StatusInternalServerError, map[string]interface{}{"error": "internal server error"})
 	}
 
-	return c.JSON(http.StatusOK, envelope{"house": house})
+	return c.JSON(http.StatusOK, map[string]interface{}{"house": house})
 }
 
 func (app *application) bulkHousesHandler(c echo.Context) error {
@@ -103,16 +103,16 @@ func (app *application) bulkHousesHandler(c echo.Context) error {
 	var houses []data.House
 	
 	if err := c.Bind(&houses); err != nil {
-		return c.JSON(http.StatusUnprocessableEntity, envelope{"error": "invalid request payload"})
+		return c.JSON(http.StatusUnprocessableEntity, map[string]interface{}{"error": "invalid request payload"})
 	}
 
 	err := app.models.Houses.BulkInsert(houses)
 
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
+		return c.JSON(http.StatusInternalServerError, map[string]interface{}{"error": "internal server error"})
 	}
 
-	return c.JSON(http.StatusCreated, envelope{"houses": houses})
+	return c.JSON(http.StatusCreated, map[string]interface{}{"houses": houses})
 
 }
 
@@ -185,7 +185,7 @@ func (app *application) bulkHousesHandler(c echo.Context) error {
 // 		}
 // 	}
 
-// 	err = app.writeJSON(w,http.StatusOK,envelope{"houses": dbHouses}, nil)
+// 	err = app.writeJSON(w,http.StatusOK,map[string]interface{}{"houses": dbHouses}, nil)
 
 // 	if err != nil {
 // 		app.serverErrorResponse(w,r,err)

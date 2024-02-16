@@ -14,10 +14,10 @@ func (app *application) listPaymentsHandler(c echo.Context) error {
 
 	if err != nil {
 		// log error above
-		return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
+		return c.JSON(http.StatusInternalServerError, map[string]interface{}{"error": "internal server error"})
 	}
 
-	return c.JSON(http.StatusOK, envelope{"payments": payments})
+	return c.JSON(http.StatusOK, map[string]interface{}{"payments": payments})
 }
 
 func (app *application) showPaymentHandler(c echo.Context) error {
@@ -27,15 +27,15 @@ func (app *application) showPaymentHandler(c echo.Context) error {
 	if err != nil {
 		switch {
 		case errors.Is(err, data.ErrRecordNotFound):
-			return c.JSON(http.StatusNotFound, envelope{"error": "payment not found"})
+			return c.JSON(http.StatusNotFound, map[string]interface{}{"error": "payment not found"})
 
 		default:
 			// log error above
-			return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
+			return c.JSON(http.StatusInternalServerError, map[string]interface{}{"error": "internal server error"})
 		}
 	}
 
-	return c.JSON(http.StatusOK, envelope{"payment": payment})
+	return c.JSON(http.StatusOK, map[string]interface{}{"payment": payment})
 }
 
 func (app *application) createPaymentHandler(c echo.Context) error {
@@ -55,7 +55,7 @@ func (app *application) createPaymentHandler(c echo.Context) error {
 
 	if err != nil {
 		if err == data.ErrRecordNotFound {
-			return c.JSON(http.StatusNotFound, envelope{"error": "tenant not found"})
+			return c.JSON(http.StatusNotFound, map[string]interface{}{"error": "tenant not found"})
 		}
 
 	}
@@ -78,7 +78,7 @@ func (app *application) createPaymentHandler(c echo.Context) error {
 	if err != nil {
 
 		// log error above
-		return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
+		return c.JSON(http.StatusInternalServerError, map[string]interface{}{"error": "internal server error"})
 	}
 
 	payment, err := app.models.Payments.GetUnrenewed(input.TenantId)
@@ -86,7 +86,7 @@ func (app *application) createPaymentHandler(c echo.Context) error {
 	if err != nil {
 		if err != data.ErrRecordNotFound {
 			// log error above
-			return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
+			return c.JSON(http.StatusInternalServerError, map[string]interface{}{"error": "internal server error"})
 		}
 
 	}
@@ -96,7 +96,7 @@ func (app *application) createPaymentHandler(c echo.Context) error {
 		err = app.models.Payments.Update(*payment)
 		if err != nil {
 			// log error above
-			return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
+			return c.JSON(http.StatusInternalServerError, map[string]interface{}{"error": "internal server error"})
 		}
 	}
 
@@ -113,10 +113,10 @@ func (app *application) createPaymentHandler(c echo.Context) error {
 
 	if err != nil {
 		// log error above
-		return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
+		return c.JSON(http.StatusInternalServerError, map[string]interface{}{"error": "internal server error"})
 	}
 
-	return c.JSON(http.StatusOK, envelope{"payment": payment})
+	return c.JSON(http.StatusOK, map[string]interface{}{"payment": payment})
 
 }
 
@@ -128,11 +128,11 @@ func (app *application) updatPaymentHandler(c echo.Context) error {
 	if err != nil {
 		switch {
 		case errors.Is(err, data.ErrRecordNotFound):
-			return c.JSON(http.StatusNotFound, envelope{"error": "payment not found"})
+			return c.JSON(http.StatusNotFound, map[string]interface{}{"error": "payment not found"})
 
 		default:
 			// log error above
-			return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
+			return c.JSON(http.StatusInternalServerError, map[string]interface{}{"error": "internal server error"})
 		}
 
 	}
@@ -173,9 +173,9 @@ func (app *application) updatPaymentHandler(c echo.Context) error {
 
 	if err != nil {
 		// log error above
-		return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "internal server error"})
 	}
 
-	return c.JSON(http.StatusOK, envelope{"payment": payment})
+	return c.JSON(http.StatusOK, map[string]interface{}{"payment": payment})
 
 }

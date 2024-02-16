@@ -34,7 +34,7 @@ func (app *application) registerUserHandler(c echo.Context) error {
 	v := validator.New()
 
 	if data.ValidateUser(v, admin); !v.Valid() {
-		return c.JSON(http.StatusUnprocessableEntity, envelope{"errors": v.Errors})
+		return c.JSON(http.StatusUnprocessableEntity, map[string]interface{}{"errors": v.Errors})
 	}
 
 	err = app.models.Admins.Insert(admin)
@@ -43,10 +43,10 @@ func (app *application) registerUserHandler(c echo.Context) error {
 
 		case errors.Is(err, data.ErrDuplicateEmail):
 			v.AddError("email", "an admin with this email address already exists")
-			return c.JSON(http.StatusUnprocessableEntity, envelope{"errors": v.Errors})
+			return c.JSON(http.StatusUnprocessableEntity, map[string]interface{}{"errors": v.Errors})
 
 		default:
-			return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
+			return c.JSON(http.StatusInternalServerError, map[string]interface{}{"error": "internal server error"})
 		}
 		
 	}
@@ -54,7 +54,7 @@ func (app *application) registerUserHandler(c echo.Context) error {
 	token, err := app.models.Tokens.New(admin.AdminID, 3*24*time.Hour, data.ScopeActivation)
 	if err != nil {
 		//logerror above
-		return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
+		return c.JSON(http.StatusInternalServerError, map[string]interface{}{"error": "internal server error"})
 	}
 
 	app.background(func() {
@@ -69,7 +69,7 @@ func (app *application) registerUserHandler(c echo.Context) error {
 		}
 	})
 
-	return c.JSON(http.StatusCreated, envelope{"message": "admin created successfully"})
+	return c.JSON(http.StatusCreated, map[string]interface{}{"message": "admin created successfully"})
 }
 
 func (app *application) activateUserHandler(c echo.Context) error {
@@ -84,7 +84,7 @@ func (app *application) activateUserHandler(c echo.Context) error {
 
 	v := validator.New()
 	if data.ValidateTokenPlaintext(v, input.TokenPlaintext); !v.Valid() {
-		return c.JSON(http.StatusUnprocessableEntity, envelope{"errors": v.Errors})
+		return c.JSON(http.StatusUnprocessableEntity, map[string]interface{}{"errors": v.Errors})
 	}
 
 	admin, err := app.models.Admins.GetForToken(data.ScopeActivation, input.TokenPlaintext)
@@ -92,10 +92,10 @@ func (app *application) activateUserHandler(c echo.Context) error {
 		switch {
 		case errors.Is(err, data.ErrRecordNotFound):
 			v.AddError("token", "invalid or expired activation token")
-			return c.JSON(http.StatusUnprocessableEntity, envelope{"errors": v.Errors})
+			return c.JSON(http.StatusUnprocessableEntity, map[string]interface{}{"errors": v.Errors})
 		default:
 			//log error above
-			return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
+			return c.JSON(http.StatusInternalServerError, map[string]interface{}{"error": "internal server error"})
 		}
 		
 	}
@@ -106,10 +106,10 @@ func (app *application) activateUserHandler(c echo.Context) error {
 	if err != nil {
 		switch {
 		case errors.Is(err, data.ErrEditConflict):
-			return c.JSON(http.StatusConflict, envelope{"error": "unable to complete request due to an edit conflict"})
+			return c.JSON(http.StatusConflict, map[string]interface{}{"error": "unable to complete request due to an edit conflict"})
 		default:
 			//log error above
-			return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
+			return c.JSON(http.StatusInternalServerError, map[string]interface{}{"error": "internal server error"})
 		}
 		
 	}
@@ -117,10 +117,10 @@ func (app *application) activateUserHandler(c echo.Context) error {
 	err = app.models.Tokens.DeleteAllForAdmin(data.ScopeActivation, admin.AdminID)
 	if err != nil {
 		//log error above
-		return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
+		return c.JSON(http.StatusInternalServerError, map[string]interface{}{"error": "internal server error"})
 	}
 
-	return c.JSON(http.StatusOK, envelope{"message": "Your account has been activated successfully"})
+	return c.JSON(http.StatusOK, map[string]interface{}{"message": "Your account has been activated successfully"})
 }
 
 // Verify the password reset token and set a new password for the admin.
@@ -139,7 +139,7 @@ func (app *application) updateUserPasswordHandler(c echo.Context) error {
 	data.ValidatePasswordPlaintext(v, input.Password)
 	data.ValidateTokenPlaintext(v, input.TokenPlaintext)
 	if !v.Valid() {
-		return c.JSON(http.StatusUnprocessableEntity, envelope{"errors": v.Errors})
+		return c.JSON(http.StatusUnprocessableEntity, map[string]interface{}{"errors": v.Errors})
 	}
 	// Retrieve the details of the admin associated with the password reset token,
 	// returning an error message if no matching record was found.
@@ -149,17 +149,17 @@ func (app *application) updateUserPasswordHandler(c echo.Context) error {
 		switch {
 		case errors.Is(err, data.ErrRecordNotFound):
 			v.AddError("token", "Invalid or expired password reset token")
-			return c.JSON(http.StatusUnprocessableEntity, envelope{"errors": v.Errors})
+			return c.JSON(http.StatusUnprocessableEntity, map[string]interface{}{"errors": v.Errors})
 		default:
 			//log error above
-			return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
+			return c.JSON(http.StatusInternalServerError, map[string]interface{}{"error": "internal server error"})
 		}
 	}
 	// Set the new password for the admin.
 	err = admin.Password.Set(input.Password)
 	if err != nil {
 		//log error above
-		return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
+		return c.JSON(http.StatusInternalServerError, map[string]interface{}{"error": "internal server error"})
 	}
 	// Save the updated user record in our database, checking for any edit conflicts as
 	// normal.
@@ -167,18 +167,18 @@ func (app *application) updateUserPasswordHandler(c echo.Context) error {
 	if err != nil {
 		switch {
 		case errors.Is(err, data.ErrEditConflict):
-			return c.JSON(http.StatusConflict, envelope{"error": "unable to complete request due to an edit conflict"})
+			return c.JSON(http.StatusConflict, map[string]interface{}{"error": "unable to complete request due to an edit conflict"})
 		default:
 			//log error above
-			return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
+			return c.JSON(http.StatusInternalServerError, map[string]interface{}{"error": "internal server error"})
 		}
 	}
 	// If everything was successful, then delete all password reset tokens for the admin.
 	err = app.models.Tokens.DeleteAllForAdmin(data.ScopePasswordReset, admin.AdminID)
 	if err != nil {
 		//log error above
-		return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
+		return c.JSON(http.StatusInternalServerError, map[string]interface{}{"error": "internal server error"})
 	}
 
-	return c.JSON(http.StatusOK, envelope{"message": "Your password has been updated successfully"})
+	return c.JSON(http.StatusOK, map[string]interface{}{"message": "Your password has been updated successfully"})
 }

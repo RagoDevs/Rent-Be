@@ -15,10 +15,10 @@ func (app *application) listTenantsHandler(c echo.Context) error {
 
 	if err != nil {
 		// log error above
-		return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
+		return c.JSON(http.StatusInternalServerError, map[string]interface{}{"error": "internal server error"})
 	}
 
-	return c.JSON(http.StatusOK, envelope{"tenants": tenants})
+	return c.JSON(http.StatusOK, map[string]interface{}{"tenants": tenants})
 
 }
 
@@ -29,15 +29,15 @@ func (app *application) showTenantsHandler(c echo.Context) error {
 	if err != nil {
 		switch {
 		case errors.Is(err, data.ErrRecordNotFound):
-			return c.JSON(http.StatusNotFound, envelope{"error": "tenant not found"})
+			return c.JSON(http.StatusNotFound, map[string]interface{}{"error": "tenant not found"})
 
 		default:
 			// log error above
-			return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
+			return c.JSON(http.StatusInternalServerError, map[string]interface{}{"error": "internal server error"})
 		}
 	}
 
-	return c.JSON(http.StatusOK, envelope{"tenant": tenant})
+	return c.JSON(http.StatusOK, map[string]interface{}{"tenant": tenant})
 }
 
 func (app *application) createTenantHandler(c echo.Context) error {
@@ -60,10 +60,10 @@ func (app *application) createTenantHandler(c echo.Context) error {
 	house, err := app.models.Houses.Get(input.HouseId)
 
 	if err != nil {
-		return c.JSON(http.StatusNotFound, envelope{"error": "house not found"})
+		return c.JSON(http.StatusNotFound, map[string]interface{}{"error": "house not found"})
 	}
 	if house.Occupied {
-		return c.JSON(http.StatusConflict, envelope{"error": "house is already occupied"})
+		return c.JSON(http.StatusConflict, map[string]interface{}{"error": "house is already occupied"})
 	}
 
 	tenant := &data.Tenant{
@@ -82,22 +82,22 @@ func (app *application) createTenantHandler(c echo.Context) error {
 
 	if err != nil {
 		if err == data.ErrDuplicatePhoneNumber {
-			return c.JSON(http.StatusConflict, envelope{"error": "duplicate phone number"})
+			return c.JSON(http.StatusConflict, map[string]interface{}{"error": "duplicate phone number"})
 		}
 
 		// log error above
-		return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
+		return c.JSON(http.StatusInternalServerError, map[string]interface{}{"error": "internal server error"})
 	}
 
 	err = app.models.Houses.Update(tenant.HouseId, true)
 
 	if err != nil {
 		// log error above
-		return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
+		return c.JSON(http.StatusInternalServerError, map[string]interface{}{"error": "internal server error"})
 
 	}
 
-	return c.JSON(http.StatusCreated, envelope{"tenant": tenant})
+	return c.JSON(http.StatusCreated, map[string]interface{}{"tenant": tenant})
 
 }
 
@@ -110,11 +110,11 @@ func (app *application) updateTenantsHandler(c echo.Context) error {
 	if err != nil {
 		switch {
 		case errors.Is(err, data.ErrRecordNotFound):
-			return c.JSON(http.StatusNotFound, envelope{"error": "tenant not found"})
+			return c.JSON(http.StatusNotFound, map[string]interface{}{"error": "tenant not found"})
 
 		default:
 			// log error above
-			return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
+			return c.JSON(http.StatusInternalServerError, map[string]interface{}{"error": "internal server error"})
 		}
 	}
 
@@ -174,14 +174,14 @@ func (app *application) updateTenantsHandler(c echo.Context) error {
 
 	if err != nil {
 		if err == data.ErrDuplicatePhoneNumber {
-			return c.JSON(http.StatusConflict, envelope{"error": "duplicate phone number"})
+			return c.JSON(http.StatusConflict, map[string]interface{}{"error": "duplicate phone number"})
 		}
 
 		// log error above
-		return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
+		return c.JSON(http.StatusInternalServerError, map[string]interface{}{"error": "internal server error"})
 	}
 
-	return c.JSON(http.StatusOK, envelope{"tenant": tenant})
+	return c.JSON(http.StatusOK, map[string]interface{}{"tenant": tenant})
 
 }
 
@@ -193,10 +193,10 @@ func (app *application) removeTenant(c echo.Context) error {
 	if err != nil {
 		switch {
 		case errors.Is(err, data.ErrRecordNotFound):
-			return c.JSON(http.StatusNotFound, envelope{"error": "tenant not found"})
+			return c.JSON(http.StatusNotFound, map[string]interface{}{"error": "tenant not found"})
 		default:
 			// log error above
-			return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
+			return c.JSON(http.StatusInternalServerError, map[string]interface{}{"error": "internal server error"})
 		}
 	}
 
@@ -206,16 +206,16 @@ func (app *application) removeTenant(c echo.Context) error {
 
 	if err != nil {
 		// log error above
-		return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
+		return c.JSON(http.StatusInternalServerError, map[string]interface{}{"error": "internal server error"})
 	}
 
 	err = app.models.Houses.Update(tenant.HouseId, false)
 
 	if err != nil {
 		// log error above
-		return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
+		return c.JSON(http.StatusInternalServerError, map[string]interface{}{"error": "internal server error"})
 	}
 
-	return c.JSON(http.StatusOK, envelope{"tenant": tenant})
+	return c.JSON(http.StatusOK, map[string]interface{}{"tenant": tenant})
 
 }
