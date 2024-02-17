@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/Hopertz/rmgmt/internal/data"
+	"github.com/Hopertz/rmgmt/db/data"
 	"github.com/labstack/echo/v4"
 )
 

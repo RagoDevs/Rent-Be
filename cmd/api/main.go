@@ -10,9 +10,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Hopertz/rmgmt/internal/data"
-	"github.com/Hopertz/rmgmt/internal/jsonlog"
-	"github.com/Hopertz/rmgmt/internal/mailer"
+	"github.com/Hopertz/rmgmt/db/data"
+	"github.com/Hopertz/rmgmt/pkg/jsonlog"
+	"github.com/Hopertz/rmgmt/pkg/mailer"
 	_ "github.com/lib/pq"
 )
 

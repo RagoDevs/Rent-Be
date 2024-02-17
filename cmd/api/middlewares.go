@@ -4,8 +4,8 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/Hopertz/rmgmt/internal/data"
-	"github.com/Hopertz/rmgmt/internal/validator"
+	"github.com/Hopertz/rmgmt/db/data"
+	"github.com/Hopertz/rmgmt/pkg/validator"
 	"github.com/labstack/echo/v4"
 )
 
@@ -43,7 +43,7 @@ func (app *application) authenticate(next echo.HandlerFunc) echo.HandlerFunc {
 			case errors.Is(err, data.ErrRecordNotFound):
 				return c.JSON(401, "invalid or missing authentication token")
 			default:
-				return c.JSON(500, "internal server error")
+				return c.JSON(500, "pkg server error")
 			}
 		}
 
