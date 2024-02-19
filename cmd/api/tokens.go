@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/Hopertz/rmgmt/db/data"
+	db "github.com/Hopertz/rmgmt/db/sqlc"
 	"github.com/Hopertz/rmgmt/pkg/validator"
 	"github.com/labstack/echo/v4"
 )
@@ -23,20 +23,19 @@ func (app *application) createAuthenticationTokenHandler(c echo.Context) error {
 
 	v := validator.New()
 
-	data.ValidateEmail(v, input.Email)
+	db.ValidateEmail(v, input.Email)
 
-	data.ValidatePasswordPlaintext(v, input.Password)
+	db.ValidatePasswordPlaintext(v, input.Password)
+
 	if !v.Valid() {
 		return c.JSON(http.StatusUnprocessableEntity, map[string]interface{}{"errors": v.Errors})
 	}
 
-	var admin *data.Admin
-
-	admin, err := app.models.Admins.GetByEmail(input.Email)
+	admin, err := app.store.GetAdminByEmail(c.Request().Context(), input.Email)
 
 	if err != nil {
 		switch {
-		case errors.Is(err, data.ErrRecordNotFound):
+		case errors.Is(err, db.ErrRecordNotFound):
 			return c.JSON(http.StatusUnauthorized, map[string]interface{}{"error": "invalid email address or password"})
 		default:
 			//log error above
@@ -44,7 +43,13 @@ func (app *application) createAuthenticationTokenHandler(c echo.Context) error {
 		}
 	}
 
-	match, err := admin.Password.Matches(input.Password)
+	pwd := db.Password{
+		Hash:      admin.PasswordHash,
+		Plaintext: input.Password,
+	}
+
+	match, err := db.PasswordMatches(pwd)
+
 	if err != nil {
 		//log error above
 		return c.JSON(http.StatusInternalServerError, map[string]interface{}{"error": "internal server error"})
@@ -55,7 +60,7 @@ func (app *application) createAuthenticationTokenHandler(c echo.Context) error {
 		return c.JSON(http.StatusUnauthorized, map[string]interface{}{"error": "invalid email address or password"})
 	}
 
-	token, err := app.models.Tokens.New(admin.AdminID, 3*24*time.Hour, data.ScopeAuthentication)
+	token, err := app.store.NewToken(admin.AdminID, 3*24*time.Hour, db.ScopeAuthentication)
 	if err != nil {
 		//log error above
 		return c.JSON(http.StatusInternalServerError, map[string]interface{}{"error": "internal server error"})
@@ -76,15 +81,17 @@ func (app *application) createPasswordResetTokenHandler(c echo.Context) error {
 	}
 
 	v := validator.New()
-	if data.ValidateEmail(v, input.Email); !v.Valid() {
+	if db.ValidateEmail(v, input.Email); !v.Valid() {
 		return c.JSON(http.StatusUnprocessableEntity, map[string]interface{}{"errors": v.Errors})
 	}
 	// Try to retrieve the corresponding user record for the email address. If it can't
 	// be found, return an error message to the client.
-	admin, err := app.models.Admins.GetByEmail(input.Email)
+
+	admin, err := app.store.GetAdminByEmail(c.Request().Context(), input.Email)
+
 	if err != nil {
 		switch {
-		case errors.Is(err, data.ErrRecordNotFound):
+		case errors.Is(err, db.ErrRecordNotFound):
 			v.AddError("email", "no matching email address found")
 			return c.JSON(http.StatusUnprocessableEntity, map[string]interface{}{"errors": v.Errors})
 		default:
@@ -92,38 +99,35 @@ func (app *application) createPasswordResetTokenHandler(c echo.Context) error {
 			return c.JSON(http.StatusInternalServerError, map[string]interface{}{"error": "internal server error"})
 		}
 	}
-	// Return an error message if the user is not activated.
+
 	if !admin.Activated {
 		v.AddError("email", "admin account must be activated")
 		return c.JSON(http.StatusUnprocessableEntity, map[string]interface{}{"errors": v.Errors})
 	}
-	// Otherwise, create a new password reset token with a 45-minute expiry time.
-	token, err := app.models.Tokens.New(admin.AdminID, 45*time.Minute, data.ScopePasswordReset)
+
+	token, err := app.store.NewToken(admin.AdminID, 45*time.Minute, db.ScopePasswordReset)
 	if err != nil {
 		//log error above
 		return c.JSON(http.StatusInternalServerError, map[string]interface{}{"error": "internal server error"})
 	}
-	// Email the user with their password reset token.
+
 	app.background(func() {
 		data := map[string]interface{}{
 			"passwordResetToken": token.Plaintext,
 		}
-		// Since email addresses MAY be case sensitive, notice that we are sending this
-		// email using the address stored in our database for the user --- not to the
-		// input.Email address provided by the client in this request.
 		err = app.mailer.Send(admin.Email, "token_password_reset.tmpl", data)
 		if err != nil {
 			app.logger.PrintError(err, nil)
 		}
 	})
-	// Send a 202 Accepted response and confirmation message to the client.
+
 	env := map[string]interface{}{"message": "an email will be sent to you containing password reset instructions"}
 
 	return c.JSON(http.StatusAccepted, env)
 }
 
 func (app *application) createActivationTokenHandler(c echo.Context) error {
-	// Parse and validate the user's email address.
+
 	var input struct {
 		Email string `json:"email"`
 	}
@@ -133,15 +137,15 @@ func (app *application) createActivationTokenHandler(c echo.Context) error {
 	}
 
 	v := validator.New()
-	if data.ValidateEmail(v, input.Email); !v.Valid() {
+	if db.ValidateEmail(v, input.Email); !v.Valid() {
 		return c.JSON(http.StatusUnprocessableEntity, map[string]interface{}{"errors": v.Errors})
 	}
-	// Try to retrieve the corresponding user record for the email address. If it can't
-	// be found, return an error message to the client.
-	admin, err := app.models.Admins.GetByEmail(input.Email)
+
+	admin, err := app.store.GetAdminByEmail(c.Request().Context(), input.Email)
+
 	if err != nil {
 		switch {
-		case errors.Is(err, data.ErrRecordNotFound):
+		case errors.Is(err, db.ErrRecordNotFound):
 			v.AddError("email", "no matching email address found")
 			return c.JSON(http.StatusUnprocessableEntity, map[string]interface{}{"errors": v.Errors})
 		default:
@@ -149,25 +153,23 @@ func (app *application) createActivationTokenHandler(c echo.Context) error {
 			return c.JSON(http.StatusInternalServerError, map[string]interface{}{"error": "internal server error"})
 		}
 	}
-	// Return an error if the user has already been activated.
+
 	if admin.Activated {
 		v.AddError("email", "admin has already been activated")
 		return c.JSON(http.StatusUnprocessableEntity, map[string]interface{}{"errors": v.Errors})
 	}
-	// Otherwise, create a new activation token.
-	token, err := app.models.Tokens.New(admin.AdminID, 3*24*time.Hour, data.ScopeActivation)
+
+	token, err := app.store.NewToken(admin.AdminID, 3*24*time.Hour, db.ScopeActivation)
 	if err != nil {
 		//log error above
 		return c.JSON(http.StatusInternalServerError, map[string]interface{}{"error": "internal server error"})
 	}
-	// Email the user with their additional activation token.
+
 	app.background(func() {
 		data := map[string]interface{}{
 			"activationToken": token.Plaintext,
 		}
-		// Since email addresses MAY be case sensitive, notice that we are sending this
-		// email using the address stored in our database for the user --- not to the
-		// input.Email address provided by the client in this request.
+
 		err = app.mailer.Send(admin.Email, "token_activation.tmpl", data)
 		if err != nil {
 			app.logger.PrintError(err, nil)

@@ -5,13 +5,14 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/Hopertz/rmgmt/db/data"
+	db "github.com/Hopertz/rmgmt/db/sqlc"
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 )
 
 func (app *application) listTenantsHandler(c echo.Context) error {
 
-	tenants, err := app.models.Tenants.GetAll()
+	tenants, err := app.store.GetTenants(c.Request().Context())
 
 	if err != nil {
 		// log error above
@@ -23,12 +24,18 @@ func (app *application) listTenantsHandler(c echo.Context) error {
 }
 
 func (app *application) showTenantsHandler(c echo.Context) error {
-	uuid := c.Param("uuid")
-	tenant, err := app.models.Tenants.Get(uuid)
+
+	uuid, err := db.ReadUUIDParam(c)
+
+	if err != nil {
+		return err
+	}
+
+	tenant, err := app.store.GetTenantById(c.Request().Context(), uuid)
 
 	if err != nil {
 		switch {
-		case errors.Is(err, data.ErrRecordNotFound):
+		case errors.Is(err, db.ErrRecordNotFound):
 			return c.JSON(http.StatusNotFound, map[string]interface{}{"error": "tenant not found"})
 
 		default:
@@ -41,11 +48,12 @@ func (app *application) showTenantsHandler(c echo.Context) error {
 }
 
 func (app *application) createTenantHandler(c echo.Context) error {
+
 	var input struct {
 		FirstName      string    `json:"first_name"`
 		LastName       string    `json:"last_name"`
 		Phone          string    `json:"phone"`
-		HouseId        string    `json:"house_id"`
+		HouseId        uuid.UUID `json:"house_id"`
 		PersonalIdType string    `json:"personal_id_type"`
 		PersonalId     string    `json:"personal_id"`
 		Active         bool      `json:"active"`
@@ -57,7 +65,7 @@ func (app *application) createTenantHandler(c echo.Context) error {
 		return err
 	}
 
-	house, err := app.models.Houses.Get(input.HouseId)
+	house, err := app.store.GetHouseById(c.Request().Context(), input.HouseId)
 
 	if err != nil {
 		return c.JSON(http.StatusNotFound, map[string]interface{}{"error": "house not found"})
@@ -66,30 +74,29 @@ func (app *application) createTenantHandler(c echo.Context) error {
 		return c.JSON(http.StatusConflict, map[string]interface{}{"error": "house is already occupied"})
 	}
 
-	tenant := &data.Tenant{
+	args := db.CreateTenantParams{
 		FirstName:      input.FirstName,
 		LastName:       input.LastName,
+		HouseID:        input.HouseId,
 		Phone:          input.Phone,
-		HouseId:        input.HouseId,
-		PersonalIdType: input.PersonalIdType,
-		PersonalId:     input.PersonalId,
+		PersonalIDType: input.PersonalIdType,
+		PersonalID:     input.PersonalId,
 		Active:         input.Active,
 		Sos:            input.Sos,
 		Eos:            input.Eos,
 	}
 
-	err = app.models.Tenants.Insert(tenant)
-
+	err = app.store.CreateTenant(c.Request().Context(), args)
 	if err != nil {
-		if err == data.ErrDuplicatePhoneNumber {
-			return c.JSON(http.StatusConflict, map[string]interface{}{"error": "duplicate phone number"})
-		}
-
 		// log error above
 		return c.JSON(http.StatusInternalServerError, map[string]interface{}{"error": "internal server error"})
 	}
 
-	err = app.models.Houses.Update(tenant.HouseId, true)
+	params := db.UpdateHouseByIdParams{
+		Occupied: true,
+		HouseID:  input.HouseId,
+	}
+	err = app.store.UpdateHouseById(c.Request().Context(), params)
 
 	if err != nil {
 		// log error above
@@ -97,19 +104,23 @@ func (app *application) createTenantHandler(c echo.Context) error {
 
 	}
 
-	return c.JSON(http.StatusCreated, map[string]interface{}{"tenant": tenant})
+	return c.JSON(http.StatusCreated, map[string]interface{}{"tenant": args})
 
 }
 
 func (app *application) updateTenantsHandler(c echo.Context) error {
 
-	uuid := c.Param("uuid")
+	id, err := db.ReadUUIDParam(c)
 
-	tenant, err := app.models.Tenants.Get(uuid)
+	if err != nil {
+		return err
+	}
+
+	tenant, err := app.store.GetTenantById(c.Request().Context(), id)
 
 	if err != nil {
 		switch {
-		case errors.Is(err, data.ErrRecordNotFound):
+		case errors.Is(err, db.ErrRecordNotFound):
 			return c.JSON(http.StatusNotFound, map[string]interface{}{"error": "tenant not found"})
 
 		default:
@@ -122,7 +133,7 @@ func (app *application) updateTenantsHandler(c echo.Context) error {
 		FirstName      *string    `json:"first_name"`
 		LastName       *string    `json:"last_name"`
 		Phone          *string    `json:"phone"`
-		HouseId        *string    `json:"house_id"`
+		HouseId        *uuid.UUID `json:"house_id"`
 		PersonalIdType *string    `json:"personal_id_type"`
 		PersonalId     *string    `json:"personal_id"`
 		Active         *bool      `json:"active"`
@@ -147,15 +158,15 @@ func (app *application) updateTenantsHandler(c echo.Context) error {
 	}
 
 	if input.HouseId != nil {
-		tenant.HouseId = *input.HouseId
+		tenant.HouseID = *input.HouseId
 	}
 
 	if input.PersonalIdType != nil {
-		tenant.PersonalIdType = *input.PersonalIdType
+		tenant.PersonalIDType = *input.PersonalIdType
 	}
 
 	if input.PersonalId != nil {
-		tenant.PersonalId = *input.PersonalId
+		tenant.PersonalID = *input.PersonalId
 	}
 
 	if input.Active != nil {
@@ -170,13 +181,22 @@ func (app *application) updateTenantsHandler(c echo.Context) error {
 		tenant.Eos = *input.Eos
 	}
 
-	err = app.models.Tenants.Update(tenant)
+	arg := db.UpdateTenantParams{
+
+		FirstName:      tenant.FirstName,
+		LastName:       tenant.LastName,
+		HouseID:        tenant.HouseID,
+		Phone:          tenant.Phone,
+		PersonalIDType: tenant.PersonalIDType,
+		PersonalID:     tenant.PersonalID,
+		Active:         tenant.Active,
+		Sos:            tenant.Sos,
+		Eos:            tenant.Eos,
+		TenantID:       tenant.TenantID,
+	}
+	err = app.store.UpdateTenant(c.Request().Context(), arg)
 
 	if err != nil {
-		if err == data.ErrDuplicatePhoneNumber {
-			return c.JSON(http.StatusConflict, map[string]interface{}{"error": "duplicate phone number"})
-		}
-
 		// log error above
 		return c.JSON(http.StatusInternalServerError, map[string]interface{}{"error": "internal server error"})
 	}
@@ -186,13 +206,18 @@ func (app *application) updateTenantsHandler(c echo.Context) error {
 }
 
 func (app *application) removeTenant(c echo.Context) error {
-	uuid := c.Param("uuid")
 
-	tenant, err := app.models.Tenants.Get(uuid)
+	uuid, err := db.ReadUUIDParam(c)
+
+	if err != nil {
+		return err
+	}
+
+	tenant, err := app.store.GetTenantById(c.Request().Context(), uuid)
 
 	if err != nil {
 		switch {
-		case errors.Is(err, data.ErrRecordNotFound):
+		case errors.Is(err, db.ErrRecordNotFound):
 			return c.JSON(http.StatusNotFound, map[string]interface{}{"error": "tenant not found"})
 		default:
 			// log error above
@@ -202,14 +227,28 @@ func (app *application) removeTenant(c echo.Context) error {
 
 	tenant.Active = false
 
-	err = app.models.Tenants.Update(tenant)
+	err = app.store.UpdateTenant(c.Request().Context(), db.UpdateTenantParams{
+		FirstName:      tenant.FirstName,
+		LastName:       tenant.LastName,
+		HouseID:        tenant.HouseID,
+		Phone:          tenant.Phone,
+		PersonalIDType: tenant.PersonalIDType,
+		PersonalID:     tenant.PersonalID,
+		Active:         tenant.Active,
+		Sos:            tenant.Sos,
+		Eos:            tenant.Eos,
+		TenantID:       tenant.TenantID,
+	})
 
 	if err != nil {
 		// log error above
 		return c.JSON(http.StatusInternalServerError, map[string]interface{}{"error": "internal server error"})
 	}
 
-	err = app.models.Houses.Update(tenant.HouseId, false)
+	err = app.store.UpdateHouseById(c.Request().Context(), db.UpdateHouseByIdParams{
+		Occupied: false,
+		HouseID:  tenant.HouseID,
+	})
 
 	if err != nil {
 		// log error above

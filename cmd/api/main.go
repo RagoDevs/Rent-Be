@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Hopertz/rmgmt/db/data"
+	db "github.com/Hopertz/rmgmt/db/sqlc"
 	"github.com/Hopertz/rmgmt/pkg/jsonlog"
 	"github.com/Hopertz/rmgmt/pkg/mailer"
 	_ "github.com/lib/pq"
@@ -44,9 +44,9 @@ type config struct {
 type application struct {
 	config config
 	logger *jsonlog.Logger
-	models data.Models
 	mailer mailer.Mailer
 	wg     sync.WaitGroup
+	store  db.Store
 }
 
 func main() {
@@ -72,12 +72,12 @@ func main() {
 
 	logger := jsonlog.New(os.Stdout, jsonlog.LevelInfo)
 
-	db, err := openDB(cfg)
+	dbConn, err := openDB(cfg)
 	if err != nil {
 		logger.PrintFatal(err, nil)
 	}
 
-	defer db.Close()
+	defer dbConn.Close()
 	logger.PrintInfo("database connection pool established", nil)
 
 	expvar.NewString("version").Set(version)
@@ -87,7 +87,7 @@ func main() {
 	}))
 
 	expvar.Publish("database", expvar.Func(func() interface{} {
-		return db.Stats()
+		return dbConn.Stats()
 	}))
 
 	expvar.Publish("timestamp", expvar.Func(func() interface{} {
@@ -97,8 +97,8 @@ func main() {
 	app := &application{
 		config: cfg,
 		logger: logger,
-		models: data.NewModels(db),
 		mailer: mailer.New(cfg.mailergun.domain, cfg.mailergun.privateKey, cfg.mailergun.sender),
+		store:  db.NewStore(dbConn),
 	}
 
 	err = app.serve()

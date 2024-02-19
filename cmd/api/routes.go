@@ -35,8 +35,6 @@ func (app *application) routes() http.Handler {
 
 	g.Use(app.authenticate)
 
-	g.GET("/test", app.test, app.requireAuthenticatedUser)
-
 	// User Routes
 
 	g.POST("/v1/users", app.registerUserHandler)
@@ -47,7 +45,7 @@ func (app *application) routes() http.Handler {
 	// houses
 	g.GET("/houses", app.listHousesHandler)
 	g.POST("/houses", app.createHouseHandler)
-	g.POST("/bulk/houses", app.bulkHousesHandler)
+	// g.POST("/bulk/houses", app.bulkHousesHandler)
 	g.GET("/houses/:uuid", app.showHousesHandler)
 	g.PUT("/houses/:uuid", app.updateHouseHandler)
 

@@ -5,13 +5,14 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/Hopertz/rmgmt/db/data"
+	db "github.com/Hopertz/rmgmt/db/sqlc"
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 )
 
 func (app *application) listPaymentsHandler(c echo.Context) error {
-	payments, err := app.models.Payments.GetAll()
 
+	payments, err := app.store.GetAllPayments(c.Request().Context())
 	if err != nil {
 		// log error above
 		return c.JSON(http.StatusInternalServerError, map[string]interface{}{"error": "internal server error"})
@@ -21,12 +22,18 @@ func (app *application) listPaymentsHandler(c echo.Context) error {
 }
 
 func (app *application) showPaymentHandler(c echo.Context) error {
-	uuid := c.Param("uuid")
-	payment, err := app.models.Payments.Get(uuid)
+
+	uuid, err := db.ReadUUIDParam(c)
+
+	if err != nil {
+		return err
+	}
+
+	payment, err := app.store.GetPaymentById(c.Request().Context(), uuid)
 
 	if err != nil {
 		switch {
-		case errors.Is(err, data.ErrRecordNotFound):
+		case errors.Is(err, db.ErrRecordNotFound):
 			return c.JSON(http.StatusNotFound, map[string]interface{}{"error": "payment not found"})
 
 		default:
@@ -39,9 +46,10 @@ func (app *application) showPaymentHandler(c echo.Context) error {
 }
 
 func (app *application) createPaymentHandler(c echo.Context) error {
+
 	var input struct {
-		TenantId  string    `json:"tenant_id"`
-		Period    int       `json:"period"`
+		TenantId  uuid.UUID `json:"tenant_id"`
+		Period    int32     `json:"period"`
 		StartDate time.Time `json:"start_date"`
 		EndDate   time.Time `json:"end_date"`
 		Renewed   bool      `json:"renewed"`
@@ -51,10 +59,10 @@ func (app *application) createPaymentHandler(c echo.Context) error {
 		return err
 	}
 
-	tenant, err := app.models.Tenants.Get(input.TenantId)
+	tenant, err := app.store.GetTenantById(c.Request().Context(), input.TenantId)
 
 	if err != nil {
-		if err == data.ErrRecordNotFound {
+		if err == db.ErrRecordNotFound {
 			return c.JSON(http.StatusNotFound, map[string]interface{}{"error": "tenant not found"})
 		}
 
@@ -73,7 +81,20 @@ func (app *application) createPaymentHandler(c echo.Context) error {
 
 	tenant.Eos = input.EndDate
 
-	err = app.models.Tenants.Update(tenant)
+	args := db.UpdateTenantParams{
+		FirstName:      tenant.FirstName,
+		LastName:       tenant.LastName,
+		HouseID:        tenant.HouseID,
+		Phone:          tenant.Phone,
+		PersonalIDType: tenant.PersonalIDType,
+		PersonalID:     tenant.PersonalID,
+		Active:         tenant.Active,
+		Sos:            tenant.Sos,
+		Eos:            tenant.Eos,
+		TenantID:       tenant.TenantID,
+	}
+
+	err = app.store.UpdateTenant(c.Request().Context(), args)
 
 	if err != nil {
 
@@ -81,53 +102,66 @@ func (app *application) createPaymentHandler(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, map[string]interface{}{"error": "internal server error"})
 	}
 
-	payment, err := app.models.Payments.GetUnrenewed(input.TenantId)
+	payment, err := app.store.GetUnrenewedByTenantId(c.Request().Context(), input.TenantId)
 
 	if err != nil {
-		if err != data.ErrRecordNotFound {
+		if err != db.ErrRecordNotFound {
 			// log error above
 			return c.JSON(http.StatusInternalServerError, map[string]interface{}{"error": "internal server error"})
 		}
 
+		return c.JSON(http.StatusNotFound, map[string]interface{}{"error": "payment not found"})
+
 	}
 
-	if payment != nil {
-		payment.Renewed = true
-		err = app.models.Payments.Update(*payment)
-		if err != nil {
-			// log error above
-			return c.JSON(http.StatusInternalServerError, map[string]interface{}{"error": "internal server error"})
-		}
+	payment.Renewed = true
+
+	params := db.UpdatePaymentParams{
+		PaymentID: payment.PaymentID,
+		Period:    payment.Period,
+		StartDate: payment.StartDate,
+		EndDate:   payment.EndDate,
+		Renewed:   payment.Renewed,
+	}
+	err = app.store.UpdatePayment(c.Request().Context(), params)
+
+	if err != nil {
+		// log error above
+		return c.JSON(http.StatusInternalServerError, map[string]interface{}{"error": "internal server error"})
 	}
 
-	payment = &data.Payment{
-
-		TenantId:  input.TenantId,
+	pay := db.CreatePaymentParams{
+		TenantID:  input.TenantId,
 		Period:    input.Period,
 		StartDate: input.StartDate,
 		EndDate:   input.EndDate,
 		Renewed:   input.Renewed,
 	}
 
-	err = app.models.Payments.Insert(payment)
+	err = app.store.CreatePayment(c.Request().Context(), pay)
 
 	if err != nil {
 		// log error above
 		return c.JSON(http.StatusInternalServerError, map[string]interface{}{"error": "internal server error"})
 	}
 
-	return c.JSON(http.StatusOK, map[string]interface{}{"payment": payment})
+	return c.JSON(http.StatusOK, map[string]interface{}{"payment": pay})
 
 }
 
 func (app *application) updatPaymentHandler(c echo.Context) error {
-	uuid := c.Param("uuid")
 
-	payment, err := app.models.Payments.Get(uuid)
+	uuid, err := db.ReadUUIDParam(c)
+
+	if err != nil {
+		return err
+	}
+
+	payment, err := app.store.GetPaymentById(c.Request().Context(), uuid)
 
 	if err != nil {
 		switch {
-		case errors.Is(err, data.ErrRecordNotFound):
+		case errors.Is(err, db.ErrRecordNotFound):
 			return c.JSON(http.StatusNotFound, map[string]interface{}{"error": "payment not found"})
 
 		default:
@@ -138,8 +172,7 @@ func (app *application) updatPaymentHandler(c echo.Context) error {
 	}
 
 	var input struct {
-		TenantId  *string    `json:"tenant_id"`
-		Period    *int       `json:"period"`
+		Period    *int32     `json:"period"`
 		StartDate *time.Time `json:"start_date"`
 		EndDate   *time.Time `json:"end_date"`
 		Renewed   *bool      `json:"renewed"`
@@ -147,10 +180,6 @@ func (app *application) updatPaymentHandler(c echo.Context) error {
 
 	if err := c.Bind(&input); err != nil {
 		return err
-	}
-
-	if input.TenantId != nil {
-		payment.TenantId = *input.TenantId
 	}
 
 	if input.Period != nil {
@@ -169,7 +198,15 @@ func (app *application) updatPaymentHandler(c echo.Context) error {
 		payment.Renewed = *input.Renewed
 	}
 
-	err = app.models.Payments.Update(*payment)
+	args := db.UpdatePaymentParams{
+		PaymentID: payment.PaymentID,
+		Period:    payment.Period,
+		StartDate: payment.StartDate,
+		EndDate:   payment.EndDate,
+		Renewed:   payment.Renewed,
+	}
+
+	err = app.store.UpdatePayment(c.Request().Context(), args)
 
 	if err != nil {
 		// log error above

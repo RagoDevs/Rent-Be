@@ -1,10 +1,12 @@
 package main
 
 import (
+	"crypto/sha256"
 	"errors"
 	"strings"
+	"time"
 
-	"github.com/Hopertz/rmgmt/db/data"
+	db "github.com/Hopertz/rmgmt/db/sqlc"
 	"github.com/Hopertz/rmgmt/pkg/validator"
 	"github.com/labstack/echo/v4"
 )
@@ -17,7 +19,7 @@ func (app *application) authenticate(next echo.HandlerFunc) echo.HandlerFunc {
 
 		if authorizationHeader == "" {
 
-			c.Set("user", data.AnonymousAdmin)
+			c.Set("user", db.Admin{})
 
 			return next(c)
 		}
@@ -33,14 +35,21 @@ func (app *application) authenticate(next echo.HandlerFunc) echo.HandlerFunc {
 		token := headerParts[1]
 		v := validator.New()
 
-		if data.ValidateTokenPlaintext(v, token); !v.Valid() {
+		if db.ValidateTokenPlaintext(v, token); !v.Valid() {
 			return c.JSON(401, "invalid or missing authentication token")
 		}
 
-		admin, err := app.models.Admins.GetForToken(data.ScopeAuthentication, token)
+		tokenHash := sha256.Sum256([]byte(token))
+		args := db.GetForTokenAdminParams{
+			Scope:  db.ScopeAuthentication,
+			Hash:   tokenHash[:],
+			Expiry: time.Now(),
+		}
+
+		admin, err := app.store.GetForTokenAdmin(c.Request().Context(), args)
 		if err != nil {
 			switch {
-			case errors.Is(err, data.ErrRecordNotFound):
+			case errors.Is(err, db.ErrRecordNotFound):
 				return c.JSON(401, "invalid or missing authentication token")
 			default:
 				return c.JSON(500, "pkg server error")
@@ -58,15 +67,15 @@ func (app *application) authenticate(next echo.HandlerFunc) echo.HandlerFunc {
 func (app *application) requireAuthenticatedUser(next echo.HandlerFunc) echo.HandlerFunc {
 
 	return func(c echo.Context) error {
-		user, ok := c.Get("admin").(*data.Admin)
+		user, ok := c.Get("admin").(*db.Admin)
 
 		if !ok {
 			return c.JSON(401, "unauthorized you must be authencticated ")
 		}
 
-		if user.IsAnonymous() {
-			return c.JSON(401, "unauthorized no anonymous user allowed")
-		}
+		// if user.IsAnonymous() {
+		// 	return c.JSON(401, "unauthorized no anonymous user allowed")
+		// }
 
 		if !user.Activated {
 			return c.JSON(403, "forbidden user account not activated")
