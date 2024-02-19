@@ -15,6 +15,7 @@ import (
 	db "github.com/Hopertz/rmgmt/db/sqlc"
 	"github.com/Hopertz/rmgmt/pkg/mailer"
 	_ "github.com/lib/pq"
+	"gopkg.in/go-playground/validator.v9"
 )
 
 const version = "1.0.0"
@@ -37,10 +38,11 @@ type config struct {
 }
 
 type application struct {
-	config config
-	mailer mailer.Mailer
-	wg     sync.WaitGroup
-	store  db.Store
+	config    config
+	mailer    mailer.Mailer
+	wg        sync.WaitGroup
+	store     db.Store
+	validator *validator.Validate
 }
 
 func init() {
@@ -93,9 +95,10 @@ func main() {
 	}))
 
 	app := &application{
-		config: cfg,
-		mailer: mailer.New(cfg.mailergun.domain, cfg.mailergun.privateKey, cfg.mailergun.sender),
-		store:  db.NewStore(dbConn),
+		config:    cfg,
+		mailer:    mailer.New(cfg.mailergun.domain, cfg.mailergun.privateKey, cfg.mailergun.sender),
+		store:     db.NewStore(dbConn),
+		validator: validator.New(),
 	}
 
 	err = app.serve()
