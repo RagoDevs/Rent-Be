@@ -3,9 +3,9 @@ package main
 import (
 	"crypto/sha256"
 	"errors"
+	"log/slog"
 	"net/http"
 	"time"
-
 
 	db "github.com/Hopertz/rmgmt/db/sqlc"
 	"github.com/Hopertz/rmgmt/pkg/validator"
@@ -67,7 +67,7 @@ func (app *application) registerUserHandler(c echo.Context) error {
 
 		err = app.mailer.Send(input.Email, "admin_welcome.tmpl", data)
 		if err != nil {
-			app.logger.PrintError(err, nil)
+			slog.Error("error sending email", err)
 		}
 	})
 

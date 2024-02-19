@@ -1,6 +1,10 @@
 package main
 
-import "fmt"
+import (
+	"context"
+	"fmt"
+	"log/slog"
+)
 
 func (app *application) background(fn func()) {
 
@@ -12,7 +16,11 @@ func (app *application) background(fn func()) {
 
 		defer func() {
 			if err := recover(); err != nil {
-				app.logger.PrintError(fmt.Errorf("%s", err), nil)
+				slog.LogAttrs(context.Background(),
+					slog.LevelError,
+					"recovered from panic",
+					slog.String("error", fmt.Sprintf("%s", err)),
+				)
 			}
 		}()
 		fn()

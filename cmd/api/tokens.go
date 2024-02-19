@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"log/slog"
 	"net/http"
 	"time"
 
@@ -117,7 +118,7 @@ func (app *application) createPasswordResetTokenHandler(c echo.Context) error {
 		}
 		err = app.mailer.Send(admin.Email, "token_password_reset.tmpl", data)
 		if err != nil {
-			app.logger.PrintError(err, nil)
+			slog.Error("error sending ", err)
 		}
 	})
 
@@ -172,7 +173,7 @@ func (app *application) createActivationTokenHandler(c echo.Context) error {
 
 		err = app.mailer.Send(admin.Email, "token_activation.tmpl", data)
 		if err != nil {
-			app.logger.PrintError(err, nil)
+			slog.Error("error sending email", err)
 		}
 	})
 	// Send a 202 Accepted response and confirmation message to the client.

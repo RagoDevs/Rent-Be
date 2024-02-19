@@ -5,13 +5,14 @@ import (
 	"database/sql"
 	"expvar"
 	"flag"
+	"log"
+	"log/slog"
 	"os"
 	"runtime"
 	"sync"
 	"time"
 
 	db "github.com/Hopertz/rmgmt/db/sqlc"
-	"github.com/Hopertz/rmgmt/pkg/jsonlog"
 	"github.com/Hopertz/rmgmt/pkg/mailer"
 	_ "github.com/lib/pq"
 )
@@ -28,12 +29,6 @@ type config struct {
 		maxIdleTime  string
 	}
 
-	limiter struct {
-		rps     float64
-		burst   int
-		enabled bool
-	}
-
 	mailergun struct {
 		domain     string
 		privateKey string
@@ -43,10 +38,18 @@ type config struct {
 
 type application struct {
 	config config
-	logger *jsonlog.Logger
 	mailer mailer.Mailer
 	wg     sync.WaitGroup
 	store  db.Store
+}
+
+func init() {
+
+	var programLevel = new(slog.LevelVar)
+
+	h := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: programLevel})
+	slog.SetDefault(slog.New(h))
+
 }
 
 func main() {
@@ -60,25 +63,20 @@ func main() {
 	flag.IntVar(&cfg.db.maxIdleConns, "db-max-idle-conns", 25, "PostgreSQL max ilde connections")
 	flag.StringVar(&cfg.db.maxIdleTime, "db-max-idle-time", "15m", "PostgreSQL max connection  connections")
 
-	flag.Float64Var(&cfg.limiter.rps, "limiter-rps", 2, "Rate limiter maximum requests per second")
-	flag.IntVar(&cfg.limiter.burst, "limiter-burst", 4, "Rate limiter maximum burst")
-	flag.BoolVar(&cfg.limiter.enabled, "limiter-enabled", true, "Enable rate limiter")
-
 	flag.StringVar(&cfg.mailergun.domain, "mg-domain", os.Getenv("MAILGUN_DOMAIN"), "Mailgun-domain")
 	flag.StringVar(&cfg.mailergun.privateKey, "mg-privatekey", os.Getenv("MAILGUN_PRIVATEKEY"), "Mailgun-privatekey")
 	flag.StringVar(&cfg.mailergun.sender, "mg-sender", os.Getenv("MAILGUN_SENDER"), "Mailgun-sender")
 
 	flag.Parse()
 
-	logger := jsonlog.New(os.Stdout, jsonlog.LevelInfo)
-
 	dbConn, err := openDB(cfg)
 	if err != nil {
-		logger.PrintFatal(err, nil)
+		log.Fatal("error opening db", err)
 	}
 
 	defer dbConn.Close()
-	logger.PrintInfo("database connection pool established", nil)
+
+	slog.Info("database connection established")
 
 	expvar.NewString("version").Set(version)
 
@@ -96,14 +94,13 @@ func main() {
 
 	app := &application{
 		config: cfg,
-		logger: logger,
 		mailer: mailer.New(cfg.mailergun.domain, cfg.mailergun.privateKey, cfg.mailergun.sender),
 		store:  db.NewStore(dbConn),
 	}
 
 	err = app.serve()
 	if err != nil {
-		logger.PrintFatal(err, nil)
+		log.Fatal("error starting server", err)
 	}
 
 }
