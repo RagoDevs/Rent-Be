@@ -7,7 +7,6 @@ import (
 	"time"
 
 	db "github.com/Hopertz/rmgmt/db/sqlc"
-	"github.com/Hopertz/rmgmt/pkg/validator"
 	"github.com/labstack/echo/v4"
 )
 
@@ -22,15 +21,7 @@ func (app *application) createAuthenticationTokenHandler(c echo.Context) error {
 		return err
 	}
 
-	v := validator.New()
-
-	db.ValidateEmail(v, input.Email)
-
-	db.ValidatePasswordPlaintext(v, input.Password)
-
-	if !v.Valid() {
-		return c.JSON(http.StatusUnprocessableEntity, map[string]interface{}{"errors": v.Errors})
-	}
+	
 
 	admin, err := app.store.GetAdminByEmail(c.Request().Context(), input.Email)
 
@@ -81,20 +72,12 @@ func (app *application) createPasswordResetTokenHandler(c echo.Context) error {
 		return err
 	}
 
-	v := validator.New()
-	if db.ValidateEmail(v, input.Email); !v.Valid() {
-		return c.JSON(http.StatusUnprocessableEntity, map[string]interface{}{"errors": v.Errors})
-	}
-	// Try to retrieve the corresponding user record for the email address. If it can't
-	// be found, return an error message to the client.
-
 	admin, err := app.store.GetAdminByEmail(c.Request().Context(), input.Email)
 
 	if err != nil {
 		switch {
 		case errors.Is(err, db.ErrRecordNotFound):
-			v.AddError("email", "no matching email address found")
-			return c.JSON(http.StatusUnprocessableEntity, map[string]interface{}{"errors": v.Errors})
+			return c.JSON(http.StatusUnprocessableEntity, map[string]interface{}{"errors": ""})
 		default:
 			//log error above
 			return c.JSON(http.StatusInternalServerError, map[string]interface{}{"error": "internal server error"})
@@ -102,8 +85,7 @@ func (app *application) createPasswordResetTokenHandler(c echo.Context) error {
 	}
 
 	if !admin.Activated {
-		v.AddError("email", "admin account must be activated")
-		return c.JSON(http.StatusUnprocessableEntity, map[string]interface{}{"errors": v.Errors})
+		return c.JSON(http.StatusUnprocessableEntity, map[string]interface{}{"errors": ""})
 	}
 
 	token, err := app.store.NewToken(admin.AdminID, 45*time.Minute, db.ScopePasswordReset)
@@ -137,18 +119,12 @@ func (app *application) createActivationTokenHandler(c echo.Context) error {
 		return err
 	}
 
-	v := validator.New()
-	if db.ValidateEmail(v, input.Email); !v.Valid() {
-		return c.JSON(http.StatusUnprocessableEntity, map[string]interface{}{"errors": v.Errors})
-	}
-
 	admin, err := app.store.GetAdminByEmail(c.Request().Context(), input.Email)
 
 	if err != nil {
 		switch {
 		case errors.Is(err, db.ErrRecordNotFound):
-			v.AddError("email", "no matching email address found")
-			return c.JSON(http.StatusUnprocessableEntity, map[string]interface{}{"errors": v.Errors})
+			return c.JSON(http.StatusUnprocessableEntity, map[string]interface{}{"errors":""})
 		default:
 			//log error above
 			return c.JSON(http.StatusInternalServerError, map[string]interface{}{"error": "internal server error"})
@@ -156,8 +132,7 @@ func (app *application) createActivationTokenHandler(c echo.Context) error {
 	}
 
 	if admin.Activated {
-		v.AddError("email", "admin has already been activated")
-		return c.JSON(http.StatusUnprocessableEntity, map[string]interface{}{"errors": v.Errors})
+		return c.JSON(http.StatusUnprocessableEntity, map[string]interface{}{"errors": ""})
 	}
 
 	token, err := app.store.NewToken(admin.AdminID, 3*24*time.Hour, db.ScopeActivation)

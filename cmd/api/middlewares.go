@@ -7,7 +7,6 @@ import (
 	"time"
 
 	db "github.com/Hopertz/rmgmt/db/sqlc"
-	"github.com/Hopertz/rmgmt/pkg/validator"
 	"github.com/labstack/echo/v4"
 )
 
@@ -33,10 +32,9 @@ func (app *application) authenticate(next echo.HandlerFunc) echo.HandlerFunc {
 		}
 
 		token := headerParts[1]
-		v := validator.New()
 
-		if db.ValidateTokenPlaintext(v, token); !v.Valid() {
-			return c.JSON(401, "invalid or missing authentication token")
+		if Isvalid, err := db.IsValidTokenPlaintext(token); !Isvalid {
+			return c.JSON(401, err)
 		}
 
 		tokenHash := sha256.Sum256([]byte(token))

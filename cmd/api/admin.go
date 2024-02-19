@@ -8,7 +8,6 @@ import (
 	"time"
 
 	db "github.com/Hopertz/rmgmt/db/sqlc"
-	"github.com/Hopertz/rmgmt/pkg/validator"
 	"github.com/labstack/echo/v4"
 )
 
@@ -31,8 +30,6 @@ func (app *application) registerUserHandler(c echo.Context) error {
 		return err
 	}
 
-	v := validator.New()
-
 	a := db.InsertAdminParams{
 		Email:        input.Email,
 		PasswordHash: pwd.Hash,
@@ -44,8 +41,7 @@ func (app *application) registerUserHandler(c echo.Context) error {
 		switch {
 
 		case errors.Is(err, db.ErrDuplicateEmail):
-			v.AddError("email", "an admin with this email address already exists")
-			return c.JSON(http.StatusUnprocessableEntity, map[string]interface{}{"errors": v.Errors})
+			return c.JSON(http.StatusUnprocessableEntity, map[string]interface{}{"errors": ""})
 
 		default:
 			return c.JSON(http.StatusInternalServerError, map[string]interface{}{"error": "internal server error"})
@@ -84,9 +80,8 @@ func (app *application) activateUserHandler(c echo.Context) error {
 		return err
 	}
 
-	v := validator.New()
-	if db.ValidateTokenPlaintext(v, input.TokenPlaintext); !v.Valid() {
-		return c.JSON(http.StatusUnprocessableEntity, map[string]interface{}{"errors": v.Errors})
+	if Isvalid, err := db.IsValidTokenPlaintext(input.TokenPlaintext); !Isvalid {
+		return c.JSON(http.StatusUnprocessableEntity, err)
 	}
 
 	tokenHash := sha256.Sum256([]byte(input.TokenPlaintext))
@@ -102,8 +97,7 @@ func (app *application) activateUserHandler(c echo.Context) error {
 	if err != nil {
 		switch {
 		case errors.Is(err, db.ErrRecordNotFound):
-			v.AddError("token", "invalid or expired activation token")
-			return c.JSON(http.StatusUnprocessableEntity, map[string]interface{}{"errors": v.Errors})
+			return c.JSON(http.StatusUnprocessableEntity, map[string]interface{}{"errors": ""})
 		default:
 			//log error above
 			return c.JSON(http.StatusInternalServerError, map[string]interface{}{"error": "internal server error"})
@@ -159,13 +153,6 @@ func (app *application) updateUserPasswordHandler(c echo.Context) error {
 		return err
 	}
 
-	v := validator.New()
-	db.ValidatePasswordPlaintext(v, input.Password)
-	db.ValidateTokenPlaintext(v, input.TokenPlaintext)
-	if !v.Valid() {
-		return c.JSON(http.StatusUnprocessableEntity, map[string]interface{}{"errors": v.Errors})
-	}
-
 	tokenHash := sha256.Sum256([]byte(input.TokenPlaintext))
 
 	args := db.GetForTokenAdminParams{
@@ -179,8 +166,8 @@ func (app *application) updateUserPasswordHandler(c echo.Context) error {
 	if err != nil {
 		switch {
 		case errors.Is(err, db.ErrRecordNotFound):
-			v.AddError("token", "Invalid or expired password reset token")
-			return c.JSON(http.StatusUnprocessableEntity, map[string]interface{}{"errors": v.Errors})
+
+			return c.JSON(http.StatusUnprocessableEntity, map[string]interface{}{"errors": ""})
 		default:
 			//log error above
 			return c.JSON(http.StatusInternalServerError, map[string]interface{}{"error": "internal server error"})

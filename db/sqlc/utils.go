@@ -8,7 +8,6 @@ import (
 	"errors"
 	"time"
 
-	"github.com/Hopertz/rmgmt/pkg/validator"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"golang.org/x/crypto/bcrypt"
@@ -60,9 +59,15 @@ func generateToken(id uuid.UUID, ttl time.Duration, scope string) (*TokenLoc, er
 	return token, nil
 }
 
-func ValidateTokenPlaintext(v *validator.Validator, tokenPlaintext string) {
-	v.Check(tokenPlaintext != "", "token", "must be provided")
-	v.Check(len(tokenPlaintext) == 26, "token", "must be 26 bytes long")
+func IsValidTokenPlaintext(tokenPlaintext string) (bool, error) {
+	if tokenPlaintext == "" {
+		return false, errors.New("token must be provided")
+	}
+	if len(tokenPlaintext) != 26 {
+		return false, errors.New("token must be 26 bytes long")
+	}
+
+	return true, nil
 }
 
 func (s *SQLStore) NewToken(id uuid.UUID, ttl time.Duration, scope string) (*TokenLoc, error) {
@@ -140,15 +145,4 @@ func PasswordMatches(pwd Password) (bool, error) {
 	}
 
 	return true, nil
-}
-
-func ValidateEmail(v *validator.Validator, email string) {
-	v.Check(email != "", "email", "must be provided")
-	v.Check(validator.Matches(email, validator.EmailRX), "email", "must be a valid email address")
-}
-
-func ValidatePasswordPlaintext(v *validator.Validator, password string) {
-	v.Check(password != "", "password", "must be provided")
-	v.Check(len(password) >= 8, "password", "must be at least 8 bytes long")
-	v.Check(len(password) <= 72, "password", "must not be more than 72 bytes long")
 }
