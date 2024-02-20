@@ -1,7 +1,9 @@
 package main
 
 import (
+	"database/sql"
 	"errors"
+	"log/slog"
 	"net/http"
 
 	db "github.com/Hopertz/rmgmt/db/sqlc"
@@ -13,10 +15,11 @@ func (app *application) listHousesHandler(c echo.Context) error {
 	houses, err := app.store.GetHouses(c.Request().Context())
 
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]interface{}{"error": "internal server error"})
+		slog.Error("error fetching houses", err)
+		return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 	}
 
-	return c.JSON(http.StatusOK, map[string]interface{}{"houses": houses})
+	return c.JSON(http.StatusOK, envelope{"houses": houses})
 
 }
 
@@ -25,36 +28,43 @@ func (app *application) showHousesHandler(c echo.Context) error {
 	uuid, err := db.ReadUUIDParam(c)
 
 	if err != nil {
-		return err
+		return c.JSON(http.StatusBadRequest, envelope{"error": "invalid house id"})
 	}
 
 	house, err := app.store.GetHouseById(c.Request().Context(), uuid)
 
 	if err != nil {
 		switch {
-		case errors.Is(err, db.ErrRecordNotFound):
-			return c.JSON(http.StatusNotFound, map[string]interface{}{"error": "house not found"})
+		case errors.Is(err, sql.ErrNoRows):
+			slog.Error("error fetching house by id", err)
+			return c.JSON(http.StatusNotFound, envelope{"error": "house not found"})
 		default:
-			return c.JSON(http.StatusInternalServerError, map[string]interface{}{"error": "internal server error"})
+			slog.Error("error fetching house by id", err)
+			return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 		}
 
 	}
 
-	return c.JSON(http.StatusOK, map[string]interface{}{"house": house})
+	return c.JSON(http.StatusOK, envelope{"house": house})
 }
 
 func (app *application) createHouseHandler(c echo.Context) error {
 
 	var input struct {
-		Location  string `json:"location"`
-		Block     string `json:"block"`
-		Partition int16  `json:"partition"`
-		Occupied  bool   `json:"occupied"`
+		Location  string `json:"location" validate:"required"`
+		Block     string `json:"block" validate:"required, len=1"`
+		Partition int16  `json:"partition" validate:"required"`
+		Occupied  bool   `json:"occupied" validate:"required"`
 	}
 
 	if err := c.Bind(&input); err != nil {
-		return err
+		return c.JSON(http.StatusBadRequest, envelope{"error": "invalid request payload"})
 	}
+
+	if err := app.validator.Struct(input); err != nil {
+		return c.JSON(http.StatusBadRequest, envelope{"error": err.Error()})
+	}
+
 
 	_, err := app.store.CreateHouse(c.Request().Context(), db.CreateHouseParams{
 		Location:  input.Location,
@@ -63,7 +73,8 @@ func (app *application) createHouseHandler(c echo.Context) error {
 		Occupied:  input.Occupied})
 
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]interface{}{"error": "internal server error"})
+		slog.Error("error creating house", err)
+		return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 	}
 
 	return c.JSON(http.StatusCreated, nil)
@@ -74,18 +85,20 @@ func (app *application) updateHouseHandler(c echo.Context) error {
 	uuid, err := db.ReadUUIDParam(c)
 
 	if err != nil {
-		return err
+		return c.JSON(http.StatusBadRequest, envelope{"error": "invalid house id"})
 	}
 
 	house, err := app.store.GetHouseById(c.Request().Context(), uuid)
 
 	if err != nil {
 		switch {
-		case errors.Is(err, db.ErrRecordNotFound):
-			return c.JSON(http.StatusNotFound, map[string]interface{}{"error": "house not found"})
+		case errors.Is(err, sql.ErrNoRows):
+			slog.Error("error fetching house by id", err)
+			return c.JSON(http.StatusNotFound, envelope{"error": "house not found"})
 
 		default:
-			return c.JSON(http.StatusInternalServerError, map[string]interface{}{"error": "internal server error"})
+			slog.Error("error fetching house by id", err)
+			return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 		}
 
 	}
@@ -95,7 +108,7 @@ func (app *application) updateHouseHandler(c echo.Context) error {
 	}
 
 	if err := c.Bind(&input); err != nil {
-		return err
+		return c.JSON(http.StatusBadRequest, envelope{"error": "invalid request payload"})
 	}
 
 	house.Occupied = input.Occupied
@@ -104,13 +117,15 @@ func (app *application) updateHouseHandler(c echo.Context) error {
 		HouseID:  house.HouseID,
 		Occupied: house.Occupied,
 	}
+	
 	err = app.store.UpdateHouseById(c.Request().Context(), args)
 
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]interface{}{"error": "internal server error"})
+		slog.Error("error updating house by id", err)
+		return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 	}
 
-	return c.JSON(http.StatusOK, map[string]interface{}{"house": house})
+	return c.JSON(http.StatusOK, nil)
 }
 
 // func (app *application) bulkHousesHandler(c echo.Context) error {

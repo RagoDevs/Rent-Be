@@ -36,6 +36,7 @@ type config struct {
 		sender     string
 	}
 }
+type envelope map[string]interface{}
 
 type application struct {
 	config    config

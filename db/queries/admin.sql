@@ -17,7 +17,7 @@ WHERE admin_id = $4 AND version = $5
 RETURNING version;
 
 
--- name: GetForTokenAdmin :one
+-- name: GetHashTokenForAdmin :one
 SELECT admins.admin_id, admins.created_at,admins.email, admins.password_hash, admins.activated, admins.version
 FROM admins
 INNER JOIN tokens

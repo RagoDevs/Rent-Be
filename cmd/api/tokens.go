@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"errors"
 	"log/slog"
 	"net/http"
@@ -13,25 +14,28 @@ import (
 func (app *application) createAuthenticationTokenHandler(c echo.Context) error {
 
 	var input struct {
-		Email    string `json:"email"`
-		Password string `json:"password"`
+		Email    string `json:"email" validate:"required,email"`
+		Password string `json:"password" validate:"required,min=8"`
 	}
 
 	if err := c.Bind(&input); err != nil {
-		return err
+		return c.JSON(http.StatusBadRequest, envelope{"error": err.Error()})
 	}
 
-	
+	if err := app.validator.Struct(input); err != nil {
+		return c.JSON(http.StatusBadRequest, envelope{"error": err.Error()})
+	}
 
 	admin, err := app.store.GetAdminByEmail(c.Request().Context(), input.Email)
 
 	if err != nil {
 		switch {
-		case errors.Is(err, db.ErrRecordNotFound):
-			return c.JSON(http.StatusUnauthorized, map[string]interface{}{"error": "invalid email address or password"})
+		case errors.Is(err, sql.ErrNoRows):
+			slog.Error("error fetching admin by email", err)
+			return c.JSON(http.StatusNotFound, envelope{"error": "invalid email address or password"})
 		default:
-			//log error above
-			return c.JSON(http.StatusInternalServerError, map[string]interface{}{"error": "internal server error"})
+			slog.Error("error fetching admin by email", err)
+			return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 		}
 	}
 
@@ -43,59 +47,60 @@ func (app *application) createAuthenticationTokenHandler(c echo.Context) error {
 	match, err := db.PasswordMatches(pwd)
 
 	if err != nil {
-		//log error above
-		return c.JSON(http.StatusInternalServerError, map[string]interface{}{"error": "internal server error"})
+		slog.Error("error matching password", err)
+		return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 
 	}
 
 	if !match {
-		return c.JSON(http.StatusUnauthorized, map[string]interface{}{"error": "invalid email address or password"})
+		slog.Error("error matching password", err)
+		return c.JSON(http.StatusUnauthorized, envelope{"error": "invalid email address or password"})
 	}
 
 	token, err := app.store.NewToken(admin.AdminID, 3*24*time.Hour, db.ScopeAuthentication)
 	if err != nil {
-		//log error above
-		return c.JSON(http.StatusInternalServerError, map[string]interface{}{"error": "internal server error"})
+		slog.Error("error generating new token", err)
+		return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 	}
 
-	return c.JSON(http.StatusCreated, map[string]interface{}{"token": token.Plaintext})
+	return c.JSON(http.StatusCreated, envelope{"token": token.Plaintext})
 }
 
-// Generate a password reset token and send it to the user's email address.
 func (app *application) createPasswordResetTokenHandler(c echo.Context) error {
-	// Parse and validate the user's email address.
+
 	var input struct {
-		Email string `json:"email"`
+		Email string `json:"email" validate:"required,email"`
 	}
 
 	if err := c.Bind(&input); err != nil {
-		return err
+		return c.JSON(http.StatusBadRequest, envelope{"error": err.Error()})
 	}
 
 	admin, err := app.store.GetAdminByEmail(c.Request().Context(), input.Email)
 
 	if err != nil {
 		switch {
-		case errors.Is(err, db.ErrRecordNotFound):
-			return c.JSON(http.StatusUnprocessableEntity, map[string]interface{}{"errors": ""})
+		case errors.Is(err, sql.ErrNoRows):
+			slog.Error("error fetching admin by email", err)
+			return c.JSON(http.StatusNotFound, envelope{"error": "invalid email address or password"})
 		default:
-			//log error above
-			return c.JSON(http.StatusInternalServerError, map[string]interface{}{"error": "internal server error"})
+			slog.Error("error fetching admin by email", err)
+			return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 		}
 	}
 
 	if !admin.Activated {
-		return c.JSON(http.StatusUnprocessableEntity, map[string]interface{}{"errors": ""})
+		return c.JSON(http.StatusForbidden, envelope{"errors": "account not activated"})
 	}
 
 	token, err := app.store.NewToken(admin.AdminID, 45*time.Minute, db.ScopePasswordReset)
 	if err != nil {
-		//log error above
-		return c.JSON(http.StatusInternalServerError, map[string]interface{}{"error": "internal server error"})
+		slog.Error("error generating new token", err)
+		return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 	}
 
 	app.background(func() {
-		data := map[string]interface{}{
+		data := envelope{
 			"passwordResetToken": token.Plaintext,
 		}
 		err = app.mailer.Send(admin.Email, "token_password_reset.tmpl", data)
@@ -104,45 +109,44 @@ func (app *application) createPasswordResetTokenHandler(c echo.Context) error {
 		}
 	})
 
-	env := map[string]interface{}{"message": "an email will be sent to you containing password reset instructions"}
-
-	return c.JSON(http.StatusAccepted, env)
+	return c.JSON(http.StatusAccepted, nil)
 }
 
 func (app *application) createActivationTokenHandler(c echo.Context) error {
 
 	var input struct {
-		Email string `json:"email"`
+		Email string `json:"email" validate:"required,email"`
 	}
 
 	if err := c.Bind(&input); err != nil {
-		return err
+		return c.JSON(http.StatusBadRequest, envelope{"error": err.Error()})
 	}
 
 	admin, err := app.store.GetAdminByEmail(c.Request().Context(), input.Email)
 
 	if err != nil {
 		switch {
-		case errors.Is(err, db.ErrRecordNotFound):
-			return c.JSON(http.StatusUnprocessableEntity, map[string]interface{}{"errors":""})
+		case errors.Is(err, sql.ErrNoRows):
+			slog.Error("error fetching admin by email", err)
+			return c.JSON(http.StatusNotFound, envelope{"error": "invalid email address or password"})
 		default:
-			//log error above
-			return c.JSON(http.StatusInternalServerError, map[string]interface{}{"error": "internal server error"})
+			slog.Error("error fetching admin by email", err)
+			return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 		}
 	}
 
-	if admin.Activated {
-		return c.JSON(http.StatusUnprocessableEntity, map[string]interface{}{"errors": ""})
+	if !admin.Activated {
+		return c.JSON(http.StatusForbidden, envelope{"errors": "account not activated"})
 	}
 
 	token, err := app.store.NewToken(admin.AdminID, 3*24*time.Hour, db.ScopeActivation)
 	if err != nil {
-		//log error above
-		return c.JSON(http.StatusInternalServerError, map[string]interface{}{"error": "internal server error"})
+		slog.Error("error generating new token", err)
+		return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 	}
 
 	app.background(func() {
-		data := map[string]interface{}{
+		data := envelope{
 			"activationToken": token.Plaintext,
 		}
 
@@ -151,7 +155,6 @@ func (app *application) createActivationTokenHandler(c echo.Context) error {
 			slog.Error("error sending email", err)
 		}
 	})
-	// Send a 202 Accepted response and confirmation message to the client.
-	env := map[string]interface{}{"message": "an email will be sent to you containing activation instructions"}
-	return c.JSON(http.StatusAccepted, env)
+
+	return c.JSON(http.StatusAccepted, nil)
 }

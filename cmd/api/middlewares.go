@@ -2,7 +2,10 @@ package main
 
 import (
 	"crypto/sha256"
+	"database/sql"
 	"errors"
+	"log/slog"
+	"net/http"
 	"strings"
 	"time"
 
@@ -17,40 +20,41 @@ func (app *application) authenticate(next echo.HandlerFunc) echo.HandlerFunc {
 		authorizationHeader := c.Request().Header.Get("Authorization")
 
 		if authorizationHeader == "" {
-
-			c.Set("user", db.Admin{})
-
-			return next(c)
+			return c.JSON(http.StatusBadRequest, envelope{"error": "missing authentication token"})
 		}
 
 		headerParts := strings.Split(authorizationHeader, " ")
 
 		if len(headerParts) != 2 || headerParts[0] != "Bearer" {
 
-			return c.JSON(401, "invalid or missing authentication token")
+			return c.JSON(http.StatusBadRequest, envelope{"error": "invalid token"})
 
 		}
 
 		token := headerParts[1]
 
 		if Isvalid, err := db.IsValidTokenPlaintext(token); !Isvalid {
-			return c.JSON(401, err)
+			return c.JSON(http.StatusBadRequest, envelope{"error": err})
 		}
 
 		tokenHash := sha256.Sum256([]byte(token))
-		args := db.GetForTokenAdminParams{
+
+		args := db.GetHashTokenForAdminParams{
 			Scope:  db.ScopeAuthentication,
 			Hash:   tokenHash[:],
 			Expiry: time.Now(),
 		}
 
-		admin, err := app.store.GetForTokenAdmin(c.Request().Context(), args)
+		admin, err := app.store.GetHashTokenForAdmin(c.Request().Context(), args)
+
 		if err != nil {
 			switch {
-			case errors.Is(err, db.ErrRecordNotFound):
-				return c.JSON(401, "invalid or missing authentication token")
+			case errors.Is(err, sql.ErrNoRows):
+				slog.Error("error", err)
+				return c.JSON(http.StatusNotFound, envelope{"error": "invalid token"})
 			default:
-				return c.JSON(500, "pkg server error")
+				slog.Error("error", err)
+				return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 			}
 		}
 
@@ -62,21 +66,18 @@ func (app *application) authenticate(next echo.HandlerFunc) echo.HandlerFunc {
 
 }
 
-func (app *application) requireAuthenticatedUser(next echo.HandlerFunc) echo.HandlerFunc {
+func (app *application) requireAuthenticatedAdmin(next echo.HandlerFunc) echo.HandlerFunc {
 
 	return func(c echo.Context) error {
-		user, ok := c.Get("admin").(*db.Admin)
+
+		admin, ok := c.Get("admin").(db.Admin)
 
 		if !ok {
-			return c.JSON(401, "unauthorized you must be authencticated ")
+			return c.JSON(http.StatusBadRequest, envelope{"error": "missing admin from context"})
 		}
 
-		// if user.IsAnonymous() {
-		// 	return c.JSON(401, "unauthorized no anonymous user allowed")
-		// }
-
-		if !user.Activated {
-			return c.JSON(403, "forbidden user account not activated")
+		if !admin.Activated {
+			return c.JSON(http.StatusForbidden, envelope{"error": "admin account not activated"})
 		}
 
 		return next(c)

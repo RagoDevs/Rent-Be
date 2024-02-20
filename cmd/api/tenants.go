@@ -1,7 +1,9 @@
 package main
 
 import (
+	"database/sql"
 	"errors"
+	"log/slog"
 	"net/http"
 	"time"
 
@@ -15,11 +17,11 @@ func (app *application) listTenantsHandler(c echo.Context) error {
 	tenants, err := app.store.GetTenants(c.Request().Context())
 
 	if err != nil {
-		// log error above
-		return c.JSON(http.StatusInternalServerError, map[string]interface{}{"error": "internal server error"})
+		slog.Error("error fetching tenants", err)
+		return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 	}
 
-	return c.JSON(http.StatusOK, map[string]interface{}{"tenants": tenants})
+	return c.JSON(http.StatusOK, envelope{"tenants": tenants})
 
 }
 
@@ -35,43 +37,49 @@ func (app *application) showTenantsHandler(c echo.Context) error {
 
 	if err != nil {
 		switch {
-		case errors.Is(err, db.ErrRecordNotFound):
-			return c.JSON(http.StatusNotFound, map[string]interface{}{"error": "tenant not found"})
+		case errors.Is(err, sql.ErrNoRows):
+			slog.Error("error fetching tenant by id", err)
+			return c.JSON(http.StatusNotFound, envelope{"error": "tenant not found"})
 
 		default:
-			// log error above
-			return c.JSON(http.StatusInternalServerError, map[string]interface{}{"error": "internal server error"})
+			slog.Error("error fetching tenant by id", err)
+			return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 		}
 	}
 
-	return c.JSON(http.StatusOK, map[string]interface{}{"tenant": tenant})
+	return c.JSON(http.StatusOK, envelope{"tenant": tenant})
 }
 
 func (app *application) createTenantHandler(c echo.Context) error {
 
 	var input struct {
-		FirstName      string    `json:"first_name"`
-		LastName       string    `json:"last_name"`
-		Phone          string    `json:"phone"`
-		HouseId        uuid.UUID `json:"house_id"`
-		PersonalIdType string    `json:"personal_id_type"`
-		PersonalId     string    `json:"personal_id"`
-		Active         bool      `json:"active"`
-		Sos            time.Time `json:"sos"`
-		Eos            time.Time `json:"eos"`
+		FirstName      string    `json:"first_name" validate:"required"`
+		LastName       string    `json:"last_name" validate:"required"`
+		Phone          string    `json:"phone" validate:"required"`
+		HouseId        uuid.UUID `json:"house_id" validate:"required"`
+		PersonalIdType string    `json:"personal_id_type" validate:"required"`
+		PersonalId     string    `json:"personal_id" validate:"required"`
+		Active         bool      `json:"active" validate:"required"`
+		Sos            time.Time `json:"sos" validate:"required"`
+		Eos            time.Time `json:"eos" validate:"required"`
 	}
 
 	if err := c.Bind(&input); err != nil {
-		return err
+		return c.JSON(http.StatusBadRequest, envelope{"error": "invalid request payload"})
+	}
+
+	if err := app.validator.Struct(input); err != nil {
+		return c.JSON(http.StatusBadRequest, envelope{"error": err.Error()})
 	}
 
 	house, err := app.store.GetHouseById(c.Request().Context(), input.HouseId)
 
 	if err != nil {
-		return c.JSON(http.StatusNotFound, map[string]interface{}{"error": "house not found"})
+		slog.Error("error fetching house by id", err)
+		return c.JSON(http.StatusNotFound, envelope{"error": "house not found"})
 	}
 	if house.Occupied {
-		return c.JSON(http.StatusConflict, map[string]interface{}{"error": "house is already occupied"})
+		return c.JSON(http.StatusBadRequest, envelope{"error": "house is already occupied"})
 	}
 
 	args := db.CreateTenantParams{
@@ -88,8 +96,8 @@ func (app *application) createTenantHandler(c echo.Context) error {
 
 	err = app.store.CreateTenant(c.Request().Context(), args)
 	if err != nil {
-		// log error above
-		return c.JSON(http.StatusInternalServerError, map[string]interface{}{"error": "internal server error"})
+		slog.Error("error creating tenant", err)
+		return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 	}
 
 	params := db.UpdateHouseByIdParams{
@@ -99,12 +107,12 @@ func (app *application) createTenantHandler(c echo.Context) error {
 	err = app.store.UpdateHouseById(c.Request().Context(), params)
 
 	if err != nil {
-		// log error above
-		return c.JSON(http.StatusInternalServerError, map[string]interface{}{"error": "internal server error"})
+		slog.Error("error updating house by id", err)
+		return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 
 	}
 
-	return c.JSON(http.StatusCreated, map[string]interface{}{"tenant": args})
+	return c.JSON(http.StatusCreated, nil)
 
 }
 
@@ -120,12 +128,13 @@ func (app *application) updateTenantsHandler(c echo.Context) error {
 
 	if err != nil {
 		switch {
-		case errors.Is(err, db.ErrRecordNotFound):
-			return c.JSON(http.StatusNotFound, map[string]interface{}{"error": "tenant not found"})
+		case errors.Is(err, sql.ErrNoRows):
+			slog.Error("error fetching tenant by id", err)
+			return c.JSON(http.StatusNotFound, envelope{"error": "tenant not found"})
 
 		default:
-			// log error above
-			return c.JSON(http.StatusInternalServerError, map[string]interface{}{"error": "internal server error"})
+			slog.Error("error fetching tenant by id", err)
+			return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 		}
 	}
 
@@ -142,7 +151,7 @@ func (app *application) updateTenantsHandler(c echo.Context) error {
 	}
 
 	if err := c.Bind(&input); err != nil {
-		return err
+		return c.JSON(http.StatusBadRequest, envelope{"error": "invalid request payload"})
 	}
 
 	if input.FirstName != nil {
@@ -197,11 +206,11 @@ func (app *application) updateTenantsHandler(c echo.Context) error {
 	err = app.store.UpdateTenant(c.Request().Context(), arg)
 
 	if err != nil {
-		// log error above
-		return c.JSON(http.StatusInternalServerError, map[string]interface{}{"error": "internal server error"})
+		slog.Error("error updating tenant", err)
+		return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 	}
 
-	return c.JSON(http.StatusOK, map[string]interface{}{"tenant": tenant})
+	return c.JSON(http.StatusOK, nil)
 
 }
 
@@ -217,11 +226,12 @@ func (app *application) removeTenant(c echo.Context) error {
 
 	if err != nil {
 		switch {
-		case errors.Is(err, db.ErrRecordNotFound):
-			return c.JSON(http.StatusNotFound, map[string]interface{}{"error": "tenant not found"})
+		case errors.Is(err, sql.ErrNoRows):
+			slog.Error("error fetching tenant by id", err)
+			return c.JSON(http.StatusNotFound, envelope{"error": "tenant not found"})
 		default:
-			// log error above
-			return c.JSON(http.StatusInternalServerError, map[string]interface{}{"error": "internal server error"})
+			slog.Error("error fetching tenant by id", err)
+			return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 		}
 	}
 
@@ -241,8 +251,8 @@ func (app *application) removeTenant(c echo.Context) error {
 	})
 
 	if err != nil {
-		// log error above
-		return c.JSON(http.StatusInternalServerError, map[string]interface{}{"error": "internal server error"})
+		slog.Error("error updating tenant", err)
+		return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 	}
 
 	err = app.store.UpdateHouseById(c.Request().Context(), db.UpdateHouseByIdParams{
@@ -251,10 +261,10 @@ func (app *application) removeTenant(c echo.Context) error {
 	})
 
 	if err != nil {
-		// log error above
-		return c.JSON(http.StatusInternalServerError, map[string]interface{}{"error": "internal server error"})
+		slog.Error("error updating house by id", err)
+		return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 	}
 
-	return c.JSON(http.StatusOK, map[string]interface{}{"tenant": tenant})
+	return c.JSON(http.StatusOK, nil)
 
 }

@@ -19,7 +19,7 @@ type Querier interface {
 	DeletePayment(ctx context.Context, paymentID uuid.UUID) error
 	GetAdminByEmail(ctx context.Context, email string) (Admin, error)
 	GetAllPayments(ctx context.Context) ([]GetAllPaymentsRow, error)
-	GetForTokenAdmin(ctx context.Context, arg GetForTokenAdminParams) (Admin, error)
+	GetHashTokenForAdmin(ctx context.Context, arg GetHashTokenForAdminParams) (Admin, error)
 	GetHouseById(ctx context.Context, houseID uuid.UUID) (House, error)
 	GetHouses(ctx context.Context) ([]House, error)
 	GetPaymentById(ctx context.Context, paymentID uuid.UUID) (GetPaymentByIdRow, error)

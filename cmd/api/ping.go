@@ -8,7 +8,7 @@ import (
 
 func (app *application) ping(c echo.Context) error {
 
-	env := map[string]interface{}{
+	env := envelope{
 		"status": "available",
 		"system_info": map[string]string{
 			"environment": app.config.env,

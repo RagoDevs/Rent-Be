@@ -32,7 +32,7 @@ func (q *Queries) GetAdminByEmail(ctx context.Context, email string) (Admin, err
 	return i, err
 }
 
-const getForTokenAdmin = `-- name: GetForTokenAdmin :one
+const getHashTokenForAdmin = `-- name: GetHashTokenForAdmin :one
 SELECT admins.admin_id, admins.created_at,admins.email, admins.password_hash, admins.activated, admins.version
 FROM admins
 INNER JOIN tokens
@@ -42,14 +42,14 @@ AND tokens.scope = $2
 AND tokens.expiry > $3
 `
 
-type GetForTokenAdminParams struct {
+type GetHashTokenForAdminParams struct {
 	Hash   []byte    `json:"hash"`
 	Scope  string    `json:"scope"`
 	Expiry time.Time `json:"expiry"`
 }
 
-func (q *Queries) GetForTokenAdmin(ctx context.Context, arg GetForTokenAdminParams) (Admin, error) {
-	row := q.db.QueryRowContext(ctx, getForTokenAdmin, arg.Hash, arg.Scope, arg.Expiry)
+func (q *Queries) GetHashTokenForAdmin(ctx context.Context, arg GetHashTokenForAdminParams) (Admin, error) {
+	row := q.db.QueryRowContext(ctx, getHashTokenForAdmin, arg.Hash, arg.Scope, arg.Expiry)
 	var i Admin
 	err := row.Scan(
 		&i.AdminID,
