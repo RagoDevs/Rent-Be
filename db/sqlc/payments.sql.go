@@ -13,7 +13,7 @@ import (
 )
 
 const createPayment = `-- name: CreatePayment :exec
-INSERT INTO payments (tenant_id,period,start_date,end_date, renewed) VALUES ($1,$2,$3,$4,$5)
+INSERT INTO payment (tenant_id, period,start_date, end_date, renewed) VALUES ($1,$2,$3,$4,$5)
 `
 
 type CreatePaymentParams struct {
@@ -36,25 +36,26 @@ func (q *Queries) CreatePayment(ctx context.Context, arg CreatePaymentParams) er
 }
 
 const deletePayment = `-- name: DeletePayment :exec
-DELETE FROM payments WHERE payment_id = $1
+DELETE FROM payment WHERE id = $1
 `
 
-func (q *Queries) DeletePayment(ctx context.Context, paymentID uuid.UUID) error {
-	_, err := q.db.ExecContext(ctx, deletePayment, paymentID)
+func (q *Queries) DeletePayment(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.ExecContext(ctx, deletePayment, id)
 	return err
 }
 
 const getAllPayments = `-- name: GetAllPayments :many
-SELECT payment_id,tenant_id, period, start_date, end_date, renewed FROM payments
+SELECT id,tenant_id, period, start_date, end_date, renewed, version FROM payment
 `
 
 type GetAllPaymentsRow struct {
-	PaymentID uuid.UUID `json:"payment_id"`
+	ID        uuid.UUID `json:"id"`
 	TenantID  uuid.UUID `json:"tenant_id"`
 	Period    int32     `json:"period"`
 	StartDate time.Time `json:"start_date"`
 	EndDate   time.Time `json:"end_date"`
 	Renewed   bool      `json:"renewed"`
+	Version   uuid.UUID `json:"version"`
 }
 
 func (q *Queries) GetAllPayments(ctx context.Context) ([]GetAllPaymentsRow, error) {
@@ -67,12 +68,13 @@ func (q *Queries) GetAllPayments(ctx context.Context) ([]GetAllPaymentsRow, erro
 	for rows.Next() {
 		var i GetAllPaymentsRow
 		if err := rows.Scan(
-			&i.PaymentID,
+			&i.ID,
 			&i.TenantID,
 			&i.Period,
 			&i.StartDate,
 			&i.EndDate,
 			&i.Renewed,
+			&i.Version,
 		); err != nil {
 			return nil, err
 		}
@@ -88,65 +90,69 @@ func (q *Queries) GetAllPayments(ctx context.Context) ([]GetAllPaymentsRow, erro
 }
 
 const getPaymentById = `-- name: GetPaymentById :one
-SELECT payment_id,tenant_id, period, start_date, end_date, renewed FROM payments 
-WHERE payment_id = $1
+SELECT id, tenant_id, period, start_date, end_date, renewed , version  FROM payment
+WHERE id = $1
 `
 
 type GetPaymentByIdRow struct {
-	PaymentID uuid.UUID `json:"payment_id"`
+	ID        uuid.UUID `json:"id"`
 	TenantID  uuid.UUID `json:"tenant_id"`
 	Period    int32     `json:"period"`
 	StartDate time.Time `json:"start_date"`
 	EndDate   time.Time `json:"end_date"`
 	Renewed   bool      `json:"renewed"`
+	Version   uuid.UUID `json:"version"`
 }
 
-func (q *Queries) GetPaymentById(ctx context.Context, paymentID uuid.UUID) (GetPaymentByIdRow, error) {
-	row := q.db.QueryRowContext(ctx, getPaymentById, paymentID)
+func (q *Queries) GetPaymentById(ctx context.Context, id uuid.UUID) (GetPaymentByIdRow, error) {
+	row := q.db.QueryRowContext(ctx, getPaymentById, id)
 	var i GetPaymentByIdRow
 	err := row.Scan(
-		&i.PaymentID,
+		&i.ID,
 		&i.TenantID,
 		&i.Period,
 		&i.StartDate,
 		&i.EndDate,
 		&i.Renewed,
+		&i.Version,
 	)
 	return i, err
 }
 
 const getUnrenewedByTenantId = `-- name: GetUnrenewedByTenantId :one
-SELECT payment_id,tenant_id, period, start_date, end_date, renewed FROM payments 
+SELECT id, tenant_id, period, start_date, end_date, renewed, version FROM payment 
 WHERE renewed = false and tenant_id = $1
 `
 
 type GetUnrenewedByTenantIdRow struct {
-	PaymentID uuid.UUID `json:"payment_id"`
+	ID        uuid.UUID `json:"id"`
 	TenantID  uuid.UUID `json:"tenant_id"`
 	Period    int32     `json:"period"`
 	StartDate time.Time `json:"start_date"`
 	EndDate   time.Time `json:"end_date"`
 	Renewed   bool      `json:"renewed"`
+	Version   uuid.UUID `json:"version"`
 }
 
 func (q *Queries) GetUnrenewedByTenantId(ctx context.Context, tenantID uuid.UUID) (GetUnrenewedByTenantIdRow, error) {
 	row := q.db.QueryRowContext(ctx, getUnrenewedByTenantId, tenantID)
 	var i GetUnrenewedByTenantIdRow
 	err := row.Scan(
-		&i.PaymentID,
+		&i.ID,
 		&i.TenantID,
 		&i.Period,
 		&i.StartDate,
 		&i.EndDate,
 		&i.Renewed,
+		&i.Version,
 	)
 	return i, err
 }
 
 const updatePayment = `-- name: UpdatePayment :exec
-UPDATE payments
-SET period = $1, start_date = $2, end_date = $3, renewed = $4
-WHERE payment_id = $5
+UPDATE payment
+SET period = $1, start_date = $2, end_date = $3, renewed = $4, version = uuid_generate_v4()
+WHERE id = $5 AND version = $6
 `
 
 type UpdatePaymentParams struct {
@@ -154,7 +160,8 @@ type UpdatePaymentParams struct {
 	StartDate time.Time `json:"start_date"`
 	EndDate   time.Time `json:"end_date"`
 	Renewed   bool      `json:"renewed"`
-	PaymentID uuid.UUID `json:"payment_id"`
+	ID        uuid.UUID `json:"id"`
+	Version   uuid.UUID `json:"version"`
 }
 
 func (q *Queries) UpdatePayment(ctx context.Context, arg UpdatePaymentParams) error {
@@ -163,7 +170,8 @@ func (q *Queries) UpdatePayment(ctx context.Context, arg UpdatePaymentParams) er
 		arg.StartDate,
 		arg.EndDate,
 		arg.Renewed,
-		arg.PaymentID,
+		arg.ID,
+		arg.Version,
 	)
 	return err
 }

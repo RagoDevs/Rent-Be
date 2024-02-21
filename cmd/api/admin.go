@@ -34,13 +34,13 @@ func (app *application) registerUserHandler(c echo.Context) error {
 		return err
 	}
 
-	args := db.InsertAdminParams{
+	args := db.CreateAdminParams{
 		Email:        input.Email,
 		PasswordHash: pwd.Hash,
 		Activated:    false,
 	}
 
-	a, err := app.store.InsertAdmin(c.Request().Context(), args)
+	a, err := app.store.CreateAdmin(c.Request().Context(), args)
 
 	if err != nil {
 		switch {
@@ -55,7 +55,7 @@ func (app *application) registerUserHandler(c echo.Context) error {
 
 	}
 
-	token, err := app.store.NewToken(a.AdminID, 3*24*time.Hour, db.ScopeActivation)
+	token, err := app.store.NewToken(a.ID, 3*24*time.Hour, db.ScopeActivation)
 	if err != nil {
 		slog.Error("error generating new token", err)
 		return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
@@ -64,7 +64,7 @@ func (app *application) registerUserHandler(c echo.Context) error {
 	app.background(func() {
 		data := map[string]interface{}{
 			"activationToken": token.Plaintext,
-			"id":              a.AdminID,
+			"id":              a.ID,
 		}
 
 		err = app.mailer.Send(input.Email, "admin_welcome.tmpl", data)
@@ -112,7 +112,7 @@ func (app *application) activateUserHandler(c echo.Context) error {
 
 	param := db.UpdateAdminParams{
 
-		AdminID:      admin.AdminID,
+		ID:      admin.ID,
 		Email:        admin.Email,
 		Activated:    true,
 		PasswordHash: admin.PasswordHash,
@@ -134,7 +134,7 @@ func (app *application) activateUserHandler(c echo.Context) error {
 
 	a := db.DeleteAllTokenParams{
 		Scope:   db.ScopeActivation,
-		AdminID: admin.AdminID,
+		ID: admin.ID,
 	}
 	err = app.store.DeleteAllToken(c.Request().Context(), a)
 
@@ -188,7 +188,7 @@ func (app *application) updateUserPasswordHandler(c echo.Context) error {
 		Email:        admin.Email,
 		PasswordHash: pwd.Hash,
 		Activated:    true,
-		AdminID:      admin.AdminID,
+		ID:      admin.ID,
 		Version:      admin.Version,
 	})
 
@@ -204,7 +204,7 @@ func (app *application) updateUserPasswordHandler(c echo.Context) error {
 
 	d := db.DeleteAllTokenParams{
 		Scope:   db.ScopePasswordReset,
-		AdminID: admin.AdminID,
+		ID: admin.ID,
 	}
 	err = app.store.DeleteAllToken(c.Request().Context(), d)
 	

@@ -75,10 +75,10 @@ func (s *SQLStore) NewToken(id uuid.UUID, ttl time.Duration, scope string) (*Tok
 	}
 
 	args := CreateTokenParams{
-		Hash:    token.Hash,
-		AdminID: id,
-		Expiry:  token.Expiry,
-		Scope:   token.Scope,
+		Hash:   token.Hash,
+		ID:     id,
+		Expiry: token.Expiry,
+		Scope:  token.Scope,
 	}
 
 	// context with tome of 5 seconds

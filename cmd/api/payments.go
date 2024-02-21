@@ -96,7 +96,7 @@ func (app *application) createPaymentHandler(c echo.Context) error {
 		Active:         tenant.Active,
 		Sos:            tenant.Sos,
 		Eos:            tenant.Eos,
-		TenantID:       tenant.TenantID,
+		ID:       tenant.ID,
 	}
 
 	err = app.store.UpdateTenant(c.Request().Context(), args)
@@ -123,7 +123,7 @@ func (app *application) createPaymentHandler(c echo.Context) error {
 	payment.Renewed = true
 
 	params := db.UpdatePaymentParams{
-		PaymentID: payment.PaymentID,
+		ID: payment.ID,
 		Period:    payment.Period,
 		StartDate: payment.StartDate,
 		EndDate:   payment.EndDate,
@@ -206,7 +206,7 @@ func (app *application) updatPaymentHandler(c echo.Context) error {
 	}
 
 	args := db.UpdatePaymentParams{
-		PaymentID: payment.PaymentID,
+		ID: payment.ID,
 		Period:    payment.Period,
 		StartDate: payment.StartDate,
 		EndDate:   payment.EndDate,

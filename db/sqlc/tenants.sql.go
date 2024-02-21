@@ -13,7 +13,9 @@ import (
 )
 
 const createTenant = `-- name: CreateTenant :exec
-INSERT INTO TENANTS (first_name, last_name, house_id, phone, personal_id_type,personal_id,active,sos,eos) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+INSERT INTO TENANT
+(first_name, last_name, house_id, phone, personal_id_type,personal_id, active, sos, eos) 
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 `
 
 type CreateTenantParams struct {
@@ -44,13 +46,14 @@ func (q *Queries) CreateTenant(ctx context.Context, arg CreateTenantParams) erro
 }
 
 const getTenantById = `-- name: GetTenantById :one
-SELECT tenant_id, first_name, last_name, house_id, phone, personal_id_type,personal_id,active,sos,eos FROM
-tenants
-WHERE tenant_id = $1
+SELECT id, first_name, last_name, house_id, 
+phone, personal_id_type,personal_id, active, sos, eos, version 
+FROM tenant
+WHERE id = $1
 `
 
 type GetTenantByIdRow struct {
-	TenantID       uuid.UUID `json:"tenant_id"`
+	ID             uuid.UUID `json:"id"`
 	FirstName      string    `json:"first_name"`
 	LastName       string    `json:"last_name"`
 	HouseID        uuid.UUID `json:"house_id"`
@@ -60,13 +63,14 @@ type GetTenantByIdRow struct {
 	Active         bool      `json:"active"`
 	Sos            time.Time `json:"sos"`
 	Eos            time.Time `json:"eos"`
+	Version        uuid.UUID `json:"version"`
 }
 
-func (q *Queries) GetTenantById(ctx context.Context, tenantID uuid.UUID) (GetTenantByIdRow, error) {
-	row := q.db.QueryRowContext(ctx, getTenantById, tenantID)
+func (q *Queries) GetTenantById(ctx context.Context, id uuid.UUID) (GetTenantByIdRow, error) {
+	row := q.db.QueryRowContext(ctx, getTenantById, id)
 	var i GetTenantByIdRow
 	err := row.Scan(
-		&i.TenantID,
+		&i.ID,
 		&i.FirstName,
 		&i.LastName,
 		&i.HouseID,
@@ -76,16 +80,19 @@ func (q *Queries) GetTenantById(ctx context.Context, tenantID uuid.UUID) (GetTen
 		&i.Active,
 		&i.Sos,
 		&i.Eos,
+		&i.Version,
 	)
 	return i, err
 }
 
 const getTenants = `-- name: GetTenants :many
-SELECT tenant_id, first_name, last_name, house_id, phone, personal_id_type,personal_id,active,sos,eos FROM tenants
+SELECT id, first_name, last_name, house_id, 
+phone, personal_id_type,personal_id, active, sos, eos 
+FROM tenant
 `
 
 type GetTenantsRow struct {
-	TenantID       uuid.UUID `json:"tenant_id"`
+	ID             uuid.UUID `json:"id"`
 	FirstName      string    `json:"first_name"`
 	LastName       string    `json:"last_name"`
 	HouseID        uuid.UUID `json:"house_id"`
@@ -107,7 +114,7 @@ func (q *Queries) GetTenants(ctx context.Context) ([]GetTenantsRow, error) {
 	for rows.Next() {
 		var i GetTenantsRow
 		if err := rows.Scan(
-			&i.TenantID,
+			&i.ID,
 			&i.FirstName,
 			&i.LastName,
 			&i.HouseID,
@@ -132,9 +139,9 @@ func (q *Queries) GetTenants(ctx context.Context) ([]GetTenantsRow, error) {
 }
 
 const updateTenant = `-- name: UpdateTenant :exec
-UPDATE tenants 
-SET first_name = $1, last_name = $2 ,house_id = $3, phone = $4 ,personal_id_type = $5 ,personal_id = $6 ,active = $7, sos=$8 ,eos = $9
-WHERE tenant_id = $10
+UPDATE tenant 
+SET first_name = $1, last_name = $2 ,house_id = $3, phone = $4 ,personal_id_type = $5 ,personal_id = $6 ,active = $7, sos=$8 ,eos = $9, version = uuid_generate_v4()
+WHERE id = $10 AND version = $11
 `
 
 type UpdateTenantParams struct {
@@ -147,7 +154,8 @@ type UpdateTenantParams struct {
 	Active         bool      `json:"active"`
 	Sos            time.Time `json:"sos"`
 	Eos            time.Time `json:"eos"`
-	TenantID       uuid.UUID `json:"tenant_id"`
+	ID             uuid.UUID `json:"id"`
+	Version        uuid.UUID `json:"version"`
 }
 
 func (q *Queries) UpdateTenant(ctx context.Context, arg UpdateTenantParams) error {
@@ -161,7 +169,8 @@ func (q *Queries) UpdateTenant(ctx context.Context, arg UpdateTenantParams) erro
 		arg.Active,
 		arg.Sos,
 		arg.Eos,
-		arg.TenantID,
+		arg.ID,
+		arg.Version,
 	)
 	return err
 }

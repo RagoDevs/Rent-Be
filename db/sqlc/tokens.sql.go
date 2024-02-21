@@ -13,20 +13,20 @@ import (
 )
 
 const createToken = `-- name: CreateToken :exec
-INSERT INTO tokens (hash, admin_id, expiry, scope) VALUES ($1, $2, $3, $4)
+INSERT INTO token (hash, id, expiry, scope) VALUES ($1, $2, $3, $4)
 `
 
 type CreateTokenParams struct {
-	Hash    []byte    `json:"hash"`
-	AdminID uuid.UUID `json:"admin_id"`
-	Expiry  time.Time `json:"expiry"`
-	Scope   string    `json:"scope"`
+	Hash   []byte    `json:"hash"`
+	ID     uuid.UUID `json:"id"`
+	Expiry time.Time `json:"expiry"`
+	Scope  string    `json:"scope"`
 }
 
 func (q *Queries) CreateToken(ctx context.Context, arg CreateTokenParams) error {
 	_, err := q.db.ExecContext(ctx, createToken,
 		arg.Hash,
-		arg.AdminID,
+		arg.ID,
 		arg.Expiry,
 		arg.Scope,
 	)
@@ -34,15 +34,15 @@ func (q *Queries) CreateToken(ctx context.Context, arg CreateTokenParams) error 
 }
 
 const deleteAllToken = `-- name: DeleteAllToken :exec
-DELETE FROM tokens WHERE scope = $1 AND admin_id = $2
+DELETE FROM token WHERE scope = $1 AND id = $2
 `
 
 type DeleteAllTokenParams struct {
-	Scope   string    `json:"scope"`
-	AdminID uuid.UUID `json:"admin_id"`
+	Scope string    `json:"scope"`
+	ID    uuid.UUID `json:"id"`
 }
 
 func (q *Queries) DeleteAllToken(ctx context.Context, arg DeleteAllTokenParams) error {
-	_, err := q.db.ExecContext(ctx, deleteAllToken, arg.Scope, arg.AdminID)
+	_, err := q.db.ExecContext(ctx, deleteAllToken, arg.Scope, arg.ID)
 	return err
 }

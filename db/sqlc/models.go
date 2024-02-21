@@ -11,48 +11,51 @@ import (
 )
 
 type Admin struct {
-	AdminID      uuid.UUID `json:"admin_id"`
+	ID           uuid.UUID `json:"id"`
 	CreatedAt    time.Time `json:"created_at"`
 	Email        string    `json:"email"`
 	PasswordHash []byte    `json:"password_hash"`
 	Activated    bool      `json:"activated"`
-	Version      int32     `json:"version"`
+	Version      uuid.UUID `json:"version"`
 }
 
 type House struct {
-	HouseID   uuid.UUID `json:"house_id"`
+	ID        uuid.UUID `json:"id"`
 	Location  string    `json:"location"`
 	Block     string    `json:"block"`
 	Partition int16     `json:"partition"`
 	Occupied  bool      `json:"occupied"`
+	Version   uuid.UUID `json:"version"`
 }
 
 type Payment struct {
-	PaymentID uuid.UUID `json:"payment_id"`
+	ID        uuid.UUID `json:"id"`
 	TenantID  uuid.UUID `json:"tenant_id"`
 	Period    int32     `json:"period"`
 	StartDate time.Time `json:"start_date"`
 	Renewed   bool      `json:"renewed"`
 	EndDate   time.Time `json:"end_date"`
+	Version   uuid.UUID `json:"version"`
 }
 
 type Tenant struct {
-	TenantID       uuid.UUID `json:"tenant_id"`
+	ID             uuid.UUID `json:"id"`
 	FirstName      string    `json:"first_name"`
 	LastName       string    `json:"last_name"`
 	Phone          string    `json:"phone"`
 	HouseID        uuid.UUID `json:"house_id"`
 	PersonalIDType string    `json:"personal_id_type"`
 	PersonalID     string    `json:"personal_id"`
-	Photo          []byte    `json:"photo"`
+	Photo          string    `json:"photo"`
 	Active         bool      `json:"active"`
 	Sos            time.Time `json:"sos"`
 	Eos            time.Time `json:"eos"`
+	Version        uuid.UUID `json:"version"`
 }
 
 type Token struct {
-	Hash    []byte    `json:"hash"`
-	AdminID uuid.UUID `json:"admin_id"`
-	Expiry  time.Time `json:"expiry"`
-	Scope   string    `json:"scope"`
+	Hash   []byte    `json:"hash"`
+	ID     uuid.UUID `json:"id"`
+	Expiry time.Time `json:"expiry"`
+	Scope  string    `json:"scope"`
 }

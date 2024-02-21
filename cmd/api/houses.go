@@ -114,7 +114,7 @@ func (app *application) updateHouseHandler(c echo.Context) error {
 	house.Occupied = input.Occupied
 
 	args := db.UpdateHouseByIdParams{
-		HouseID:  house.HouseID,
+		ID:  house.ID,
 		Occupied: house.Occupied,
 	}
 	

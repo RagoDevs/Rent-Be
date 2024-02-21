@@ -1,16 +1,18 @@
 -- name: CreateHouse :one
-INSERT INTO houses (location,block,partition, occupied) VALUES ($1,$2,$3,$4) RETURNING house_id;
+INSERT INTO house (location, block, partition, occupied) VALUES ($1,$2,$3,$4) RETURNING id;
 
 -- name: GetHouses :many
-SELECT house_id,location, block, partition , occupied FROM houses;
+SELECT id,location, block, partition , occupied FROM house;
 
 -- name: UpdateHouseById :exec
-UPDATE houses
-SET occupied = $1
-WHERE house_id = $2;
+UPDATE house
+SET occupied = $1, version = uuid_generate_v4()
+WHERE id = $2 AND version = $3;
 
 -- name: GetHouseById :one
-SELECT house_id,location, block, partition , Occupied FROM houses
-WHERE house_id = $1;
+SELECT id,location, block, partition , Occupied FROM house
+WHERE id = $1;
+
+
 
 

@@ -12,9 +12,34 @@ import (
 	"github.com/google/uuid"
 )
 
+const createAdmin = `-- name: CreateAdmin :one
+INSERT INTO admin (email, password_hash, activated)
+VALUES ($1, $2, $3 )
+RETURNING id, created_at, version
+`
+
+type CreateAdminParams struct {
+	Email        string `json:"email"`
+	PasswordHash []byte `json:"password_hash"`
+	Activated    bool   `json:"activated"`
+}
+
+type CreateAdminRow struct {
+	ID        uuid.UUID `json:"id"`
+	CreatedAt time.Time `json:"created_at"`
+	Version   uuid.UUID `json:"version"`
+}
+
+func (q *Queries) CreateAdmin(ctx context.Context, arg CreateAdminParams) (CreateAdminRow, error) {
+	row := q.db.QueryRowContext(ctx, createAdmin, arg.Email, arg.PasswordHash, arg.Activated)
+	var i CreateAdminRow
+	err := row.Scan(&i.ID, &i.CreatedAt, &i.Version)
+	return i, err
+}
+
 const getAdminByEmail = `-- name: GetAdminByEmail :one
-SELECT admin_id, created_at, email, password_hash, activated, version
-FROM admins
+SELECT id, created_at, email, password_hash, activated, version
+FROM admin
 WHERE email = $1
 `
 
@@ -22,7 +47,7 @@ func (q *Queries) GetAdminByEmail(ctx context.Context, email string) (Admin, err
 	row := q.db.QueryRowContext(ctx, getAdminByEmail, email)
 	var i Admin
 	err := row.Scan(
-		&i.AdminID,
+		&i.ID,
 		&i.CreatedAt,
 		&i.Email,
 		&i.PasswordHash,
@@ -33,13 +58,13 @@ func (q *Queries) GetAdminByEmail(ctx context.Context, email string) (Admin, err
 }
 
 const getHashTokenForAdmin = `-- name: GetHashTokenForAdmin :one
-SELECT admins.admin_id, admins.created_at,admins.email, admins.password_hash, admins.activated, admins.version
-FROM admins
-INNER JOIN tokens
-ON admins.admin_id = tokens.admin_id
-WHERE tokens.hash = $1
-AND tokens.scope = $2
-AND tokens.expiry > $3
+SELECT admin.id, admin.created_at,admin.email, admin.password_hash,admin.version, admin.activated
+FROM admin
+INNER JOIN token
+ON admin.id = tokens.id
+WHERE token.hash = $1
+AND token.scope = $2
+AND token.expiry > $3
 `
 
 type GetHashTokenForAdminParams struct {
@@ -48,49 +73,33 @@ type GetHashTokenForAdminParams struct {
 	Expiry time.Time `json:"expiry"`
 }
 
-func (q *Queries) GetHashTokenForAdmin(ctx context.Context, arg GetHashTokenForAdminParams) (Admin, error) {
+type GetHashTokenForAdminRow struct {
+	ID           uuid.UUID `json:"id"`
+	CreatedAt    time.Time `json:"created_at"`
+	Email        string    `json:"email"`
+	PasswordHash []byte    `json:"password_hash"`
+	Version      uuid.UUID `json:"version"`
+	Activated    bool      `json:"activated"`
+}
+
+func (q *Queries) GetHashTokenForAdmin(ctx context.Context, arg GetHashTokenForAdminParams) (GetHashTokenForAdminRow, error) {
 	row := q.db.QueryRowContext(ctx, getHashTokenForAdmin, arg.Hash, arg.Scope, arg.Expiry)
-	var i Admin
+	var i GetHashTokenForAdminRow
 	err := row.Scan(
-		&i.AdminID,
+		&i.ID,
 		&i.CreatedAt,
 		&i.Email,
 		&i.PasswordHash,
-		&i.Activated,
 		&i.Version,
+		&i.Activated,
 	)
 	return i, err
 }
 
-const insertAdmin = `-- name: InsertAdmin :one
-INSERT INTO admins (email, password_hash, activated)
-VALUES ($1, $2, $3 )
-RETURNING admin_id, created_at, version
-`
-
-type InsertAdminParams struct {
-	Email        string `json:"email"`
-	PasswordHash []byte `json:"password_hash"`
-	Activated    bool   `json:"activated"`
-}
-
-type InsertAdminRow struct {
-	AdminID   uuid.UUID `json:"admin_id"`
-	CreatedAt time.Time `json:"created_at"`
-	Version   int32     `json:"version"`
-}
-
-func (q *Queries) InsertAdmin(ctx context.Context, arg InsertAdminParams) (InsertAdminRow, error) {
-	row := q.db.QueryRowContext(ctx, insertAdmin, arg.Email, arg.PasswordHash, arg.Activated)
-	var i InsertAdminRow
-	err := row.Scan(&i.AdminID, &i.CreatedAt, &i.Version)
-	return i, err
-}
-
 const updateAdmin = `-- name: UpdateAdmin :one
-UPDATE admins
-SET email = $1, password_hash = $2, activated = $3, version = version + 1
-WHERE admin_id = $4 AND version = $5
+UPDATE admin
+SET email = $1, password_hash = $2, activated = $3, version = uuid_generate_v4()
+WHERE id = $4 AND version = $5
 RETURNING version
 `
 
@@ -98,19 +107,19 @@ type UpdateAdminParams struct {
 	Email        string    `json:"email"`
 	PasswordHash []byte    `json:"password_hash"`
 	Activated    bool      `json:"activated"`
-	AdminID      uuid.UUID `json:"admin_id"`
-	Version      int32     `json:"version"`
+	ID           uuid.UUID `json:"id"`
+	Version      uuid.UUID `json:"version"`
 }
 
-func (q *Queries) UpdateAdmin(ctx context.Context, arg UpdateAdminParams) (int32, error) {
+func (q *Queries) UpdateAdmin(ctx context.Context, arg UpdateAdminParams) (uuid.UUID, error) {
 	row := q.db.QueryRowContext(ctx, updateAdmin,
 		arg.Email,
 		arg.PasswordHash,
 		arg.Activated,
-		arg.AdminID,
+		arg.ID,
 		arg.Version,
 	)
-	var version int32
+	var version uuid.UUID
 	err := row.Scan(&version)
 	return version, err
 }

@@ -57,7 +57,7 @@ func (app *application) createAuthenticationTokenHandler(c echo.Context) error {
 		return c.JSON(http.StatusUnauthorized, envelope{"error": "invalid email address or password"})
 	}
 
-	token, err := app.store.NewToken(admin.AdminID, 3*24*time.Hour, db.ScopeAuthentication)
+	token, err := app.store.NewToken(admin.ID, 3*24*time.Hour, db.ScopeAuthentication)
 	if err != nil {
 		slog.Error("error generating new token", err)
 		return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
@@ -93,7 +93,7 @@ func (app *application) createPasswordResetTokenHandler(c echo.Context) error {
 		return c.JSON(http.StatusForbidden, envelope{"errors": "account not activated"})
 	}
 
-	token, err := app.store.NewToken(admin.AdminID, 45*time.Minute, db.ScopePasswordReset)
+	token, err := app.store.NewToken(admin.ID, 45*time.Minute, db.ScopePasswordReset)
 	if err != nil {
 		slog.Error("error generating new token", err)
 		return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
@@ -139,7 +139,7 @@ func (app *application) createActivationTokenHandler(c echo.Context) error {
 		return c.JSON(http.StatusForbidden, envelope{"errors": "account not activated"})
 	}
 
-	token, err := app.store.NewToken(admin.AdminID, 3*24*time.Hour, db.ScopeActivation)
+	token, err := app.store.NewToken(admin.ID, 3*24*time.Hour, db.ScopeActivation)
 	if err != nil {
 		slog.Error("error generating new token", err)
 		return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})

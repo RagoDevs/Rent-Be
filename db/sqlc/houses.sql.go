@@ -12,7 +12,7 @@ import (
 )
 
 const createHouse = `-- name: CreateHouse :one
-INSERT INTO houses (location,block,partition, occupied) VALUES ($1,$2,$3,$4) RETURNING house_id
+INSERT INTO house (location, block, partition, occupied) VALUES ($1,$2,$3,$4) RETURNING id
 `
 
 type CreateHouseParams struct {
@@ -29,21 +29,29 @@ func (q *Queries) CreateHouse(ctx context.Context, arg CreateHouseParams) (uuid.
 		arg.Partition,
 		arg.Occupied,
 	)
-	var house_id uuid.UUID
-	err := row.Scan(&house_id)
-	return house_id, err
+	var id uuid.UUID
+	err := row.Scan(&id)
+	return id, err
 }
 
 const getHouseById = `-- name: GetHouseById :one
-SELECT house_id,location, block, partition , Occupied FROM houses
-WHERE house_id = $1
+SELECT id,location, block, partition , Occupied FROM house
+WHERE id = $1
 `
 
-func (q *Queries) GetHouseById(ctx context.Context, houseID uuid.UUID) (House, error) {
-	row := q.db.QueryRowContext(ctx, getHouseById, houseID)
-	var i House
+type GetHouseByIdRow struct {
+	ID        uuid.UUID `json:"id"`
+	Location  string    `json:"location"`
+	Block     string    `json:"block"`
+	Partition int16     `json:"partition"`
+	Occupied  bool      `json:"occupied"`
+}
+
+func (q *Queries) GetHouseById(ctx context.Context, id uuid.UUID) (GetHouseByIdRow, error) {
+	row := q.db.QueryRowContext(ctx, getHouseById, id)
+	var i GetHouseByIdRow
 	err := row.Scan(
-		&i.HouseID,
+		&i.ID,
 		&i.Location,
 		&i.Block,
 		&i.Partition,
@@ -53,20 +61,28 @@ func (q *Queries) GetHouseById(ctx context.Context, houseID uuid.UUID) (House, e
 }
 
 const getHouses = `-- name: GetHouses :many
-SELECT house_id,location, block, partition , occupied FROM houses
+SELECT id,location, block, partition , occupied FROM house
 `
 
-func (q *Queries) GetHouses(ctx context.Context) ([]House, error) {
+type GetHousesRow struct {
+	ID        uuid.UUID `json:"id"`
+	Location  string    `json:"location"`
+	Block     string    `json:"block"`
+	Partition int16     `json:"partition"`
+	Occupied  bool      `json:"occupied"`
+}
+
+func (q *Queries) GetHouses(ctx context.Context) ([]GetHousesRow, error) {
 	rows, err := q.db.QueryContext(ctx, getHouses)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []House{}
+	items := []GetHousesRow{}
 	for rows.Next() {
-		var i House
+		var i GetHousesRow
 		if err := rows.Scan(
-			&i.HouseID,
+			&i.ID,
 			&i.Location,
 			&i.Block,
 			&i.Partition,
@@ -86,17 +102,18 @@ func (q *Queries) GetHouses(ctx context.Context) ([]House, error) {
 }
 
 const updateHouseById = `-- name: UpdateHouseById :exec
-UPDATE houses
-SET occupied = $1
-WHERE house_id = $2
+UPDATE house
+SET occupied = $1, version = uuid_generate_v4()
+WHERE id = $2 AND version = $3
 `
 
 type UpdateHouseByIdParams struct {
 	Occupied bool      `json:"occupied"`
-	HouseID  uuid.UUID `json:"house_id"`
+	ID       uuid.UUID `json:"id"`
+	Version  uuid.UUID `json:"version"`
 }
 
 func (q *Queries) UpdateHouseById(ctx context.Context, arg UpdateHouseByIdParams) error {
-	_, err := q.db.ExecContext(ctx, updateHouseById, arg.Occupied, arg.HouseID)
+	_, err := q.db.ExecContext(ctx, updateHouseById, arg.Occupied, arg.ID, arg.Version)
 	return err
 }

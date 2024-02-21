@@ -102,7 +102,7 @@ func (app *application) createTenantHandler(c echo.Context) error {
 
 	params := db.UpdateHouseByIdParams{
 		Occupied: true,
-		HouseID:  input.HouseId,
+		ID:  input.HouseId,
 	}
 	err = app.store.UpdateHouseById(c.Request().Context(), params)
 
@@ -201,7 +201,7 @@ func (app *application) updateTenantsHandler(c echo.Context) error {
 		Active:         tenant.Active,
 		Sos:            tenant.Sos,
 		Eos:            tenant.Eos,
-		TenantID:       tenant.TenantID,
+		ID:       tenant.ID,
 	}
 	err = app.store.UpdateTenant(c.Request().Context(), arg)
 
@@ -247,7 +247,7 @@ func (app *application) removeTenant(c echo.Context) error {
 		Active:         tenant.Active,
 		Sos:            tenant.Sos,
 		Eos:            tenant.Eos,
-		TenantID:       tenant.TenantID,
+		ID:       tenant.ID,
 	})
 
 	if err != nil {
@@ -257,7 +257,7 @@ func (app *application) removeTenant(c echo.Context) error {
 
 	err = app.store.UpdateHouseById(c.Request().Context(), db.UpdateHouseByIdParams{
 		Occupied: false,
-		HouseID:  tenant.HouseID,
+		ID:  tenant.HouseID,
 	})
 
 	if err != nil {
