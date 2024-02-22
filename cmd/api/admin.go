@@ -12,7 +12,7 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-func (app *application) registerUserHandler(c echo.Context) error {
+func (app *application) registerAdminHandler(c echo.Context) error {
 
 	var input struct {
 		Email    string `json:"email" validate:"required,email"`
@@ -80,7 +80,7 @@ func (app *application) registerUserHandler(c echo.Context) error {
 	return c.JSON(http.StatusCreated, nil)
 }
 
-func (app *application) activateUserHandler(c echo.Context) error {
+func (app *application) activateAdminHandler(c echo.Context) error {
 
 	var input struct {
 		TokenPlaintext string `json:"token" validate:"required,len=26"`
@@ -150,7 +150,7 @@ func (app *application) activateUserHandler(c echo.Context) error {
 	return c.JSON(http.StatusOK, nil)
 }
 
-func (app *application) updateUserPasswordHandler(c echo.Context) error {
+func (app *application) updateAdminPasswordHandler(c echo.Context) error {
 
 	var input struct {
 		Password       string `json:"password" validate:"required,min=8"`

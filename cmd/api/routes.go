@@ -25,14 +25,14 @@ func (app *application) routes() http.Handler {
 
 	// User Routes
 
-	e.POST("/v1/admin", app.registerUserHandler)
-	e.PUT("/v1/admin/activate", app.activateUserHandler)
+	e.POST("/v1/admin", app.registerAdminHandler)
+	e.PUT("/v1/admin/activate", app.activateAdminHandler)
 	e.POST("/v1/login", app.createAuthenticationTokenHandler)
 	e.POST("/v1/token/resend/activation", app.createActivationTokenHandler)
 
 	// password management
 	e.GET("/v1/token/passwordreset", app.createPasswordResetTokenHandler)
-	e.PUT("/v1/admin/password", app.updateUserPasswordHandler)
+	e.PUT("/v1/admin/password", app.updateAdminPasswordHandler)
 
 	g := e.Group("/v1/auth")
 
