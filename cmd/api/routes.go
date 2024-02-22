@@ -30,7 +30,6 @@ func (app *application) routes() http.Handler {
 	e.POST("/v1/login", app.createAuthenticationTokenHandler)
 	e.POST("/v1/token/activation", app.createActivationTokenHandler)
 
-
 	// password management
 	e.GET("/v1/token/passwordreset", app.createPasswordResetTokenHandler)
 	e.PUT("/v1/admin/password", app.updateUserPasswordHandler)
@@ -39,28 +38,25 @@ func (app *application) routes() http.Handler {
 
 	g.Use(app.authenticate)
 
-
-
 	// houses
-	g.GET("/house", app.listHousesHandler)
-	g.POST("/house", app.createHouseHandler)
+	g.GET("/house", app.listHousesHandler, app.requireAuthenticatedAdmin)
+	g.POST("/house", app.createHouseHandler, app.requireAuthenticatedAdmin)
 	// g.POST("/bulk/houses", app.bulkHousesHandler)
-	g.GET("/house/:uuid", app.showHousesHandler)
-	g.PUT("/house/:uuid", app.updateHouseHandler)
+	g.GET("/house/:uuid", app.showHousesHandler, app.requireAuthenticatedAdmin)
+	g.PUT("/house/:uuid", app.updateHouseHandler, app.requireAuthenticatedAdmin)
 
 	// tenants
-	g.GET("/v1/tenant", app.listTenantsHandler)
-	g.POST("/v1/tenant", app.createTenantHandler)
-	g.GET("/v1/tenant/:uuid", app.showTenantsHandler)
-	g.PUT("/v1/tenant/:uuid", app.updateTenantsHandler)
-	g.DELETE("/v1/tenant/:uuid", app.removeTenant)
+	g.GET("/v1/tenant", app.listTenantsHandler, app.requireAuthenticatedAdmin)
+	g.POST("/v1/tenant", app.createTenantHandler, app.requireAuthenticatedAdmin)
+	g.GET("/v1/tenant/:uuid", app.showTenantsHandler, app.requireAuthenticatedAdmin)
+	g.PUT("/v1/tenant/:uuid", app.updateTenantsHandler, app.requireAuthenticatedAdmin)
+	g.DELETE("/v1/tenant/:uuid", app.removeTenant, app.requireAuthenticatedAdmin)
 
 	// Payments
-	g.GET("/v1/payment", app.listPaymentsHandler)
-	g.POST("/v1/payment", app.createPaymentHandler)
-	g.GET("/v1/payment/:uuid", app.showPaymentHandler)
-	g.PUT("/v1/payment/:uuid", app.updatPaymentHandler)
-
+	g.GET("/v1/payment", app.listPaymentsHandler, app.requireAuthenticatedAdmin)
+	g.POST("/v1/payment", app.createPaymentHandler, app.requireAuthenticatedAdmin)
+	g.GET("/v1/payment/:uuid", app.showPaymentHandler, app.requireAuthenticatedAdmin)
+	g.PUT("/v1/payment/:uuid", app.updatPaymentHandler, app.requireAuthenticatedAdmin)
 
 	return e
 
