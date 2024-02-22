@@ -30,6 +30,8 @@ type config struct {
 		maxIdleTime  string
 	}
 
+	email string
+
 	mailergun struct {
 		domain     string
 		privateKey string
@@ -69,6 +71,7 @@ func main() {
 	flag.StringVar(&cfg.mailergun.domain, "mg-domain", os.Getenv("MAILGUN_DOMAIN"), "Mailgun-domain")
 	flag.StringVar(&cfg.mailergun.privateKey, "mg-privatekey", os.Getenv("MAILGUN_PRIVATEKEY"), "Mailgun-privatekey")
 	flag.StringVar(&cfg.mailergun.sender, "mg-sender", os.Getenv("MAILGUN_SENDER"), "Mailgun-sender")
+	flag.StringVar(&cfg.email, "admin-email", os.Getenv("EMAIL"), "Allowed admin email address")
 
 	flag.Parse()
 

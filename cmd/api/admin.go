@@ -23,6 +23,10 @@ func (app *application) registerUserHandler(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, envelope{"error": err.Error()})
 	}
 
+	if input.Email != app.config.email {
+		return c.JSON(http.StatusUnauthorized, envelope{"error": "email not allowed"})
+	}
+
 	if err := app.validator.Struct(input); err != nil {
 		return c.JSON(http.StatusBadRequest, envelope{"error": err.Error()})
 	}
@@ -112,7 +116,7 @@ func (app *application) activateUserHandler(c echo.Context) error {
 
 	param := db.UpdateAdminParams{
 
-		ID:      admin.ID,
+		ID:           admin.ID,
 		Email:        admin.Email,
 		Activated:    true,
 		PasswordHash: admin.PasswordHash,
@@ -133,8 +137,8 @@ func (app *application) activateUserHandler(c echo.Context) error {
 	}
 
 	a := db.DeleteAllTokenParams{
-		Scope:   db.ScopeActivation,
-		ID: admin.ID,
+		Scope: db.ScopeActivation,
+		ID:    admin.ID,
 	}
 	err = app.store.DeleteAllToken(c.Request().Context(), a)
 
@@ -149,7 +153,7 @@ func (app *application) activateUserHandler(c echo.Context) error {
 func (app *application) updateUserPasswordHandler(c echo.Context) error {
 
 	var input struct {
-		Password string `json:"password" validate:"required,min=8"`
+		Password       string `json:"password" validate:"required,min=8"`
 		TokenPlaintext string `json:"token" validate:"required,len=26"`
 	}
 
@@ -188,7 +192,7 @@ func (app *application) updateUserPasswordHandler(c echo.Context) error {
 		Email:        admin.Email,
 		PasswordHash: pwd.Hash,
 		Activated:    true,
-		ID:      admin.ID,
+		ID:           admin.ID,
 		Version:      admin.Version,
 	})
 
@@ -203,11 +207,11 @@ func (app *application) updateUserPasswordHandler(c echo.Context) error {
 	}
 
 	d := db.DeleteAllTokenParams{
-		Scope:   db.ScopePasswordReset,
-		ID: admin.ID,
+		Scope: db.ScopePasswordReset,
+		ID:    admin.ID,
 	}
 	err = app.store.DeleteAllToken(c.Request().Context(), d)
-	
+
 	if err != nil {
 		slog.Error("error deleting token", err)
 		return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
