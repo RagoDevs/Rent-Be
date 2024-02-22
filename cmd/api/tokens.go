@@ -135,8 +135,8 @@ func (app *application) createActivationTokenHandler(c echo.Context) error {
 		}
 	}
 
-	if !admin.Activated {
-		return c.JSON(http.StatusForbidden, envelope{"errors": "account not activated"})
+	if admin.Activated {
+		return c.JSON(http.StatusForbidden, envelope{"errors": "account already activated"})
 	}
 
 	token, err := app.store.NewToken(admin.ID, 3*24*time.Hour, db.ScopeActivation)
