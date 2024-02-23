@@ -105,7 +105,7 @@ func (app *application) createPasswordResetTokenHandler(c echo.Context) error {
 		}
 		err = app.mailer.Send(admin.Email, "token_password_reset.tmpl", data, "Password Reset")
 		if err != nil {
-			slog.Error("error sending ", err)
+			slog.Error("error sending ","err", err)
 		}
 	})
 
@@ -152,7 +152,7 @@ func (app *application) createActivationTokenHandler(c echo.Context) error {
 
 		err = app.mailer.Send(admin.Email, "token_activation.tmpl", data, "Account Activation")
 		if err != nil {
-			slog.Error("error sending email", err)
+			slog.Error("error sending email","err", err)
 		}
 	})
 

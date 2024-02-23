@@ -33,8 +33,9 @@ type config struct {
 	email string
 
 	mail struct {
-		password string
 		sender   string
+		password string
+		
 	}
 }
 type envelope map[string]interface{}
@@ -67,8 +68,8 @@ func main() {
 	flag.IntVar(&cfg.db.maxIdleConns, "db-max-idle-conns", 25, "PostgreSQL max ilde connections")
 	flag.StringVar(&cfg.db.maxIdleTime, "db-max-idle-time", "15m", "PostgreSQL max connection  connections")
 
-	flag.StringVar(&cfg.mail.password, "mg-domain", os.Getenv("MAIL_PWD"), "Mailgun-domain")
-	flag.StringVar(&cfg.mail.sender, "mg-privatekey", os.Getenv("MAIL_SENDER"), "Mailgun-privatekey")
+	flag.StringVar(&cfg.mail.password, "mg-password", os.Getenv("MAIL_PWD"), "Mailgun-password")
+	flag.StringVar(&cfg.mail.sender, "mg-sender", os.Getenv("MAIL_SENDER"), "Mail-sender")
 	flag.StringVar(&cfg.email, "admin-email", os.Getenv("EMAIL"), "Allowed admin email address")
 
 	flag.Parse()

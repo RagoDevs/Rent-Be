@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"embed"
 	"html/template"
-	"log"
 	"net/smtp"
 )
 
@@ -19,8 +18,8 @@ type Mailer struct {
 func New(sender string, password string) Mailer {
 
 	return Mailer{
-		Password: password,
 		sender:   sender,
+		Password: password,
 	}
 }
 
@@ -46,4 +45,3 @@ func (m Mailer) Send(recipient, templateFile string, data interface{}, subject s
 	return err
 
 }
-
