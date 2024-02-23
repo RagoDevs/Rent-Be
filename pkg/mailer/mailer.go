@@ -43,9 +43,6 @@ func (m Mailer) Send(recipient, templateFile string, data interface{}, subject s
 		smtp.PlainAuth("", m.sender, m.Password, "smtp.gmail.com"),
 		m.sender, []string{recipient}, []byte(body))
 
-	if err != nil {
-		log.Printf("smtp error: %s", err)
-	}
 	return err
 
 }
