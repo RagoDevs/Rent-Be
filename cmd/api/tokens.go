@@ -103,7 +103,7 @@ func (app *application) createPasswordResetTokenHandler(c echo.Context) error {
 		data := envelope{
 			"passwordResetToken": token.Plaintext,
 		}
-		err = app.mailer.Send(admin.Email, "token_password_reset.tmpl", data)
+		err = app.mailer.Send(admin.Email, "token_password_reset.tmpl", data, "Password Reset")
 		if err != nil {
 			slog.Error("error sending ", err)
 		}
@@ -150,7 +150,7 @@ func (app *application) createActivationTokenHandler(c echo.Context) error {
 			"activationToken": token.Plaintext,
 		}
 
-		err = app.mailer.Send(admin.Email, "token_activation.tmpl", data)
+		err = app.mailer.Send(admin.Email, "token_activation.tmpl", data, "Account Activation")
 		if err != nil {
 			slog.Error("error sending email", err)
 		}

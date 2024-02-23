@@ -2,34 +2,29 @@ package mailer
 
 import (
 	"bytes"
-	"context"
 	"embed"
-	"fmt"
 	"html/template"
-	"time"
-
-	"github.com/mailgun/mailgun-go/v4"
+	"log"
+	"net/smtp"
 )
 
 //go:embed "templates"
 var templateFS embed.FS
 
 type Mailer struct {
-	mg     *mailgun.MailgunImpl
-	sender string
+	Password string
+	sender   string
 }
 
-func New(yourDomain, privateAPIKey, sender string) Mailer {
-
-	mg := mailgun.NewMailgun(yourDomain, privateAPIKey)
+func New(sender string, password string) Mailer {
 
 	return Mailer{
-		mg:     mg,
-		sender: sender,
+		Password: password,
+		sender:   sender,
 	}
 }
 
-func (m Mailer) Send(recipient, templateFile string, data interface{}) error {
+func (m Mailer) Send(recipient, templateFile string, data interface{}, subject string) error {
 
 	tmpl, err := template.New("email").ParseFS(templateFS, "templates/"+templateFile)
 	if err != nil {
@@ -44,26 +39,14 @@ func (m Mailer) Send(recipient, templateFile string, data interface{}) error {
 
 	body := htmlBody.String()
 
-	subject := "Home Rent System Registration"
+	err = smtp.SendMail("smtp.gmail.com:587",
+		smtp.PlainAuth("", m.sender, m.Password, "smtp.gmail.com"),
+		m.sender, []string{recipient}, []byte(body))
 
-	message := m.mg.NewMessage(m.sender, subject, "", recipient)
-
-	message.SetHtml(body)
-
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
-	defer cancel()
-
-	for i := 1; i <= 3; i++ {
-		resp, id, err := m.mg.Send(ctx, message)
-
-		if nil == err {
-			fmt.Printf("ID: %s Resp: %s\n", id, resp)
-			return nil
-		}
-
-		time.Sleep(2000 * time.Millisecond)
+	if err != nil {
+		log.Printf("smtp error: %s", err)
 	}
-
 	return err
 
 }
+

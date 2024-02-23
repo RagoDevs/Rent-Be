@@ -71,7 +71,7 @@ func (app *application) registerAdminHandler(c echo.Context) error {
 			"id":              a.ID,
 		}
 
-		err = app.mailer.Send(input.Email, "admin_welcome.tmpl", data)
+		err = app.mailer.Send(input.Email, "admin_welcome.tmpl", data , "Welcome to RMGMT")
 		if err != nil {
 			slog.Error("error sending email", err)
 		}

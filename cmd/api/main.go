@@ -32,10 +32,9 @@ type config struct {
 
 	email string
 
-	mailergun struct {
-		domain     string
-		privateKey string
-		sender     string
+	mail struct {
+		password string
+		sender   string
 	}
 }
 type envelope map[string]interface{}
@@ -68,9 +67,8 @@ func main() {
 	flag.IntVar(&cfg.db.maxIdleConns, "db-max-idle-conns", 25, "PostgreSQL max ilde connections")
 	flag.StringVar(&cfg.db.maxIdleTime, "db-max-idle-time", "15m", "PostgreSQL max connection  connections")
 
-	flag.StringVar(&cfg.mailergun.domain, "mg-domain", os.Getenv("MAILGUN_DOMAIN"), "Mailgun-domain")
-	flag.StringVar(&cfg.mailergun.privateKey, "mg-privatekey", os.Getenv("MAILGUN_PRIVATEKEY"), "Mailgun-privatekey")
-	flag.StringVar(&cfg.mailergun.sender, "mg-sender", os.Getenv("MAILGUN_SENDER"), "Mailgun-sender")
+	flag.StringVar(&cfg.mail.password, "mg-domain", os.Getenv("MAIL_PWD"), "Mailgun-domain")
+	flag.StringVar(&cfg.mail.sender, "mg-privatekey", os.Getenv("MAIL_SENDER"), "Mailgun-privatekey")
 	flag.StringVar(&cfg.email, "admin-email", os.Getenv("EMAIL"), "Allowed admin email address")
 
 	flag.Parse()
@@ -100,7 +98,7 @@ func main() {
 
 	app := &application{
 		config:    cfg,
-		mailer:    mailer.New(cfg.mailergun.domain, cfg.mailergun.privateKey, cfg.mailergun.sender),
+		mailer:    mailer.New(cfg.mail.sender, cfg.mail.password),
 		store:     db.NewStore(dbConn),
 		validator: validator.New(),
 	}
