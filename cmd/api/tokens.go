@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"time"
@@ -99,13 +100,13 @@ func (app *application) createPasswordResetTokenHandler(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 	}
 
+	msg := fmt.Sprintf("Your password reset token is: %s", token.Plaintext)
+
 	app.background(func() {
-		data := envelope{
-			"passwordResetToken": token.Plaintext,
-		}
-		err = app.mailer.Send(admin.Email, "token_password_reset.tmpl", data, "Password Reset")
+
+		err = app.beem.Send(msg, "0711111111")
 		if err != nil {
-			slog.Error("error sending ","err", err)
+			slog.Error("error sending ", "err", err)
 		}
 	})
 
@@ -145,14 +146,13 @@ func (app *application) createActivationTokenHandler(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 	}
 
-	app.background(func() {
-		data := envelope{
-			"activationToken": token.Plaintext,
-		}
+	msg := fmt.Sprintf("Your account activation token is: %s", token.Plaintext)
 
-		err = app.mailer.Send(admin.Email, "token_activation.tmpl", data, "Account Activation")
+	app.background(func() {
+
+		err = app.beem.Send(msg, "0711111111")
 		if err != nil {
-			slog.Error("error sending email","err", err)
+			slog.Error("error sending email", "err", err)
 		}
 	})
 

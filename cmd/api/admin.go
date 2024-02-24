@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"database/sql"
 	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"time"
@@ -65,15 +66,14 @@ func (app *application) registerAdminHandler(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 	}
 
-	app.background(func() {
-		data := map[string]interface{}{
-			"activationToken": token.Plaintext,
-			"id":              a.ID,
-		}
+	msg := fmt.Sprintf("Welcome, your activation token is %s", token.Plaintext)
 
-		err = app.mailer.Send(input.Email, "admin_welcome.tmpl", data , "Welcome to RMGMT")
+	app.background(func() {
+
+		err = app.beem.Send(msg, "0711000000")
+
 		if err != nil {
-			slog.Error("error sending email","err",err)
+			slog.Error("error sending email", "err", err)
 		}
 	})
 

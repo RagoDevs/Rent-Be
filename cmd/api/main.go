@@ -13,7 +13,7 @@ import (
 	"time"
 
 	db "github.com/Hopertz/rmgmt/db/sqlc"
-	"github.com/Hopertz/rmgmt/pkg/mailer"
+	"github.com/Hopertz/rmgmt/pkg/beem"
 	_ "github.com/lib/pq"
 	"gopkg.in/go-playground/validator.v9"
 )
@@ -30,19 +30,19 @@ type config struct {
 		maxIdleTime  string
 	}
 
-	email string
+	phone string
 
-	mail struct {
-		sender   string
-		password string
-		
+	beemSmS struct {
+		apiKey    string
+		secretKey string
 	}
 }
+
 type envelope map[string]interface{}
 
 type application struct {
 	config    config
-	mailer    mailer.Mailer
+	beem      *beem.Beem
 	wg        sync.WaitGroup
 	store     db.Store
 	validator *validator.Validate
@@ -68,9 +68,10 @@ func main() {
 	flag.IntVar(&cfg.db.maxIdleConns, "db-max-idle-conns", 25, "PostgreSQL max ilde connections")
 	flag.StringVar(&cfg.db.maxIdleTime, "db-max-idle-time", "15m", "PostgreSQL max connection  connections")
 
-	flag.StringVar(&cfg.mail.password, "mg-password", os.Getenv("MAIL_PWD"), "Mailgun-password")
-	flag.StringVar(&cfg.mail.sender, "mg-sender", os.Getenv("MAIL_SENDER"), "Mail-sender")
-	flag.StringVar(&cfg.email, "admin-email", os.Getenv("EMAIL"), "Allowed admin email address")
+	flag.StringVar(&cfg.beemSmS.apiKey, "beem-apikey", os.Getenv("BEEM_APIKEY"), "beem-apikey")
+	flag.StringVar(&cfg.beemSmS.secretKey, "beem-secretkey", os.Getenv("BEEM_SECRETKEY"), "beem-secretkey")
+
+	flag.StringVar(&cfg.phone, "admin-phone", os.Getenv("ADMIN_PHONE"), "admin phone number")
 
 	flag.Parse()
 
@@ -99,7 +100,7 @@ func main() {
 
 	app := &application{
 		config:    cfg,
-		mailer:    mailer.New(cfg.mail.sender, cfg.mail.password),
+		beem:      beem.New(cfg.beemSmS.apiKey, cfg.beemSmS.secretKey),
 		store:     db.NewStore(dbConn),
 		validator: validator.New(),
 	}
