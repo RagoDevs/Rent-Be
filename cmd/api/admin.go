@@ -70,7 +70,7 @@ func (app *application) registerAdminHandler(c echo.Context) error {
 
 	app.background(func() {
 
-		err = app.beem.Send(msg, "0711000000")
+		err = app.beem.Send(msg, input.Phone)
 
 		if err != nil {
 			slog.Error("error sending email", "err", err)
