@@ -61,7 +61,7 @@ const getHashTokenForAdmin = `-- name: GetHashTokenForAdmin :one
 SELECT admin.id, admin.created_at,admin.phone, admin.password_hash,admin.version, admin.activated
 FROM admin
 INNER JOIN token
-ON admin.id = tokens.id
+ON admin.id = token.id
 WHERE token.hash = $1
 AND token.scope = $2
 AND token.expiry > $3
