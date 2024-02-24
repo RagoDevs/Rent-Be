@@ -50,7 +50,7 @@ func (app *application) registerAdminHandler(c echo.Context) error {
 	if err != nil {
 		switch {
 
-		case err.Error() == db.DuplicateEmail:
+		case err.Error() == db.DuplicatePhone:
 			return c.JSON(http.StatusBadRequest, envelope{"error": "email address is already in use"})
 
 		default:
