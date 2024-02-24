@@ -51,7 +51,7 @@ func (b *Beem) Send(msg string, recipient string) error {
 
 	apiKey := b.ApiKey
 	secretKey := b.SecretKey
-	sourceAddr := "INFO"
+	sourceAddr := "Mangi"
 
 	recipients := []Recipient{
 		{
