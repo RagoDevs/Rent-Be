@@ -31,7 +31,7 @@ func (app *application) routes() http.Handler {
 	e.POST("/v1/token/resend/activation", app.createActivationTokenHandler)
 
 	// password management
-	e.POST("/v1/token/passwordreset", app.createPasswordResetTokenHandler)
+	e.POST("/v1/token/password/reset", app.createPasswordResetTokenHandler)
 	e.PUT("/v1/admin/password", app.updateAdminPasswordHandler)
 
 	g := e.Group("/v1/auth")
