@@ -24,14 +24,15 @@ func (app *application) registerAdminHandler(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, envelope{"error": err.Error()})
 	}
 
-	if input.Phone != app.config.phone {
-		return c.JSON(http.StatusUnauthorized, envelope{"error": "email not allowed"})
-	}
-
 	if err := app.validator.Struct(input); err != nil {
 		return c.JSON(http.StatusBadRequest, envelope{"error": err.Error()})
 	}
 
+	if input.Phone != app.config.phone {
+		return c.JSON(http.StatusUnauthorized, envelope{"error": "email not allowed"})
+	}
+
+	
 	pwd, err := db.SetPassword(input.Password)
 
 	if err != nil {
@@ -90,6 +91,10 @@ func (app *application) activateAdminHandler(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, envelope{"error": err.Error()})
 	}
 
+	if err := app.validator.Struct(input); err != nil {
+		return c.JSON(http.StatusBadRequest, envelope{"error": err.Error()})
+	}
+	
 	tokenHash := sha256.Sum256([]byte(input.TokenPlaintext))
 
 	args := db.GetHashTokenForAdminParams{
@@ -158,6 +163,10 @@ func (app *application) updateAdminPasswordHandler(c echo.Context) error {
 	}
 
 	if err := c.Bind(&input); err != nil {
+		return c.JSON(http.StatusBadRequest, envelope{"error": err.Error()})
+	}
+
+	if err := app.validator.Struct(input); err != nil {
 		return c.JSON(http.StatusBadRequest, envelope{"error": err.Error()})
 	}
 

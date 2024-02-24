@@ -77,6 +77,10 @@ func (app *application) createPasswordResetTokenHandler(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, envelope{"error": err.Error()})
 	}
 
+	if err := app.validator.Struct(input); err != nil {
+		return c.JSON(http.StatusBadRequest, envelope{"error": err.Error()})
+	}
+
 	admin, err := app.store.GetAdminByPhone(c.Request().Context(), input.Phone)
 
 	if err != nil {
@@ -120,6 +124,10 @@ func (app *application) createActivationTokenHandler(c echo.Context) error {
 	}
 
 	if err := c.Bind(&input); err != nil {
+		return c.JSON(http.StatusBadRequest, envelope{"error": err.Error()})
+	}
+
+	if err := app.validator.Struct(input); err != nil {
 		return c.JSON(http.StatusBadRequest, envelope{"error": err.Error()})
 	}
 

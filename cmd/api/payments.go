@@ -61,6 +61,11 @@ func (app *application) createPaymentHandler(c echo.Context) error {
 		return err
 	}
 
+	if err := app.validator.Struct(input); err != nil {
+		return c.JSON(http.StatusBadRequest, envelope{"error": err.Error()})
+	}
+
+
 	tenant, err := app.store.GetTenantById(c.Request().Context(), input.TenantId)
 
 	if err != nil {
