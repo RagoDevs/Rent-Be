@@ -13,7 +13,7 @@ import (
 type Admin struct {
 	ID           uuid.UUID `json:"id"`
 	CreatedAt    time.Time `json:"created_at"`
-	Email        string    `json:"email"`
+	Phone        string    `json:"phone"`
 	PasswordHash []byte    `json:"password_hash"`
 	Activated    bool      `json:"activated"`
 	Version      uuid.UUID `json:"version"`

@@ -13,13 +13,13 @@ import (
 )
 
 const createAdmin = `-- name: CreateAdmin :one
-INSERT INTO admin (email, password_hash, activated)
+INSERT INTO admin (phone, password_hash, activated)
 VALUES ($1, $2, $3 )
 RETURNING id, created_at, version
 `
 
 type CreateAdminParams struct {
-	Email        string `json:"email"`
+	Phone        string `json:"phone"`
 	PasswordHash []byte `json:"password_hash"`
 	Activated    bool   `json:"activated"`
 }
@@ -31,25 +31,25 @@ type CreateAdminRow struct {
 }
 
 func (q *Queries) CreateAdmin(ctx context.Context, arg CreateAdminParams) (CreateAdminRow, error) {
-	row := q.db.QueryRowContext(ctx, createAdmin, arg.Email, arg.PasswordHash, arg.Activated)
+	row := q.db.QueryRowContext(ctx, createAdmin, arg.Phone, arg.PasswordHash, arg.Activated)
 	var i CreateAdminRow
 	err := row.Scan(&i.ID, &i.CreatedAt, &i.Version)
 	return i, err
 }
 
-const getAdminByEmail = `-- name: GetAdminByEmail :one
-SELECT id, created_at, email, password_hash, activated, version
+const getAdminByPhone = `-- name: GetAdminByPhone :one
+SELECT id, created_at, phone, password_hash, activated, version
 FROM admin
-WHERE email = $1
+WHERE phone = $1
 `
 
-func (q *Queries) GetAdminByEmail(ctx context.Context, email string) (Admin, error) {
-	row := q.db.QueryRowContext(ctx, getAdminByEmail, email)
+func (q *Queries) GetAdminByPhone(ctx context.Context, phone string) (Admin, error) {
+	row := q.db.QueryRowContext(ctx, getAdminByPhone, phone)
 	var i Admin
 	err := row.Scan(
 		&i.ID,
 		&i.CreatedAt,
-		&i.Email,
+		&i.Phone,
 		&i.PasswordHash,
 		&i.Activated,
 		&i.Version,
@@ -58,7 +58,7 @@ func (q *Queries) GetAdminByEmail(ctx context.Context, email string) (Admin, err
 }
 
 const getHashTokenForAdmin = `-- name: GetHashTokenForAdmin :one
-SELECT admin.id, admin.created_at,admin.email, admin.password_hash,admin.version, admin.activated
+SELECT admin.id, admin.created_at,admin.phone, admin.password_hash,admin.version, admin.activated
 FROM admin
 INNER JOIN token
 ON admin.id = tokens.id
@@ -76,7 +76,7 @@ type GetHashTokenForAdminParams struct {
 type GetHashTokenForAdminRow struct {
 	ID           uuid.UUID `json:"id"`
 	CreatedAt    time.Time `json:"created_at"`
-	Email        string    `json:"email"`
+	Phone        string    `json:"phone"`
 	PasswordHash []byte    `json:"password_hash"`
 	Version      uuid.UUID `json:"version"`
 	Activated    bool      `json:"activated"`
@@ -88,7 +88,7 @@ func (q *Queries) GetHashTokenForAdmin(ctx context.Context, arg GetHashTokenForA
 	err := row.Scan(
 		&i.ID,
 		&i.CreatedAt,
-		&i.Email,
+		&i.Phone,
 		&i.PasswordHash,
 		&i.Version,
 		&i.Activated,
@@ -98,13 +98,13 @@ func (q *Queries) GetHashTokenForAdmin(ctx context.Context, arg GetHashTokenForA
 
 const updateAdmin = `-- name: UpdateAdmin :one
 UPDATE admin
-SET email = $1, password_hash = $2, activated = $3, version = uuid_generate_v4()
+SET phone = $1, password_hash = $2, activated = $3, version = uuid_generate_v4()
 WHERE id = $4 AND version = $5
 RETURNING version
 `
 
 type UpdateAdminParams struct {
-	Email        string    `json:"email"`
+	Phone        string    `json:"phone"`
 	PasswordHash []byte    `json:"password_hash"`
 	Activated    bool      `json:"activated"`
 	ID           uuid.UUID `json:"id"`
@@ -113,7 +113,7 @@ type UpdateAdminParams struct {
 
 func (q *Queries) UpdateAdmin(ctx context.Context, arg UpdateAdminParams) (uuid.UUID, error) {
 	row := q.db.QueryRowContext(ctx, updateAdmin,
-		arg.Email,
+		arg.Phone,
 		arg.PasswordHash,
 		arg.Activated,
 		arg.ID,

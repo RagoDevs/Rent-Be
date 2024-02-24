@@ -15,7 +15,7 @@ import (
 func (app *application) createAuthenticationTokenHandler(c echo.Context) error {
 
 	var input struct {
-		Email    string `json:"email" validate:"required,email"`
+		Phone    string `json:"phone" validate:"required,len=10"`
 		Password string `json:"password" validate:"required,min=8"`
 	}
 
@@ -27,7 +27,7 @@ func (app *application) createAuthenticationTokenHandler(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, envelope{"error": err.Error()})
 	}
 
-	admin, err := app.store.GetAdminByEmail(c.Request().Context(), input.Email)
+	admin, err := app.store.GetAdminByPhone(c.Request().Context(), input.Phone)
 
 	if err != nil {
 		switch {
@@ -70,14 +70,14 @@ func (app *application) createAuthenticationTokenHandler(c echo.Context) error {
 func (app *application) createPasswordResetTokenHandler(c echo.Context) error {
 
 	var input struct {
-		Email string `json:"email" validate:"required,email"`
+		Phone    string `json:"phone" validate:"required,len=10"`
 	}
 
 	if err := c.Bind(&input); err != nil {
 		return c.JSON(http.StatusBadRequest, envelope{"error": err.Error()})
 	}
 
-	admin, err := app.store.GetAdminByEmail(c.Request().Context(), input.Email)
+	admin, err := app.store.GetAdminByPhone(c.Request().Context(), input.Phone)
 
 	if err != nil {
 		switch {
@@ -104,7 +104,7 @@ func (app *application) createPasswordResetTokenHandler(c echo.Context) error {
 
 	app.background(func() {
 
-		err = app.beem.Send(msg, "0711111111")
+		err = app.beem.Send(msg, admin.Phone)
 		if err != nil {
 			slog.Error("error sending ", "err", err)
 		}
@@ -116,14 +116,14 @@ func (app *application) createPasswordResetTokenHandler(c echo.Context) error {
 func (app *application) createActivationTokenHandler(c echo.Context) error {
 
 	var input struct {
-		Email string `json:"email" validate:"required,email"`
+		Phone    string `json:"phone" validate:"required,len=10"`
 	}
 
 	if err := c.Bind(&input); err != nil {
 		return c.JSON(http.StatusBadRequest, envelope{"error": err.Error()})
 	}
 
-	admin, err := app.store.GetAdminByEmail(c.Request().Context(), input.Email)
+	admin, err := app.store.GetAdminByPhone(c.Request().Context(), input.Phone)
 
 	if err != nil {
 		switch {
@@ -150,7 +150,7 @@ func (app *application) createActivationTokenHandler(c echo.Context) error {
 
 	app.background(func() {
 
-		err = app.beem.Send(msg, "0711111111")
+		err = app.beem.Send(msg, admin.Phone)
 		if err != nil {
 			slog.Error("error sending email", "err", err)
 		}
