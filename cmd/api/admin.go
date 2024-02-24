@@ -51,7 +51,7 @@ func (app *application) registerAdminHandler(c echo.Context) error {
 		switch {
 
 		case err.Error() == db.DuplicatePhone:
-			return c.JSON(http.StatusBadRequest, envelope{"error": "phone address is already in use"})
+			return c.JSON(http.StatusBadRequest, envelope{"error": "phone number is already in use"})
 
 		default:
 			slog.Error("error creating admin", err)
@@ -73,7 +73,7 @@ func (app *application) registerAdminHandler(c echo.Context) error {
 		err = app.beem.Send(msg, input.Phone)
 
 		if err != nil {
-			slog.Error("error sending email", "err", err)
+			slog.Error("error sending ", "err", err)
 		}
 	})
 
