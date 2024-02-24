@@ -32,10 +32,10 @@ func (app *application) createAuthenticationTokenHandler(c echo.Context) error {
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			slog.Error("error fetching admin by email", err)
-			return c.JSON(http.StatusNotFound, envelope{"error": "invalid email address or password"})
+			slog.Error("error fetching admin by phone", err)
+			return c.JSON(http.StatusNotFound, envelope{"error": "invalid phone number or password"})
 		default:
-			slog.Error("error fetching admin by email", err)
+			slog.Error("error fetching admin by phone number", err)
 			return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 		}
 	}
@@ -55,7 +55,7 @@ func (app *application) createAuthenticationTokenHandler(c echo.Context) error {
 
 	if !match {
 		slog.Error("error matching password", err)
-		return c.JSON(http.StatusUnauthorized, envelope{"error": "invalid email address or password"})
+		return c.JSON(http.StatusUnauthorized, envelope{"error": "invalid phone number or password"})
 	}
 
 	token, err := app.store.NewToken(admin.ID, 3*24*time.Hour, db.ScopeAuthentication)
@@ -82,10 +82,10 @@ func (app *application) createPasswordResetTokenHandler(c echo.Context) error {
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			slog.Error("error fetching admin by email", err)
-			return c.JSON(http.StatusNotFound, envelope{"error": "invalid email address or password"})
+			slog.Error("error fetching admin by phone number", err)
+			return c.JSON(http.StatusNotFound, envelope{"error": "invalid phone number or password"})
 		default:
-			slog.Error("error fetching admin by email", err)
+			slog.Error("error fetching admin by phone number", err)
 			return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 		}
 	}
@@ -106,7 +106,7 @@ func (app *application) createPasswordResetTokenHandler(c echo.Context) error {
 
 		err = app.beem.Send(msg, admin.Phone)
 		if err != nil {
-			slog.Error("error sending ", "err", err)
+			slog.Error("error sending msg to phone number", "err", err)
 		}
 	})
 
@@ -128,10 +128,10 @@ func (app *application) createActivationTokenHandler(c echo.Context) error {
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			slog.Error("error fetching admin by email", err)
-			return c.JSON(http.StatusNotFound, envelope{"error": "invalid email address or password"})
+			slog.Error("error fetching admin by phone number", err)
+			return c.JSON(http.StatusNotFound, envelope{"error": "invalid phone number or password"})
 		default:
-			slog.Error("error fetching admin by email", err)
+			slog.Error("error fetching admin by phone number", err)
 			return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 		}
 	}
@@ -152,7 +152,7 @@ func (app *application) createActivationTokenHandler(c echo.Context) error {
 
 		err = app.beem.Send(msg, admin.Phone)
 		if err != nil {
-			slog.Error("error sending email", "err", err)
+			slog.Error("error sending msg to phone number", "err", err)
 		}
 	})
 
