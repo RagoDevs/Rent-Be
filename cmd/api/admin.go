@@ -51,7 +51,7 @@ func (app *application) registerAdminHandler(c echo.Context) error {
 		switch {
 
 		case err.Error() == db.DuplicatePhone:
-			return c.JSON(http.StatusBadRequest, envelope{"error": "email address is already in use"})
+			return c.JSON(http.StatusBadRequest, envelope{"error": "phone address is already in use"})
 
 		default:
 			slog.Error("error creating admin", err)
