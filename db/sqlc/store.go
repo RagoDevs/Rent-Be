@@ -1,6 +1,7 @@
 package db
 
 import (
+	"context"
 	"database/sql"
 	"time"
 
@@ -10,6 +11,7 @@ import (
 type Store interface {
 	Querier
 	NewToken(id uuid.UUID, ttl time.Duration, scope string) (*TokenLoc, error)
+	BulkInsert(ctx context.Context, houses []HouseBulk) error
 }
 
 type SQLStore struct {

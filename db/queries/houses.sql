@@ -6,11 +6,11 @@ SELECT id,location, block, partition , occupied FROM house;
 
 -- name: UpdateHouseById :exec
 UPDATE house
-SET occupied = $1, version = uuid_generate_v4()
-WHERE id = $2 AND version = $3;
+SET location = $1, block = $2, partition = $3, occupied = $4, version = uuid_generate_v4()
+WHERE id = $5 AND version = $6;
 
 -- name: GetHouseById :one
-SELECT id,location, block, partition , Occupied FROM house
+SELECT id,location, block, partition , Occupied, version FROM house
 WHERE id = $1;
 
 

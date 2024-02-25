@@ -21,7 +21,7 @@ type Querier interface {
 	GetAdminByPhone(ctx context.Context, phone string) (Admin, error)
 	GetAllPayments(ctx context.Context) ([]GetAllPaymentsRow, error)
 	GetHashTokenForAdmin(ctx context.Context, arg GetHashTokenForAdminParams) (GetHashTokenForAdminRow, error)
-	GetHouseById(ctx context.Context, id uuid.UUID) (GetHouseByIdRow, error)
+	GetHouseById(ctx context.Context, id uuid.UUID) (House, error)
 	GetHouses(ctx context.Context) ([]GetHousesRow, error)
 	GetPaymentById(ctx context.Context, id uuid.UUID) (GetPaymentByIdRow, error)
 	GetTenantById(ctx context.Context, id uuid.UUID) (GetTenantByIdRow, error)
