@@ -3,7 +3,6 @@ package db
 import (
 	"context"
 	"fmt"
-	"log/slog"
 
 	"github.com/lib/pq"
 )
@@ -27,11 +26,7 @@ func (s *SQLStore) BulkInsert(ctx context.Context, houses []HouseBulk) error {
 		return fail(err)
 	}
 
-	defer func() {
-		slog.Error("error", "error", "in defer rollback")
-		slog.Error("error", "error of rollback ", txn.Rollback())
-
-	}()
+	defer txn.Rollback()
 
 	stmt, err := txn.PrepareContext(ctx, pq.CopyIn("house", "location", "block", "partition", "occupied"))
 
