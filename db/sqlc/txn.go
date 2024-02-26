@@ -29,10 +29,8 @@ func (s *SQLStore) BulkInsert(ctx context.Context, houses []HouseBulk) error {
 
 	defer func() {
 		slog.Error("error", "error", "in defer rollback")
-		if err != nil {
-			err := txn.Rollback()
-			slog.Error("error", "error of rollback ", err)
-		}
+		slog.Error("error", "error of rollback ", txn.Rollback())
+
 	}()
 
 	stmt, err := txn.PrepareContext(ctx, pq.CopyIn("house", "location", "block", "partition", "occupied"))
