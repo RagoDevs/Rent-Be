@@ -167,8 +167,10 @@ func (app *application) bulkHousesHandler(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, envelope{"error": "invalid request payload"})
 	}
 
-	if err := app.validator.Struct(bulkInputs); err != nil {
-		return c.JSON(http.StatusBadRequest, envelope{"error": err.Error()})
+	for _, input := range bulkInputs {
+		if err := app.validator.Struct(input); err != nil {
+			return c.JSON(http.StatusBadRequest, envelope{"error": err.Error()})
+		}
 	}
 
 	var housesBulk []db.HouseBulk
