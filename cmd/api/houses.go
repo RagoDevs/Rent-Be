@@ -10,12 +10,6 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-type BulkInput struct {
-	Location  string   `json:"location" validate:"required"`
-	Block     []string `json:"block" validate:"required,min=1,max=5"`
-	Partition [][]int  `json:"partition" validate:"gt=0,dive,min=1,max=5,dive,min=1,max=9"`
-}
-
 func (app *application) listHousesHandler(c echo.Context) error {
 
 	houses, err := app.store.GetHouses(c.Request().Context())
@@ -161,21 +155,25 @@ func (app *application) updateHouseHandler(c echo.Context) error {
 
 func (app *application) bulkHousesHandler(c echo.Context) error {
 
-	var bulkInputs []BulkInput
+	var input []struct {
+		Location  string   `json:"location" validate:"required"`
+		Block     []string `json:"block" validate:"required,min=1,max=5"`
+		Partition [][]int  `json:"partition" validate:"gt=0,dive,min=1,max=9,dive,min=1,max=9"`
+	}
 
-	if err := c.Bind(&bulkInputs); err != nil {
+	if err := c.Bind(&input); err != nil {
 		return c.JSON(http.StatusBadRequest, envelope{"error": "invalid request payload"})
 	}
 
-	for _, input := range bulkInputs {
-		if err := app.validator.Struct(input); err != nil {
+	for _, house := range input {
+		if err := app.validator.Struct(house); err != nil {
 			return c.JSON(http.StatusBadRequest, envelope{"error": err.Error()})
 		}
 	}
 
 	var housesBulk []db.HouseBulk
 
-	for _, house := range bulkInputs {
+	for _, house := range input {
 		for i, block := range house.Block {
 			for _, pt := range house.Partition[i] {
 				housesBulk = append(housesBulk, db.HouseBulk{
