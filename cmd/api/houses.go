@@ -153,41 +153,6 @@ func (app *application) updateHouseHandler(c echo.Context) error {
 	return c.JSON(http.StatusOK, nil)
 }
 
-// example data for below
-
-// 	house_data := `[
-
-// 	{
-// 	  "location": "Chanika",
-// 	  "block":["A", "B"],
-// 	  "partition" : [[1,2], [1]]
-// 	},
-
-// 	{
-// 	  "location": "Taliani",
-// 	  "block":["A", "B"],
-// 	  "partition" : [[1,2], [1]]
-// 	 },
-
-// 	{
-// 	  "location": "Kivule",
-// 	  "block":["A", "B"],
-// 	  "partition" : [[1,2,3,4,5,6], [1,2,3,4]]
-// 	},
-
-// 	{
-// 	  "location": "Machimbo",
-// 	  "block":["A", "B", "C", "D"],
-// 	  "partition" : [[1,2,3,4,5], [1,2,3,4,5],[1,2,3,4,5,6,7,8], [1,2,3]]
-// 	},
-
-// 	{
-// 	  "location": "UKonga",
-// 	  "block":["A", "B","C","D"],
-// 	  "partition" : [[1,2], [1], [1] ,[1,2]]
-// 	}
-
-// ]`
 
 func (app *application) bulkHousesHandler(c echo.Context) error {
 
