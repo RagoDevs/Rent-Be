@@ -70,7 +70,7 @@ func (app *application) requireAuthenticatedAdmin(next echo.HandlerFunc) echo.Ha
 
 	return func(c echo.Context) error {
 
-		admin, ok := c.Get("admin").(db.Admin)
+		admin, ok := c.Get("admin").(db.GetHashTokenForAdminRow)
 
 		if !ok {
 			return c.JSON(http.StatusBadRequest, envelope{"error": "missing admin from context"})
