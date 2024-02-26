@@ -52,8 +52,8 @@ func (app *application) createHouseHandler(c echo.Context) error {
 
 	var input struct {
 		Location  string `json:"location" validate:"required"`
-		Block     string `json:"block" validate:"required, len=1"`
-		Partition int16  `json:"partition" validate:"required, len=1"`
+		Block     string `json:"block" validate:"required,len=1"`
+		Partition int16  `json:"partition" validate:"required,min=1,max=9"`
 		Occupied  bool   `json:"occupied" validate:"required"`
 	}
 
