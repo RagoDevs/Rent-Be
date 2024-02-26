@@ -157,9 +157,9 @@ func (app *application) updateHouseHandler(c echo.Context) error {
 func (app *application) bulkHousesHandler(c echo.Context) error {
 
 	var input []struct {
-		Location  string   `json:"location"`
-		Block     []string `json:"block"`
-		Partition [][]int  `json:"partition"`
+		Location  string   `json:"location" validate:"required"`
+		Block     []string `json:"block" validate:"required,min=1,max=5"`
+		Partition [][]int  `json:"partition" validate:"required,min=1,max=8"`
 	}
 
 	if err := c.Bind(&input); err != nil {
