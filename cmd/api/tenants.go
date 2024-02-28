@@ -17,7 +17,7 @@ func (app *application) listTenantsHandler(c echo.Context) error {
 	tenants, err := app.store.GetTenants(c.Request().Context())
 
 	if err != nil {
-		slog.Error("error fetching tenants", err)
+		slog.Error("error fetching tenants", "err", err)
 		return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 	}
 
@@ -38,7 +38,7 @@ func (app *application) showTenantsHandler(c echo.Context) error {
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			slog.Error("error fetching tenant by id", err)
+			slog.Error("error fetching tenant by id", "err", err)
 			return c.JSON(http.StatusNotFound, envelope{"error": "tenant not found"})
 
 		default:
@@ -129,11 +129,11 @@ func (app *application) updateTenantsHandler(c echo.Context) error {
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			slog.Error("error fetching tenant by id", err)
+			slog.Error("error fetching tenant by id", "err", err)
 			return c.JSON(http.StatusNotFound, envelope{"error": "tenant not found"})
 
 		default:
-			slog.Error("error fetching tenant by id", err)
+			slog.Error("error fetching tenant by id", "err", err)
 			return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 		}
 	}
@@ -206,7 +206,7 @@ func (app *application) updateTenantsHandler(c echo.Context) error {
 	err = app.store.TxnUpdateTenantHouse(c.Request().Context(), arg, false)
 
 	if err != nil {
-		slog.Error("error updating tenant and house", err)
+		slog.Error("error updating tenant and house", "err", err)
 		return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 	}
 
@@ -227,10 +227,10 @@ func (app *application) removeTenant(c echo.Context) error {
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			slog.Error("error fetching tenant by id", err)
+			slog.Error("error fetching tenant by id", "err", err)
 			return c.JSON(http.StatusNotFound, envelope{"error": "tenant not found"})
 		default:
-			slog.Error("error fetching tenant by id", err)
+			slog.Error("error fetching tenant by id", "err", err)
 			return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 		}
 	}
