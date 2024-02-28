@@ -31,7 +31,7 @@ func (app *application) showHousesHandler(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, envelope{"error": "invalid house id"})
 	}
 
-	house, err := app.store.GetHouseById(c.Request().Context(), uuid)
+	house, err := app.store.GetHouseByIdWithTenant(c.Request().Context(), uuid)
 
 	if err != nil {
 		switch {
