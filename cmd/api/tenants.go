@@ -55,11 +55,11 @@ func (app *application) createTenantHandler(c echo.Context) error {
 	var input struct {
 		FirstName      string    `json:"first_name" validate:"required"`
 		LastName       string    `json:"last_name" validate:"required"`
-		Phone          string    `json:"phone" validate:"required"`
-		HouseId        uuid.UUID `json:"house_id" validate:"required"`
+		Phone          string    `json:"phone" validate:"required,len=10"`
+		HouseId        uuid.UUID `json:"house_id" validate:"required,uuid4"`
 		PersonalIdType string    `json:"personal_id_type" validate:"required"`
 		PersonalId     string    `json:"personal_id" validate:"required"`
-		Active         bool      `json:"active" validate:"required"`
+		Active         bool      `json:"active"`
 		Sos            time.Time `json:"sos" validate:"required"`
 		Eos            time.Time `json:"eos" validate:"required"`
 	}
@@ -75,9 +75,20 @@ func (app *application) createTenantHandler(c echo.Context) error {
 	house, err := app.store.GetHouseById(c.Request().Context(), input.HouseId)
 
 	if err != nil {
-		slog.Error("error fetching house by id", err)
-		return c.JSON(http.StatusNotFound, envelope{"error": "house not found"})
+
+		switch {
+
+		case errors.Is(err, sql.ErrNoRows):
+			slog.Error("error fetching house by id", "err", err)
+			return c.JSON(http.StatusNotFound, envelope{"error": "house not found"})
+
+		default:
+			slog.Error("error fetching house by id", "err", err)
+			return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
+		}
+
 	}
+
 	if house.Occupied {
 		return c.JSON(http.StatusBadRequest, envelope{"error": "house is already occupied"})
 	}
@@ -94,22 +105,11 @@ func (app *application) createTenantHandler(c echo.Context) error {
 		Eos:            input.Eos,
 	}
 
-	err = app.store.CreateTenant(c.Request().Context(), args)
-	if err != nil {
-		slog.Error("error creating tenant", err)
-		return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
-	}
-
-	params := db.UpdateHouseByIdParams{
-		Occupied: true,
-		ID:  input.HouseId,
-	}
-	err = app.store.UpdateHouseById(c.Request().Context(), params)
+	err = app.store.TxnCreateTenant(c.Request().Context(), args)
 
 	if err != nil {
-		slog.Error("error updating house by id", err)
+		slog.Error("error creating tenant", "err", err)
 		return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
-
 	}
 
 	return c.JSON(http.StatusCreated, nil)
@@ -201,12 +201,12 @@ func (app *application) updateTenantsHandler(c echo.Context) error {
 		Active:         tenant.Active,
 		Sos:            tenant.Sos,
 		Eos:            tenant.Eos,
-		ID:       tenant.ID,
+		ID:             tenant.ID,
 	}
-	err = app.store.UpdateTenant(c.Request().Context(), arg)
+	err = app.store.TxnUpdateTenantHouse(c.Request().Context(), arg, false)
 
 	if err != nil {
-		slog.Error("error updating tenant", err)
+		slog.Error("error updating tenant and house", err)
 		return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 	}
 
@@ -237,7 +237,7 @@ func (app *application) removeTenant(c echo.Context) error {
 
 	tenant.Active = false
 
-	err = app.store.UpdateTenant(c.Request().Context(), db.UpdateTenantParams{
+	args := db.UpdateTenantParams{
 		FirstName:      tenant.FirstName,
 		LastName:       tenant.LastName,
 		HouseID:        tenant.HouseID,
@@ -247,21 +247,13 @@ func (app *application) removeTenant(c echo.Context) error {
 		Active:         tenant.Active,
 		Sos:            tenant.Sos,
 		Eos:            tenant.Eos,
-		ID:       tenant.ID,
-	})
-
-	if err != nil {
-		slog.Error("error updating tenant", err)
-		return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
+		ID:             tenant.ID,
 	}
 
-	err = app.store.UpdateHouseById(c.Request().Context(), db.UpdateHouseByIdParams{
-		Occupied: false,
-		ID:  tenant.HouseID,
-	})
+	err = app.store.TxnUpdateTenantHouse(c.Request().Context(), args, true)
 
 	if err != nil {
-		slog.Error("error updating house by id", err)
+		slog.Error("failed deactiving tenant & disabling house", "err", err)
 		return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 	}
 

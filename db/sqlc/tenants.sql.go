@@ -12,10 +12,10 @@ import (
 	"github.com/google/uuid"
 )
 
-const createTenant = `-- name: CreateTenant :exec
+const createTenant = `-- name: CreateTenant :one
 INSERT INTO TENANT
 (first_name, last_name, house_id, phone, personal_id_type,personal_id, active, sos, eos) 
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id
 `
 
 type CreateTenantParams struct {
@@ -30,8 +30,8 @@ type CreateTenantParams struct {
 	Eos            time.Time `json:"eos"`
 }
 
-func (q *Queries) CreateTenant(ctx context.Context, arg CreateTenantParams) error {
-	_, err := q.db.ExecContext(ctx, createTenant,
+func (q *Queries) CreateTenant(ctx context.Context, arg CreateTenantParams) (uuid.UUID, error) {
+	row := q.db.QueryRowContext(ctx, createTenant,
 		arg.FirstName,
 		arg.LastName,
 		arg.HouseID,
@@ -42,7 +42,9 @@ func (q *Queries) CreateTenant(ctx context.Context, arg CreateTenantParams) erro
 		arg.Sos,
 		arg.Eos,
 	)
-	return err
+	var id uuid.UUID
+	err := row.Scan(&id)
+	return id, err
 }
 
 const getTenantById = `-- name: GetTenantById :one

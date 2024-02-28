@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/google/uuid"
 	"github.com/lib/pq"
 )
 
@@ -57,5 +58,126 @@ func (s *SQLStore) BulkInsert(ctx context.Context, houses []HouseBulk) error {
 	}
 
 	return nil
+
+}
+
+func (store *SQLStore) TxnCreateTenant(ctx context.Context, args CreateTenantParams) error {
+
+	tx, err := store.db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+	qtx := New(tx)
+
+	tenant_id, err := qtx.CreateTenant(ctx, args)
+
+	if err != nil {
+		return err
+	}
+
+	house, err := qtx.GetHouseById(ctx, args.HouseID)
+
+	if err != nil {
+		return err
+	}
+
+	if house.Occupied {
+		return fmt.Errorf("house is already occupied")
+	}
+
+	occupiedBy := uuid.NullUUID{
+		UUID:  tenant_id,
+		Valid: true,
+	}
+
+	err = qtx.UpdateHouseById(ctx, UpdateHouseByIdParams{
+		Occupied:   true,
+		ID:         args.HouseID,
+		Location:   house.Location,
+		Block:      house.Block,
+		Partition:  house.Partition,
+		Version:    house.Version,
+		Occupiedby: occupiedBy,
+	})
+
+	if err != nil {
+
+		return err
+	}
+
+	return tx.Commit()
+
+}
+
+func (store *SQLStore) TxnUpdateTenantHouse(ctx context.Context, args UpdateTenantParams, isDelTenant bool) error {
+
+	tx, err := store.db.Begin()
+
+	if err != nil {
+		return err
+	}
+
+	defer tx.Rollback()
+
+	qtx := New(tx)
+
+	var occupiedBy uuid.NullUUID
+
+	var occupied bool
+
+	if isDelTenant {
+
+		args.Active = false
+
+		occupiedBy = uuid.NullUUID{
+			UUID:  args.ID,
+			Valid: false,
+		}
+
+		occupied = false
+
+	} else {
+
+		args.Active = true
+
+		occupiedBy = uuid.NullUUID{
+			UUID:  args.ID,
+			Valid: true,
+		}
+
+		occupied = true
+
+	}
+
+	err = qtx.UpdateTenant(ctx, args)
+
+	if err != nil {
+		return err
+	}
+
+	house, err := qtx.GetHouseById(ctx, args.HouseID)
+
+	if err != nil {
+		return err
+	}
+
+	hargs := UpdateHouseByIdParams{
+		Occupied:   occupied,
+		ID:         args.HouseID,
+		Location:   house.Location,
+		Block:      house.Block,
+		Partition:  house.Partition,
+		Version:    house.Version,
+		Occupiedby: occupiedBy,
+	}
+
+	err = qtx.UpdateHouseById(ctx, hargs)
+
+	if err != nil {
+       return err
+	}
+
+	return tx.Commit()
 
 }

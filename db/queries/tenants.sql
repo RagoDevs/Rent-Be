@@ -1,7 +1,7 @@
--- name: CreateTenant :exec
+-- name: CreateTenant :one
 INSERT INTO TENANT
 (first_name, last_name, house_id, phone, personal_id_type,personal_id, active, sos, eos) 
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9);
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id;
 
 -- name: GetTenantById :one
 SELECT id, first_name, last_name, house_id, 
