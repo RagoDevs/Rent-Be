@@ -11,7 +11,7 @@ version = uuid_generate_v4(), occupiedBy = $5
 WHERE id = $6 AND version = $7;
 
 -- name: GetHouseById :one
-SELECT id,location, block, partition , Occupied, version FROM house WHERE id = $1;
+SELECT id,location, block, partition , Occupied, occupiedBy, version FROM house WHERE id = $1;
 
 -- name: GetHouseByIdWithTenant :one
 SELECT h.id,h.location, h.block, h.partition , h.Occupied, 

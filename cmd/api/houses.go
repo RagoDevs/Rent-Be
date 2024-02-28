@@ -130,12 +130,13 @@ func (app *application) updateHouseHandler(c echo.Context) error {
 	}
 
 	args := db.UpdateHouseByIdParams{
-		ID:        house.ID,
-		Occupied:  house.Occupied,
-		Location:  house.Location,
-		Block:     house.Block,
-		Partition: house.Partition,
-		Version:   house.Version,
+		ID:         house.ID,
+		Occupied:   house.Occupied,
+		Location:   house.Location,
+		Block:      house.Block,
+		Partition:  house.Partition,
+		Version:    house.Version,
+		Occupiedby: house.Occupiedby,
 	}
 
 	err = app.store.UpdateHouseById(c.Request().Context(), args)

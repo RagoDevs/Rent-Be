@@ -35,27 +35,19 @@ func (q *Queries) CreateHouse(ctx context.Context, arg CreateHouseParams) (uuid.
 }
 
 const getHouseById = `-- name: GetHouseById :one
-SELECT id,location, block, partition , Occupied, version FROM house WHERE id = $1
+SELECT id,location, block, partition , Occupied, occupiedBy, version FROM house WHERE id = $1
 `
 
-type GetHouseByIdRow struct {
-	ID        uuid.UUID `json:"id"`
-	Location  string    `json:"location"`
-	Block     string    `json:"block"`
-	Partition int16     `json:"partition"`
-	Occupied  bool      `json:"occupied"`
-	Version   uuid.UUID `json:"version"`
-}
-
-func (q *Queries) GetHouseById(ctx context.Context, id uuid.UUID) (GetHouseByIdRow, error) {
+func (q *Queries) GetHouseById(ctx context.Context, id uuid.UUID) (House, error) {
 	row := q.db.QueryRowContext(ctx, getHouseById, id)
-	var i GetHouseByIdRow
+	var i House
 	err := row.Scan(
 		&i.ID,
 		&i.Location,
 		&i.Block,
 		&i.Partition,
 		&i.Occupied,
+		&i.Occupiedby,
 		&i.Version,
 	)
 	return i, err
