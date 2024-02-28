@@ -46,11 +46,11 @@ func (app *application) routes() http.Handler {
 	g.PUT("/house/:uuid", app.updateHouseHandler, app.requireAuthenticatedAdmin)
 
 	// tenants
-	g.GET("/v1/tenant", app.listTenantsHandler, app.requireAuthenticatedAdmin)
-	g.POST("/v1/tenant", app.createTenantHandler, app.requireAuthenticatedAdmin)
-	g.GET("/v1/tenant/:uuid", app.showTenantsHandler, app.requireAuthenticatedAdmin)
-	g.PUT("/v1/tenant/:uuid", app.updateTenantsHandler, app.requireAuthenticatedAdmin)
-	g.DELETE("/v1/tenant/:uuid", app.removeTenant, app.requireAuthenticatedAdmin)
+	g.GET("tenant", app.listTenantsHandler, app.requireAuthenticatedAdmin)
+	g.POST("tenant", app.createTenantHandler, app.requireAuthenticatedAdmin)
+	g.GET("tenant/:uuid", app.showTenantsHandler, app.requireAuthenticatedAdmin)
+	g.PUT("tenant/:uuid", app.updateTenantsHandler, app.requireAuthenticatedAdmin)
+	g.DELETE("tenant/:uuid", app.removeTenant, app.requireAuthenticatedAdmin)
 
 	// Payments
 	g.GET("/v1/payment", app.listPaymentsHandler, app.requireAuthenticatedAdmin)
