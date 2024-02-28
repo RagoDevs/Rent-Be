@@ -56,7 +56,7 @@ func (app *application) createTenantHandler(c echo.Context) error {
 		FirstName      string    `json:"first_name" validate:"required"`
 		LastName       string    `json:"last_name" validate:"required"`
 		Phone          string    `json:"phone" validate:"required,len=10"`
-		HouseId        uuid.UUID `json:"house_id" validate:"required,uuid4"`
+		HouseId        uuid.UUID `json:"house_id" validate:"required"`
 		PersonalIdType string    `json:"personal_id_type" validate:"required"`
 		PersonalId     string    `json:"personal_id" validate:"required"`
 		Active         bool      `json:"active"`
