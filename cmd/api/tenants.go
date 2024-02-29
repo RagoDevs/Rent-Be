@@ -202,6 +202,7 @@ func (app *application) updateTenantsHandler(c echo.Context) error {
 		Sos:            tenant.Sos,
 		Eos:            tenant.Eos,
 		ID:             tenant.ID,
+		Version:        tenant.Version,
 	}
 	err = app.store.TxnUpdateTenantHouse(c.Request().Context(), arg, false)
 
@@ -248,6 +249,7 @@ func (app *application) removeTenant(c echo.Context) error {
 		Sos:            tenant.Sos,
 		Eos:            tenant.Eos,
 		ID:             tenant.ID,
+		Version:        tenant.Version,
 	}
 
 	err = app.store.TxnUpdateTenantHouse(c.Request().Context(), args, true)
