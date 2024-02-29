@@ -1,6 +1,7 @@
 package main
 
 import (
+	"expvar"
 	"net/http"
 	"time"
 
@@ -53,6 +54,9 @@ func (app *application) routes() http.Handler {
 	// password management
 	e.POST("/v1/token/password/reset", app.createPasswordResetTokenHandler)
 	e.PUT("/v1/admin/password", app.updateAdminPasswordHandler)
+
+	// metrics
+	e.GET("/v1/metrics", echo.WrapHandler(expvar.Handler()))
 
 	g := e.Group("/v1/auth")
 
