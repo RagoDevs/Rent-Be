@@ -57,6 +57,7 @@ func (app *application) routes() http.Handler {
 	g.POST("/v1/payment", app.createPaymentHandler, app.requireAuthenticatedAdmin)
 	g.GET("/v1/payment/:uuid", app.showPaymentHandler, app.requireAuthenticatedAdmin)
 	g.PUT("/v1/payment/:uuid", app.updatePaymentHandler, app.requireAuthenticatedAdmin)
+	g.DELETE("/v1/payment/:uuid", app.deletePaymentHandler, app.requireAuthenticatedAdmin)
 
 	return e
 
