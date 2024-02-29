@@ -15,20 +15,19 @@ import (
 
 const createTenant = `-- name: CreateTenant :exec
 INSERT INTO TENANT
-(first_name, last_name, house_id, phone, personal_id_type,personal_id, active, sos, eos) 
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+(first_name, last_name, house_id, phone, personal_id_type,personal_id, active, sos) 
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 `
 
 type CreateTenantParams struct {
-	FirstName      string       `json:"first_name"`
-	LastName       string       `json:"last_name"`
-	HouseID        uuid.UUID    `json:"house_id"`
-	Phone          string       `json:"phone"`
-	PersonalIDType string       `json:"personal_id_type"`
-	PersonalID     string       `json:"personal_id"`
-	Active         bool         `json:"active"`
-	Sos            time.Time    `json:"sos"`
-	Eos            sql.NullTime `json:"eos"`
+	FirstName      string    `json:"first_name"`
+	LastName       string    `json:"last_name"`
+	HouseID        uuid.UUID `json:"house_id"`
+	Phone          string    `json:"phone"`
+	PersonalIDType string    `json:"personal_id_type"`
+	PersonalID     string    `json:"personal_id"`
+	Active         bool      `json:"active"`
+	Sos            time.Time `json:"sos"`
 }
 
 func (q *Queries) CreateTenant(ctx context.Context, arg CreateTenantParams) error {
@@ -41,7 +40,6 @@ func (q *Queries) CreateTenant(ctx context.Context, arg CreateTenantParams) erro
 		arg.PersonalID,
 		arg.Active,
 		arg.Sos,
-		arg.Eos,
 	)
 	return err
 }
@@ -80,37 +78,22 @@ func (q *Queries) GetHouseByIdWithTenant(ctx context.Context, id uuid.UUID) (Get
 }
 
 const getTenantById = `-- name: GetTenantById :one
-SELECT id, first_name, last_name, house_id, 
-phone, personal_id_type,personal_id, active, sos, eos, version 
-FROM tenant
+SELECT id, first_name, last_name, phone, house_id, personal_id_type, personal_id, photo, active, sos, eos, version FROM tenant
 WHERE id = $1
 `
 
-type GetTenantByIdRow struct {
-	ID             uuid.UUID    `json:"id"`
-	FirstName      string       `json:"first_name"`
-	LastName       string       `json:"last_name"`
-	HouseID        uuid.UUID    `json:"house_id"`
-	Phone          string       `json:"phone"`
-	PersonalIDType string       `json:"personal_id_type"`
-	PersonalID     string       `json:"personal_id"`
-	Active         bool         `json:"active"`
-	Sos            time.Time    `json:"sos"`
-	Eos            sql.NullTime `json:"eos"`
-	Version        uuid.UUID    `json:"version"`
-}
-
-func (q *Queries) GetTenantById(ctx context.Context, id uuid.UUID) (GetTenantByIdRow, error) {
+func (q *Queries) GetTenantById(ctx context.Context, id uuid.UUID) (Tenant, error) {
 	row := q.db.QueryRowContext(ctx, getTenantById, id)
-	var i GetTenantByIdRow
+	var i Tenant
 	err := row.Scan(
 		&i.ID,
 		&i.FirstName,
 		&i.LastName,
-		&i.HouseID,
 		&i.Phone,
+		&i.HouseID,
 		&i.PersonalIDType,
 		&i.PersonalID,
+		&i.Photo,
 		&i.Active,
 		&i.Sos,
 		&i.Eos,
@@ -121,27 +104,26 @@ func (q *Queries) GetTenantById(ctx context.Context, id uuid.UUID) (GetTenantByI
 
 const getTenantByIdWithHouse = `-- name: GetTenantByIdWithHouse :one
 SELECT t.id, t.first_name, t.last_name, t.house_id,h.location, h.block, h.partition, 
-t.phone, t.personal_id_type,t.personal_id, t.active, t.sos, t.eos, t.version 
+t.phone, t.personal_id_type,t.personal_id, t.active, t.sos, t.version 
 FROM tenant t
 JOIN house h ON t.house_id = h.id
 WHERE t.id = $1
 `
 
 type GetTenantByIdWithHouseRow struct {
-	ID             uuid.UUID    `json:"id"`
-	FirstName      string       `json:"first_name"`
-	LastName       string       `json:"last_name"`
-	HouseID        uuid.UUID    `json:"house_id"`
-	Location       string       `json:"location"`
-	Block          string       `json:"block"`
-	Partition      int16        `json:"partition"`
-	Phone          string       `json:"phone"`
-	PersonalIDType string       `json:"personal_id_type"`
-	PersonalID     string       `json:"personal_id"`
-	Active         bool         `json:"active"`
-	Sos            time.Time    `json:"sos"`
-	Eos            sql.NullTime `json:"eos"`
-	Version        uuid.UUID    `json:"version"`
+	ID             uuid.UUID `json:"id"`
+	FirstName      string    `json:"first_name"`
+	LastName       string    `json:"last_name"`
+	HouseID        uuid.UUID `json:"house_id"`
+	Location       string    `json:"location"`
+	Block          string    `json:"block"`
+	Partition      int16     `json:"partition"`
+	Phone          string    `json:"phone"`
+	PersonalIDType string    `json:"personal_id_type"`
+	PersonalID     string    `json:"personal_id"`
+	Active         bool      `json:"active"`
+	Sos            time.Time `json:"sos"`
+	Version        uuid.UUID `json:"version"`
 }
 
 func (q *Queries) GetTenantByIdWithHouse(ctx context.Context, id uuid.UUID) (GetTenantByIdWithHouseRow, error) {
@@ -160,7 +142,6 @@ func (q *Queries) GetTenantByIdWithHouse(ctx context.Context, id uuid.UUID) (Get
 		&i.PersonalID,
 		&i.Active,
 		&i.Sos,
-		&i.Eos,
 		&i.Version,
 	)
 	return i, err
@@ -168,21 +149,20 @@ func (q *Queries) GetTenantByIdWithHouse(ctx context.Context, id uuid.UUID) (Get
 
 const getTenants = `-- name: GetTenants :many
 SELECT id, first_name, last_name, house_id, 
-phone, personal_id_type,personal_id, active, sos, eos 
+phone, personal_id_type,personal_id, active, sos
 FROM tenant
 `
 
 type GetTenantsRow struct {
-	ID             uuid.UUID    `json:"id"`
-	FirstName      string       `json:"first_name"`
-	LastName       string       `json:"last_name"`
-	HouseID        uuid.UUID    `json:"house_id"`
-	Phone          string       `json:"phone"`
-	PersonalIDType string       `json:"personal_id_type"`
-	PersonalID     string       `json:"personal_id"`
-	Active         bool         `json:"active"`
-	Sos            time.Time    `json:"sos"`
-	Eos            sql.NullTime `json:"eos"`
+	ID             uuid.UUID `json:"id"`
+	FirstName      string    `json:"first_name"`
+	LastName       string    `json:"last_name"`
+	HouseID        uuid.UUID `json:"house_id"`
+	Phone          string    `json:"phone"`
+	PersonalIDType string    `json:"personal_id_type"`
+	PersonalID     string    `json:"personal_id"`
+	Active         bool      `json:"active"`
+	Sos            time.Time `json:"sos"`
 }
 
 func (q *Queries) GetTenants(ctx context.Context) ([]GetTenantsRow, error) {
@@ -204,7 +184,6 @@ func (q *Queries) GetTenants(ctx context.Context) ([]GetTenantsRow, error) {
 			&i.PersonalID,
 			&i.Active,
 			&i.Sos,
-			&i.Eos,
 		); err != nil {
 			return nil, err
 		}

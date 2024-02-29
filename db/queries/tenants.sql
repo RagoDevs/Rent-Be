@@ -1,24 +1,22 @@
 -- name: CreateTenant :exec
 INSERT INTO TENANT
-(first_name, last_name, house_id, phone, personal_id_type,personal_id, active, sos, eos) 
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) ;
+(first_name, last_name, house_id, phone, personal_id_type,personal_id, active, sos) 
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8) ;
 
 -- name: GetTenantById :one
-SELECT id, first_name, last_name, house_id, 
-phone, personal_id_type,personal_id, active, sos, eos, version 
-FROM tenant
+SELECT * FROM tenant
 WHERE id = $1;
 
 -- name: GetTenantByIdWithHouse :one
 SELECT t.id, t.first_name, t.last_name, t.house_id,h.location, h.block, h.partition, 
-t.phone, t.personal_id_type,t.personal_id, t.active, t.sos, t.eos, t.version 
+t.phone, t.personal_id_type,t.personal_id, t.active, t.sos, t.version 
 FROM tenant t
 JOIN house h ON t.house_id = h.id
 WHERE t.id = $1;
 
 -- name: GetTenants :many
 SELECT id, first_name, last_name, house_id, 
-phone, personal_id_type,personal_id, active, sos, eos 
+phone, personal_id_type,personal_id, active, sos
 FROM tenant;
 
 -- name: UpdateTenant :exec

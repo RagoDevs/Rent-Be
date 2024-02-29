@@ -102,7 +102,6 @@ func (app *application) createTenantHandler(c echo.Context) error {
 		PersonalID:     input.PersonalId,
 		Active:         input.Active,
 		Sos:            input.Sos,
-		Eos:            input.Eos,
 	}
 
 	err = app.store.TxnCreateTenant(c.Request().Context(), args)
@@ -147,7 +146,6 @@ func (app *application) updateTenantsHandler(c echo.Context) error {
 		PersonalId     *string    `json:"personal_id"`
 		Active         *bool      `json:"active"`
 		Sos            *time.Time `json:"sos"`
-		Eos            *time.Time `json:"eos"`
 	}
 
 	if err := c.Bind(&input); err != nil {
@@ -186,10 +184,6 @@ func (app *application) updateTenantsHandler(c echo.Context) error {
 
 	if input.Sos != nil {
 		tenant.Sos = *input.Sos
-	}
-
-	if input.Eos != nil {
-		tenant.Eos = *input.Eos
 	}
 
 	arg := db.UpdateTenantParams{
