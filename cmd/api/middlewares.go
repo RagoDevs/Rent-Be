@@ -87,9 +87,9 @@ func (app *application) requireAuthenticatedAdmin(next echo.HandlerFunc) echo.Ha
 
 func (app *application) metrics(next echo.HandlerFunc) echo.HandlerFunc {
 
-	totalRequestsReceived := expvar.NewInt("total_of_requests_received")
-	totalResponsesSent := expvar.NewInt("total_responses_sent")
-	totalProcessingTimeMicroseconds := expvar.NewInt("total_processing_time_μs")
+	totalRequestsReceived := expvar.NewInt("total_requests_received_middleware")
+	totalResponsesSent := expvar.NewInt("total_responses_sent_middleware")
+	totalProcessingTimeMicroseconds := expvar.NewInt("total_processing_time_μs_middleware")
 
 	return func(c echo.Context) error {
 
