@@ -79,11 +79,11 @@ func (app *application) createTenantHandler(c echo.Context) error {
 		switch {
 
 		case errors.Is(err, sql.ErrNoRows):
-			slog.Error("error fetching house by id", "err", err)
+			slog.Error("error fetching house by id for create tenant", "err", err)
 			return c.JSON(http.StatusNotFound, envelope{"error": "house not found"})
 
 		default:
-			slog.Error("error fetching house by id", "err", err)
+			slog.Error("error fetching house by id for create tenant", "err", err)
 			return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 		}
 
@@ -129,11 +129,11 @@ func (app *application) updateTenantsHandler(c echo.Context) error {
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			slog.Error("error fetching tenant by id", "err", err)
+			slog.Error("error fetching tenant by id for update", "err", err)
 			return c.JSON(http.StatusNotFound, envelope{"error": "tenant not found"})
 
 		default:
-			slog.Error("error fetching tenant by id", "err", err)
+			slog.Error("error fetching tenant by id for update", "err", err)
 			return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 		}
 	}
@@ -228,10 +228,10 @@ func (app *application) removeTenant(c echo.Context) error {
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			slog.Error("error fetching tenant by id", "err", err)
+			slog.Error("error fetching tenant by id for update", "err", err)
 			return c.JSON(http.StatusNotFound, envelope{"error": "tenant not found"})
 		default:
-			slog.Error("error fetching tenant by id", "err", err)
+			slog.Error("error fetching tenant by id for update", "err", err)
 			return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 		}
 	}
