@@ -26,6 +26,7 @@ type Querier interface {
 	GetHouses(ctx context.Context) ([]GetHousesRow, error)
 	GetPaymentById(ctx context.Context, id uuid.UUID) (GetPaymentByIdRow, error)
 	GetTenantById(ctx context.Context, id uuid.UUID) (GetTenantByIdRow, error)
+	GetTenantByIdWithHouse(ctx context.Context, id uuid.UUID) (GetTenantByIdWithHouseRow, error)
 	GetTenants(ctx context.Context) ([]GetTenantsRow, error)
 	GetUnrenewedByTenantId(ctx context.Context, tenantID uuid.UUID) (GetUnrenewedByTenantIdRow, error)
 	UpdateAdmin(ctx context.Context, arg UpdateAdminParams) (uuid.UUID, error)
