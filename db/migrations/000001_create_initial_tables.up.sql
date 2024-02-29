@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS tenant(
     photo TEXT NOT NULL DEFAULT '',
     active BOOL NOT NULL ,
     sos DATE NOT NULL,
-    eos DATE NOT NULL,
+    eos DATE,
     version UUID NOT NULL DEFAULT uuid_generate_v4()
 
 ); 
