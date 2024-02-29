@@ -14,6 +14,10 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+var totalRequestsReceived = expvar.NewInt("total_requests_received_middleware")
+var totalResponsesSent = expvar.NewInt("total_responses_sent_middleware")
+var totalProcessingTimeMicroseconds = expvar.NewInt("total_processing_time_μs_middleware")
+
 func (app *application) authenticate(next echo.HandlerFunc) echo.HandlerFunc {
 
 	return func(c echo.Context) error {
@@ -86,10 +90,6 @@ func (app *application) requireAuthenticatedAdmin(next echo.HandlerFunc) echo.Ha
 }
 
 func (app *application) metrics(next echo.HandlerFunc) echo.HandlerFunc {
-
-	totalRequestsReceived := expvar.NewInt("total_requests_received_middleware")
-	totalResponsesSent := expvar.NewInt("total_responses_sent_middleware")
-	totalProcessingTimeMicroseconds := expvar.NewInt("total_processing_time_μs_middleware")
 
 	return func(c echo.Context) error {
 
