@@ -1,7 +1,7 @@
--- name: CreateTenant :one
+-- name: CreateTenant :exec
 INSERT INTO TENANT
 (first_name, last_name, house_id, phone, personal_id_type,personal_id, active, sos, eos) 
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id;
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) ;
 
 -- name: GetTenantById :one
 SELECT id, first_name, last_name, house_id, 
@@ -25,4 +25,11 @@ FROM tenant;
 UPDATE tenant 
 SET first_name = $1, last_name = $2 ,house_id = $3, phone = $4 ,personal_id_type = $5 ,personal_id = $6 ,active = $7, sos=$8 ,eos = $9, version = uuid_generate_v4()
 WHERE id = $10 AND version = $11;
+
+-- name: GetHouseByIdWithTenant :one
+SELECT h.id,h.location, h.block, h.partition , h.Occupied, 
+CONCAT(t.first_name || ' ' || t.last_name) AS tenant_name, t.id AS tenant_id
+FROM tenant t
+Join house h ON h.id = t.house_id
+WHERE h.id = $1;
 

@@ -154,6 +154,8 @@ func (app *application) updateTenantsHandler(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, envelope{"error": "invalid request payload"})
 	}
 
+	prev_house_id := tenant.HouseID
+
 	if input.FirstName != nil {
 		tenant.FirstName = *input.FirstName
 	}
@@ -204,7 +206,8 @@ func (app *application) updateTenantsHandler(c echo.Context) error {
 		ID:             tenant.ID,
 		Version:        tenant.Version,
 	}
-	err = app.store.TxnUpdateTenantHouse(c.Request().Context(), arg, false)
+
+	err = app.store.TxnUpdateTenantHouse(c.Request().Context(), arg, prev_house_id)
 
 	if err != nil {
 		slog.Error("error updating tenant and house", "err", err)
@@ -252,7 +255,7 @@ func (app *application) removeTenant(c echo.Context) error {
 		Version:        tenant.Version,
 	}
 
-	err = app.store.TxnUpdateTenantHouse(c.Request().Context(), args, true)
+	err = app.store.TxnRemoveTenantHouse(c.Request().Context(), args)
 
 	if err != nil {
 		slog.Error("failed deactiving tenant & disabling house", "err", err)

@@ -20,13 +20,12 @@ type Admin struct {
 }
 
 type House struct {
-	ID         uuid.UUID     `json:"id"`
-	Location   string        `json:"location"`
-	Block      string        `json:"block"`
-	Partition  int16         `json:"partition"`
-	Occupied   bool          `json:"occupied"`
-	Occupiedby uuid.NullUUID `json:"occupiedby"`
-	Version    uuid.UUID     `json:"version"`
+	ID        uuid.UUID `json:"id"`
+	Location  string    `json:"location"`
+	Block     string    `json:"block"`
+	Partition int16     `json:"partition"`
+	Occupied  bool      `json:"occupied"`
+	Version   uuid.UUID `json:"version"`
 }
 
 type Payment struct {

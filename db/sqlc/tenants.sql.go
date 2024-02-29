@@ -12,10 +12,10 @@ import (
 	"github.com/google/uuid"
 )
 
-const createTenant = `-- name: CreateTenant :one
+const createTenant = `-- name: CreateTenant :exec
 INSERT INTO TENANT
 (first_name, last_name, house_id, phone, personal_id_type,personal_id, active, sos, eos) 
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 `
 
 type CreateTenantParams struct {
@@ -30,8 +30,8 @@ type CreateTenantParams struct {
 	Eos            time.Time `json:"eos"`
 }
 
-func (q *Queries) CreateTenant(ctx context.Context, arg CreateTenantParams) (uuid.UUID, error) {
-	row := q.db.QueryRowContext(ctx, createTenant,
+func (q *Queries) CreateTenant(ctx context.Context, arg CreateTenantParams) error {
+	_, err := q.db.ExecContext(ctx, createTenant,
 		arg.FirstName,
 		arg.LastName,
 		arg.HouseID,
@@ -42,9 +42,40 @@ func (q *Queries) CreateTenant(ctx context.Context, arg CreateTenantParams) (uui
 		arg.Sos,
 		arg.Eos,
 	)
-	var id uuid.UUID
-	err := row.Scan(&id)
-	return id, err
+	return err
+}
+
+const getHouseByIdWithTenant = `-- name: GetHouseByIdWithTenant :one
+SELECT h.id,h.location, h.block, h.partition , h.Occupied, 
+CONCAT(t.first_name || ' ' || t.last_name) AS tenant_name, t.id AS tenant_id
+FROM tenant t
+Join house h ON h.id = t.house_id
+WHERE h.id = $1
+`
+
+type GetHouseByIdWithTenantRow struct {
+	ID         uuid.UUID   `json:"id"`
+	Location   string      `json:"location"`
+	Block      string      `json:"block"`
+	Partition  int16       `json:"partition"`
+	Occupied   bool        `json:"occupied"`
+	TenantName interface{} `json:"tenant_name"`
+	TenantID   uuid.UUID   `json:"tenant_id"`
+}
+
+func (q *Queries) GetHouseByIdWithTenant(ctx context.Context, id uuid.UUID) (GetHouseByIdWithTenantRow, error) {
+	row := q.db.QueryRowContext(ctx, getHouseByIdWithTenant, id)
+	var i GetHouseByIdWithTenantRow
+	err := row.Scan(
+		&i.ID,
+		&i.Location,
+		&i.Block,
+		&i.Partition,
+		&i.Occupied,
+		&i.TenantName,
+		&i.TenantID,
+	)
+	return i, err
 }
 
 const getTenantById = `-- name: GetTenantById :one

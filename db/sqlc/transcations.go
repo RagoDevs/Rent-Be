@@ -70,7 +70,7 @@ func (store *SQLStore) TxnCreateTenant(ctx context.Context, args CreateTenantPar
 	defer tx.Rollback()
 	qtx := New(tx)
 
-	tenant_id, err := qtx.CreateTenant(ctx, args)
+	err = qtx.CreateTenant(ctx, args)
 
 	if err != nil {
 		return err
@@ -86,19 +86,13 @@ func (store *SQLStore) TxnCreateTenant(ctx context.Context, args CreateTenantPar
 		return fmt.Errorf("house is already occupied")
 	}
 
-	occupiedBy := uuid.NullUUID{
-		UUID:  tenant_id,
-		Valid: true,
-	}
-
 	err = qtx.UpdateHouseById(ctx, UpdateHouseByIdParams{
-		Occupied:   true,
-		ID:         args.HouseID,
-		Location:   house.Location,
-		Block:      house.Block,
-		Partition:  house.Partition,
-		Version:    house.Version,
-		Occupiedby: occupiedBy,
+		Occupied:  true,
+		ID:        args.HouseID,
+		Location:  house.Location,
+		Block:     house.Block,
+		Partition: house.Partition,
+		Version:   house.Version,
 	})
 
 	if err != nil {
@@ -110,7 +104,7 @@ func (store *SQLStore) TxnCreateTenant(ctx context.Context, args CreateTenantPar
 
 }
 
-func (store *SQLStore) TxnUpdateTenantHouse(ctx context.Context, args UpdateTenantParams, isDelTenant bool) error {
+func (store *SQLStore) TxnUpdateTenantHouse(ctx context.Context, args UpdateTenantParams, prev_house_id uuid.UUID) error {
 
 	tx, err := store.db.Begin()
 
@@ -122,33 +116,79 @@ func (store *SQLStore) TxnUpdateTenantHouse(ctx context.Context, args UpdateTena
 
 	qtx := New(tx)
 
-	var occupiedBy uuid.NullUUID
+	// rare cases when tenant shifts houses
+	if prev_house_id != args.HouseID {
 
-	var occupied bool
+		// old house tenant is moving from
+		house, err := qtx.GetHouseById(ctx, prev_house_id)
 
-	if isDelTenant {
-
-		args.Active = false
-
-		occupiedBy = uuid.NullUUID{
-			UUID:  args.ID,
-			Valid: false,
+		if err != nil {
+			return err
 		}
 
-		occupied = false
-
-	} else {
-
-		args.Active = true
-
-		occupiedBy = uuid.NullUUID{
-			UUID:  args.ID,
-			Valid: true,
+		hargs := UpdateHouseByIdParams{
+			Occupied:  false,
+			ID:        prev_house_id,
+			Location:  house.Location,
+			Block:     house.Block,
+			Partition: house.Partition,
+			Version:   house.Version,
 		}
 
-		occupied = true
+		err = qtx.UpdateHouseById(ctx, hargs)
+
+		if err != nil {
+			return err
+		}
+
+		// new house tenant is moving to
+
+		nh, err := qtx.GetHouseById(ctx, args.HouseID)
+
+		if err != nil {
+			return err
+		}
+
+		nhargs := UpdateHouseByIdParams{
+			Occupied:  true,
+			ID:        args.HouseID,
+			Location:  nh.Location,
+			Block:     nh.Block,
+			Partition: nh.Partition,
+			Version:   nh.Version,
+		}
+
+		err = qtx.UpdateHouseById(ctx, nhargs)
+
+		if err != nil {
+			return err
+		}
 
 	}
+
+	err = qtx.UpdateTenant(ctx, args)
+
+	if err != nil {
+		return err
+	}
+
+	return tx.Commit()
+
+}
+
+func (store *SQLStore) TxnRemoveTenantHouse(ctx context.Context, args UpdateTenantParams) error {
+
+	tx, err := store.db.Begin()
+
+	if err != nil {
+		return err
+	}
+
+	defer tx.Rollback()
+
+	qtx := New(tx)
+
+	args.Active = false
 
 	err = qtx.UpdateTenant(ctx, args)
 
@@ -163,19 +203,18 @@ func (store *SQLStore) TxnUpdateTenantHouse(ctx context.Context, args UpdateTena
 	}
 
 	hargs := UpdateHouseByIdParams{
-		Occupied:   occupied,
-		ID:         args.HouseID,
-		Location:   house.Location,
-		Block:      house.Block,
-		Partition:  house.Partition,
-		Version:    house.Version,
-		Occupiedby: occupiedBy,
+		Occupied:  false,
+		ID:        args.HouseID,
+		Location:  house.Location,
+		Block:     house.Block,
+		Partition: house.Partition,
+		Version:   house.Version,
 	}
 
 	err = qtx.UpdateHouseById(ctx, hargs)
 
 	if err != nil {
-       return err
+		return err
 	}
 
 	return tx.Commit()

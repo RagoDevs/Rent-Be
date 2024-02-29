@@ -136,7 +136,6 @@ func (app *application) updateHouseHandler(c echo.Context) error {
 		Block:      house.Block,
 		Partition:  house.Partition,
 		Version:    house.Version,
-		Occupiedby: house.Occupiedby,
 	}
 
 	err = app.store.UpdateHouseById(c.Request().Context(), args)

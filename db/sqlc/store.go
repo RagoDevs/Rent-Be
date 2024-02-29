@@ -13,7 +13,8 @@ type Store interface {
 	NewToken(id uuid.UUID, ttl time.Duration, scope string) (*TokenLoc, error)
 	BulkInsert(ctx context.Context, houses []HouseBulk) error
 	TxnCreateTenant(ctx context.Context, args CreateTenantParams) error
-	TxnUpdateTenantHouse(ctx context.Context, args UpdateTenantParams, isDelTenant bool) error
+	TxnUpdateTenantHouse(ctx context.Context, args UpdateTenantParams, prev_house_id uuid.UUID) error
+	TxnRemoveTenantHouse(ctx context.Context, args UpdateTenantParams) error
 }
 
 type SQLStore struct {
