@@ -61,7 +61,6 @@ func (app *application) createTenantHandler(c echo.Context) error {
 		PersonalId     string    `json:"personal_id" validate:"required"`
 		Active         bool      `json:"active"`
 		Sos            time.Time `json:"sos" validate:"required"`
-		Eos            time.Time `json:"eos" validate:"required"`
 	}
 
 	if err := c.Bind(&input); err != nil {
