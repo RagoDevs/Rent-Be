@@ -5,6 +5,7 @@
 package db
 
 import (
+	"database/sql"
 	"time"
 
 	"github.com/google/uuid"
@@ -41,18 +42,18 @@ type Payment struct {
 }
 
 type Tenant struct {
-	ID             uuid.UUID `json:"id"`
-	FirstName      string    `json:"first_name"`
-	LastName       string    `json:"last_name"`
-	Phone          string    `json:"phone"`
-	HouseID        uuid.UUID `json:"house_id"`
-	PersonalIDType string    `json:"personal_id_type"`
-	PersonalID     string    `json:"personal_id"`
-	Photo          string    `json:"photo"`
-	Active         bool      `json:"active"`
-	Sos            time.Time `json:"sos"`
-	Eos            time.Time `json:"eos"`
-	Version        uuid.UUID `json:"version"`
+	ID             uuid.UUID    `json:"id"`
+	FirstName      string       `json:"first_name"`
+	LastName       string       `json:"last_name"`
+	Phone          string       `json:"phone"`
+	HouseID        uuid.UUID    `json:"house_id"`
+	PersonalIDType string       `json:"personal_id_type"`
+	PersonalID     string       `json:"personal_id"`
+	Photo          string       `json:"photo"`
+	Active         bool         `json:"active"`
+	Sos            time.Time    `json:"sos"`
+	Eos            sql.NullTime `json:"eos"`
+	Version        uuid.UUID    `json:"version"`
 }
 
 type Token struct {
