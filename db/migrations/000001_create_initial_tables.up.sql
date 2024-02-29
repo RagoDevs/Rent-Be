@@ -25,7 +25,6 @@ CREATE TABLE IF NOT EXISTS house (
     block CITEXT NOT NULL,
     partition SMALLINT NOT NULL,
     occupied BOOL NOT NULL,
-    occupiedBy uuid REFERENCES tenant(id) ON DELETE SET NULL,
     version UUID NOT NULL DEFAULT uuid_generate_v4()
 ); 
 
