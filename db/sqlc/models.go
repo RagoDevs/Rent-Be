@@ -31,11 +31,13 @@ type House struct {
 type Payment struct {
 	ID        uuid.UUID `json:"id"`
 	TenantID  uuid.UUID `json:"tenant_id"`
-	Period    int32     `json:"period"`
+	Amount    int32     `json:"amount"`
 	StartDate time.Time `json:"start_date"`
-	Renewed   bool      `json:"renewed"`
 	EndDate   time.Time `json:"end_date"`
 	Version   uuid.UUID `json:"version"`
+	CreatedAt time.Time `json:"created_at"`
+	CreatedBy uuid.UUID `json:"created_by"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 type Tenant struct {

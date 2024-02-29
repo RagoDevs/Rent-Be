@@ -48,11 +48,13 @@ CREATE TABLE IF NOT EXISTS tenant(
 CREATE TABLE IF NOT EXISTS payment (
     id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
     tenant_id  UUID NOT NULL REFERENCES tenant(id) ON DELETE CASCADE,
-    period INT NOT NULL,
+    amount INT NOT NULL,
     start_date DATE NOT NULL,
     end_date DATE NOT NULL,
     version UUID NOT NULL DEFAULT uuid_generate_v4(),
-    created_at TIMESTAMP(0) WITH TIME ZONE NOT NULL DEFAULT NOW()
+    created_at TIMESTAMP(0) WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    created_by UUID NOT NULL REFERENCES admin(id) ON DELETE CASCADE,
+    updated_at TIMESTAMP(0) WITH TIME ZONE NOT NULL DEFAULT NOW()
     
 );
 

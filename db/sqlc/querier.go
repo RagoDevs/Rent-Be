@@ -19,16 +19,16 @@ type Querier interface {
 	DeleteAllToken(ctx context.Context, arg DeleteAllTokenParams) error
 	DeletePayment(ctx context.Context, id uuid.UUID) error
 	GetAdminByPhone(ctx context.Context, phone string) (Admin, error)
-	GetAllPayments(ctx context.Context) ([]GetAllPaymentsRow, error)
+	GetAllPayments(ctx context.Context) ([]Payment, error)
+	GetDetailedPaymentById(ctx context.Context, id uuid.UUID) (GetDetailedPaymentByIdRow, error)
 	GetHashTokenForAdmin(ctx context.Context, arg GetHashTokenForAdminParams) (GetHashTokenForAdminRow, error)
 	GetHouseById(ctx context.Context, id uuid.UUID) (House, error)
 	GetHouseByIdWithTenant(ctx context.Context, id uuid.UUID) (GetHouseByIdWithTenantRow, error)
 	GetHouses(ctx context.Context) ([]GetHousesRow, error)
-	GetPaymentById(ctx context.Context, id uuid.UUID) (GetPaymentByIdRow, error)
+	GetPaymentById(ctx context.Context, id uuid.UUID) (Payment, error)
 	GetTenantById(ctx context.Context, id uuid.UUID) (GetTenantByIdRow, error)
 	GetTenantByIdWithHouse(ctx context.Context, id uuid.UUID) (GetTenantByIdWithHouseRow, error)
 	GetTenants(ctx context.Context) ([]GetTenantsRow, error)
-	GetUnrenewedByTenantId(ctx context.Context, tenantID uuid.UUID) (GetUnrenewedByTenantIdRow, error)
 	UpdateAdmin(ctx context.Context, arg UpdateAdminParams) (uuid.UUID, error)
 	UpdateHouseById(ctx context.Context, arg UpdateHouseByIdParams) error
 	UpdatePayment(ctx context.Context, arg UpdatePaymentParams) error

@@ -13,24 +13,24 @@ import (
 )
 
 const createPayment = `-- name: CreatePayment :exec
-INSERT INTO payment (tenant_id, period,start_date, end_date, renewed) VALUES ($1,$2,$3,$4,$5)
+INSERT INTO payment (tenant_id, amount, start_date, end_date, created_by) VALUES ($1,$2,$3,$4,$5) RETURNING id
 `
 
 type CreatePaymentParams struct {
 	TenantID  uuid.UUID `json:"tenant_id"`
-	Period    int32     `json:"period"`
+	Amount    int32     `json:"amount"`
 	StartDate time.Time `json:"start_date"`
 	EndDate   time.Time `json:"end_date"`
-	Renewed   bool      `json:"renewed"`
+	CreatedBy uuid.UUID `json:"created_by"`
 }
 
 func (q *Queries) CreatePayment(ctx context.Context, arg CreatePaymentParams) error {
 	_, err := q.db.ExecContext(ctx, createPayment,
 		arg.TenantID,
-		arg.Period,
+		arg.Amount,
 		arg.StartDate,
 		arg.EndDate,
-		arg.Renewed,
+		arg.CreatedBy,
 	)
 	return err
 }
@@ -45,36 +45,28 @@ func (q *Queries) DeletePayment(ctx context.Context, id uuid.UUID) error {
 }
 
 const getAllPayments = `-- name: GetAllPayments :many
-SELECT id,tenant_id, period, start_date, end_date, renewed, version FROM payment
+SELECT id, tenant_id, amount, start_date, end_date, version, created_at, created_by, updated_at FROM payment
 `
 
-type GetAllPaymentsRow struct {
-	ID        uuid.UUID `json:"id"`
-	TenantID  uuid.UUID `json:"tenant_id"`
-	Period    int32     `json:"period"`
-	StartDate time.Time `json:"start_date"`
-	EndDate   time.Time `json:"end_date"`
-	Renewed   bool      `json:"renewed"`
-	Version   uuid.UUID `json:"version"`
-}
-
-func (q *Queries) GetAllPayments(ctx context.Context) ([]GetAllPaymentsRow, error) {
+func (q *Queries) GetAllPayments(ctx context.Context) ([]Payment, error) {
 	rows, err := q.db.QueryContext(ctx, getAllPayments)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []GetAllPaymentsRow{}
+	items := []Payment{}
 	for rows.Next() {
-		var i GetAllPaymentsRow
+		var i Payment
 		if err := rows.Scan(
 			&i.ID,
 			&i.TenantID,
-			&i.Period,
+			&i.Amount,
 			&i.StartDate,
 			&i.EndDate,
-			&i.Renewed,
 			&i.Version,
+			&i.CreatedAt,
+			&i.CreatedBy,
+			&i.UpdatedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -89,87 +81,95 @@ func (q *Queries) GetAllPayments(ctx context.Context) ([]GetAllPaymentsRow, erro
 	return items, nil
 }
 
-const getPaymentById = `-- name: GetPaymentById :one
-SELECT id, tenant_id, period, start_date, end_date, renewed , version  FROM payment
-WHERE id = $1
+const getDetailedPaymentById = `-- name: GetDetailedPaymentById :one
+SELECT p.id, CONCAT(t.first_name || ' ' || t.last_name) AS tenant_name,
+t.id AS tenant_id,p.amount, p.start_date, p.end_date, a.phone AS admin_phone, h.location, h.block, h.partition, 
+p.created_at , p.updated_at, p.version  
+FROM payment p
+JOIN tenant t ON p.tenant_id = t.id
+JOIN house h ON t.house_id = h.id
+JOIN admin a ON p.created_by = a.id
+WHERE p.id = $1
 `
 
-type GetPaymentByIdRow struct {
-	ID        uuid.UUID `json:"id"`
-	TenantID  uuid.UUID `json:"tenant_id"`
-	Period    int32     `json:"period"`
-	StartDate time.Time `json:"start_date"`
-	EndDate   time.Time `json:"end_date"`
-	Renewed   bool      `json:"renewed"`
-	Version   uuid.UUID `json:"version"`
+type GetDetailedPaymentByIdRow struct {
+	ID         uuid.UUID   `json:"id"`
+	TenantName interface{} `json:"tenant_name"`
+	TenantID   uuid.UUID   `json:"tenant_id"`
+	Amount     int32       `json:"amount"`
+	StartDate  time.Time   `json:"start_date"`
+	EndDate    time.Time   `json:"end_date"`
+	AdminPhone string      `json:"admin_phone"`
+	Location   string      `json:"location"`
+	Block      string      `json:"block"`
+	Partition  int16       `json:"partition"`
+	CreatedAt  time.Time   `json:"created_at"`
+	UpdatedAt  time.Time   `json:"updated_at"`
+	Version    uuid.UUID   `json:"version"`
 }
 
-func (q *Queries) GetPaymentById(ctx context.Context, id uuid.UUID) (GetPaymentByIdRow, error) {
-	row := q.db.QueryRowContext(ctx, getPaymentById, id)
-	var i GetPaymentByIdRow
+func (q *Queries) GetDetailedPaymentById(ctx context.Context, id uuid.UUID) (GetDetailedPaymentByIdRow, error) {
+	row := q.db.QueryRowContext(ctx, getDetailedPaymentById, id)
+	var i GetDetailedPaymentByIdRow
 	err := row.Scan(
 		&i.ID,
+		&i.TenantName,
 		&i.TenantID,
-		&i.Period,
+		&i.Amount,
 		&i.StartDate,
 		&i.EndDate,
-		&i.Renewed,
+		&i.AdminPhone,
+		&i.Location,
+		&i.Block,
+		&i.Partition,
+		&i.CreatedAt,
+		&i.UpdatedAt,
 		&i.Version,
 	)
 	return i, err
 }
 
-const getUnrenewedByTenantId = `-- name: GetUnrenewedByTenantId :one
-SELECT id, tenant_id, period, start_date, end_date, renewed, version FROM payment 
-WHERE renewed = false and tenant_id = $1
+const getPaymentById = `-- name: GetPaymentById :one
+SELECT id, tenant_id, amount, start_date, end_date, version, created_at, created_by, updated_at FROM payment
+WHERE id = $1
 `
 
-type GetUnrenewedByTenantIdRow struct {
-	ID        uuid.UUID `json:"id"`
-	TenantID  uuid.UUID `json:"tenant_id"`
-	Period    int32     `json:"period"`
-	StartDate time.Time `json:"start_date"`
-	EndDate   time.Time `json:"end_date"`
-	Renewed   bool      `json:"renewed"`
-	Version   uuid.UUID `json:"version"`
-}
-
-func (q *Queries) GetUnrenewedByTenantId(ctx context.Context, tenantID uuid.UUID) (GetUnrenewedByTenantIdRow, error) {
-	row := q.db.QueryRowContext(ctx, getUnrenewedByTenantId, tenantID)
-	var i GetUnrenewedByTenantIdRow
+func (q *Queries) GetPaymentById(ctx context.Context, id uuid.UUID) (Payment, error) {
+	row := q.db.QueryRowContext(ctx, getPaymentById, id)
+	var i Payment
 	err := row.Scan(
 		&i.ID,
 		&i.TenantID,
-		&i.Period,
+		&i.Amount,
 		&i.StartDate,
 		&i.EndDate,
-		&i.Renewed,
 		&i.Version,
+		&i.CreatedAt,
+		&i.CreatedBy,
+		&i.UpdatedAt,
 	)
 	return i, err
 }
 
 const updatePayment = `-- name: UpdatePayment :exec
 UPDATE payment
-SET period = $1, start_date = $2, end_date = $3, renewed = $4, version = uuid_generate_v4()
-WHERE id = $5 AND version = $6
+SET amount = $1, start_date = $2, end_date = $3, version = uuid_generate_v4(), updated_at = NOW()
+WHERE id = $4 AND version = $5
 `
 
 type UpdatePaymentParams struct {
-	Period    int32     `json:"period"`
+	Amount    int32     `json:"amount"`
 	StartDate time.Time `json:"start_date"`
 	EndDate   time.Time `json:"end_date"`
-	Renewed   bool      `json:"renewed"`
 	ID        uuid.UUID `json:"id"`
 	Version   uuid.UUID `json:"version"`
 }
 
 func (q *Queries) UpdatePayment(ctx context.Context, arg UpdatePaymentParams) error {
 	_, err := q.db.ExecContext(ctx, updatePayment,
-		arg.Period,
+		arg.Amount,
 		arg.StartDate,
 		arg.EndDate,
-		arg.Renewed,
 		arg.ID,
 		arg.Version,
 	)
