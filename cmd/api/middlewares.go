@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"database/sql"
 	"errors"
+	"expvar"
 	"log/slog"
 	"net/http"
 	"strings"
@@ -81,5 +82,25 @@ func (app *application) requireAuthenticatedAdmin(next echo.HandlerFunc) echo.Ha
 		}
 
 		return next(c)
+	}
+}
+
+func (app *application) metrics(next echo.HandlerFunc) echo.HandlerFunc {
+
+	totalRequestsReceived := expvar.NewInt("total_requests_received")
+	totalResponsesSent := expvar.NewInt("total_responses_sent")
+	totalProcessingTimeMicroseconds := expvar.NewInt("total_processing_time_μs")
+
+	return func(c echo.Context) error {
+
+		totalRequestsReceived.Add(1)
+		start := time.Now()
+
+		err := next(c)
+
+		totalResponsesSent.Add(1)
+		totalProcessingTimeMicroseconds.Add(time.Since(start).Microseconds())
+
+		return err
 	}
 }

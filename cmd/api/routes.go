@@ -36,6 +36,7 @@ func (app *application) routes() http.Handler {
 		},
 	}
 
+	e.Use(app.metrics)
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 	e.Use(middleware.RateLimiterWithConfig(config))
