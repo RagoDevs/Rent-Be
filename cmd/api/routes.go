@@ -53,11 +53,11 @@ func (app *application) routes() http.Handler {
 	g.DELETE("/tenant/:uuid", app.removeTenant, app.requireAuthenticatedAdmin)
 
 	// Payments
-	g.GET("/v1/payment", app.listPaymentsHandler, app.requireAuthenticatedAdmin)
-	g.POST("/v1/payment", app.createPaymentHandler, app.requireAuthenticatedAdmin)
-	g.GET("/v1/payment/:uuid", app.showPaymentHandler, app.requireAuthenticatedAdmin)
-	g.PUT("/v1/payment/:uuid", app.updatePaymentHandler, app.requireAuthenticatedAdmin)
-	g.DELETE("/v1/payment/:uuid", app.deletePaymentHandler, app.requireAuthenticatedAdmin)
+	g.GET("/payment", app.listPaymentsHandler, app.requireAuthenticatedAdmin)
+	g.POST("/payment", app.createPaymentHandler, app.requireAuthenticatedAdmin)
+	g.GET("/payment/:uuid", app.showPaymentHandler, app.requireAuthenticatedAdmin)
+	g.PUT("/payment/:uuid", app.updatePaymentHandler, app.requireAuthenticatedAdmin)
+	g.DELETE("/payment/:uuid", app.deletePaymentHandler, app.requireAuthenticatedAdmin)
 
 	return e
 
