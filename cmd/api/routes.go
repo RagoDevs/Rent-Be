@@ -12,9 +12,6 @@ func (app *application) routes() http.Handler {
 
 	e := echo.New()
 
-	e.Use(middleware.Logger())
-	e.Use(middleware.Recover())
-
 	DefaultCORSConfig := middleware.CORSConfig{
 		Skipper:      middleware.DefaultSkipper,
 		AllowOrigins: []string{"*"},
@@ -38,9 +35,11 @@ func (app *application) routes() http.Handler {
 		},
 	}
 
+	e.Use(middleware.Logger())
+	e.Use(middleware.Recover())
 	e.Use(middleware.RateLimiterWithConfig(config))
-
 	e.Use(middleware.CORSWithConfig(DefaultCORSConfig))
+	e.Use(middleware.BodyLimit("2K"))
 
 	e.GET("/v1/ping", app.ping)
 
