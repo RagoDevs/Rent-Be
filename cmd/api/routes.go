@@ -47,14 +47,14 @@ func (app *application) routes() http.Handler {
 
 	// User Routes
 
-	e.POST("/v1/admin", app.registerAdminHandler)
-	e.PUT("/v1/admin/activate", app.activateAdminHandler)
+	e.POST("/v1/admins", app.registerAdminHandler)
+	e.PUT("/v1/admins/activate", app.activateAdminHandler)
 	e.POST("/v1/login", app.createAuthenticationTokenHandler)
-	e.POST("/v1/token/resend/activation", app.createActivationTokenHandler)
+	e.POST("/v1/tokens/resend/activation", app.createActivationTokenHandler)
 
 	// password management
-	e.POST("/v1/token/password/reset", app.createPasswordResetTokenHandler)
-	e.PUT("/v1/admin/password", app.updateAdminPasswordHandler)
+	e.POST("/v1/tokens/password/reset", app.createPasswordResetTokenHandler)
+	e.PUT("/v1/admins/password", app.updateAdminPasswordHandler)
 
 	// metrics
 	e.GET("/v1/metrics", echo.WrapHandler(expvar.Handler()))
@@ -64,25 +64,25 @@ func (app *application) routes() http.Handler {
 	g.Use(app.authenticate)
 
 	// houses
-	g.GET("/house", app.listHousesHandler, app.requireAuthenticatedAdmin)
-	g.POST("/house", app.createHouseHandler, app.requireAuthenticatedAdmin)
-	g.POST("/bulk/house", app.bulkHousesHandler, app.requireAuthenticatedAdmin)
-	g.GET("/house/:uuid", app.showHousesHandler, app.requireAuthenticatedAdmin)
-	g.PUT("/house/:uuid", app.updateHouseHandler, app.requireAuthenticatedAdmin)
+	g.GET("/houses", app.listHousesHandler, app.requireAuthenticatedAdmin)
+	g.POST("/houses", app.createHouseHandler, app.requireAuthenticatedAdmin)
+	g.POST("/bulk/houses", app.bulkHousesHandler, app.requireAuthenticatedAdmin)
+	g.GET("/houses/:uuid", app.showHousesHandler, app.requireAuthenticatedAdmin)
+	g.PUT("/houses/:uuid", app.updateHouseHandler, app.requireAuthenticatedAdmin)
 
 	// tenants
-	g.GET("/tenant", app.listTenantsHandler, app.requireAuthenticatedAdmin)
-	g.POST("/tenant", app.createTenantHandler, app.requireAuthenticatedAdmin)
-	g.GET("/tenant/:uuid", app.showTenantsHandler, app.requireAuthenticatedAdmin)
-	g.PUT("/tenant/:uuid", app.updateTenantsHandler, app.requireAuthenticatedAdmin)
-	g.DELETE("/tenant/:uuid", app.removeTenant, app.requireAuthenticatedAdmin)
+	g.GET("/tenants", app.listTenantsHandler, app.requireAuthenticatedAdmin)
+	g.POST("/tenants", app.createTenantHandler, app.requireAuthenticatedAdmin)
+	g.GET("/tenants/:uuid", app.showTenantsHandler, app.requireAuthenticatedAdmin)
+	g.PUT("/tenants/:uuid", app.updateTenantsHandler, app.requireAuthenticatedAdmin)
+	g.DELETE("/tenants/:uuid", app.removeTenant, app.requireAuthenticatedAdmin)
 
 	// Payments
-	g.GET("/payment", app.listPaymentsHandler, app.requireAuthenticatedAdmin)
-	g.POST("/payment", app.createPaymentHandler, app.requireAuthenticatedAdmin)
-	g.GET("/payment/:uuid", app.showPaymentHandler, app.requireAuthenticatedAdmin)
-	g.PUT("/payment/:uuid", app.updatePaymentHandler, app.requireAuthenticatedAdmin)
-	g.DELETE("/payment/:uuid", app.deletePaymentHandler, app.requireAuthenticatedAdmin)
+	g.GET("/payments", app.listPaymentsHandler, app.requireAuthenticatedAdmin)
+	g.POST("/payments", app.createPaymentHandler, app.requireAuthenticatedAdmin)
+	g.GET("/payments/:uuid", app.showPaymentHandler, app.requireAuthenticatedAdmin)
+	g.PUT("/payments/:uuid", app.updatePaymentHandler, app.requireAuthenticatedAdmin)
+	g.DELETE("/payments/:uuid", app.deletePaymentHandler, app.requireAuthenticatedAdmin)
 
 	return e
 
