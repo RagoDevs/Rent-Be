@@ -29,7 +29,7 @@ func (app *application) registerAdminHandler(c echo.Context) error {
 	}
 
 	if input.Phone != app.config.phone {
-		return c.JSON(http.StatusUnauthorized, envelope{"error": "email not allowed"})
+		return c.JSON(http.StatusUnauthorized, envelope{"error": "phone not allowed"})
 	}
 
 	
