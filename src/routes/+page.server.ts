@@ -1,5 +1,6 @@
 import { redirect } from "@sveltejs/kit";
 import type { Actions } from "./$types";
+import { SECRET_BASE_API_URL } from '$env/static/private'
 
 export const actions: Actions = {
   default: async ({ cookies, request }) => {
@@ -15,7 +16,7 @@ export const actions: Actions = {
       };
 
       // Sending a POST request to the login URL
-      const response = await fetch("https://rmgmt.eadevs.com/v1/login", {
+      const response = await fetch(`${SECRET_BASE_API_URL}/v1/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
