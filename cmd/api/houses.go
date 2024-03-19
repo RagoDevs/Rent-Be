@@ -45,7 +45,7 @@ func (app *application) showHousesHandler(c echo.Context) error {
 
 	}
 
-	return c.JSON(http.StatusOK, envelope{"house": house})
+	return c.JSON(http.StatusOK, house)
 }
 
 func (app *application) createHouseHandler(c echo.Context) error {
