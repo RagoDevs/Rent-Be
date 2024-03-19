@@ -31,7 +31,7 @@ func (app *application) showHousesHandler(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, envelope{"error": "invalid house id"})
 	}
 
-	house, err := app.store.GetHouseByIdWithTenant(c.Request().Context(), uuid)
+	house, err := app.store.GetHouseById(c.Request().Context(), uuid)
 
 	if err != nil {
 		switch {
@@ -130,12 +130,12 @@ func (app *application) updateHouseHandler(c echo.Context) error {
 	}
 
 	args := db.UpdateHouseByIdParams{
-		ID:         house.ID,
-		Occupied:   house.Occupied,
-		Location:   house.Location,
-		Block:      house.Block,
-		Partition:  house.Partition,
-		Version:    house.Version,
+		ID:        house.ID,
+		Occupied:  house.Occupied,
+		Location:  house.Location,
+		Block:     house.Block,
+		Partition: house.Partition,
+		Version:   house.Version,
 	}
 
 	err = app.store.UpdateHouseById(c.Request().Context(), args)
