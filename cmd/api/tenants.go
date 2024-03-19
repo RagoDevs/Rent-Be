@@ -33,7 +33,7 @@ func (app *application) showTenantsHandler(c echo.Context) error {
 		return err
 	}
 
-	tenant, err := app.store.GetTenantByIdWithHouse(c.Request().Context(), uuid)
+	tenant, err := app.store.GetTenantById(c.Request().Context(), uuid)
 
 	if err != nil {
 		switch {
