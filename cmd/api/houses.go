@@ -19,7 +19,7 @@ func (app *application) listHousesHandler(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 	}
 
-	return c.JSON(http.StatusOK, envelope{"houses": houses})
+	return c.JSON(http.StatusOK, houses)
 
 }
 
