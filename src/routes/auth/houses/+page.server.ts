@@ -1,15 +1,30 @@
 import { SECRET_BASE_API_URL } from '$env/static/private'
+import type { PageServerLoad } from "./$types"
 
-export const load = async ({ fetch }) => {
-  try {
-    const response = await fetch(`${SECRET_BASE_API_URL}/v1/ping`)
+interface House {
+    id: string;
+    location: string;
+    block: string;
+    partition: number;
+    occupied: boolean;
+}
+
+
+export const load : PageServerLoad = async ({ fetch, locals}): Promise<{ houses: House[] }>  => {
+
+   let token = locals.Token
+
+    const response = await fetch(`${SECRET_BASE_API_URL}/v1/auth/houses`, {
+        method: "GET",
+        headers: {
+          "authorization": "Bearer " + token,
+        },
+    },
+    )
     if (!response.ok) {
-      throw new Error(`HTTP error: ${response.status}`)
+      return { houses : [] }
+       
     }
-    const currencies = await response.json()
-    return { currencies }
-  } catch (error) {
-    console.error(error)
-    return { error: 'Unable to fetch currencies' }
-  }
+    const houses: House[] = await response.json()
+    return { houses : houses }
 }
