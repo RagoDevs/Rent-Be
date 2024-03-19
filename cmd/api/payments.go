@@ -20,7 +20,7 @@ func (app *application) listPaymentsHandler(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 	}
 
-	return c.JSON(http.StatusOK, envelope{"payments": payments})
+	return c.JSON(http.StatusOK, payments)
 }
 
 func (app *application) showPaymentHandler(c echo.Context) error {
@@ -44,7 +44,7 @@ func (app *application) showPaymentHandler(c echo.Context) error {
 		}
 	}
 
-	return c.JSON(http.StatusOK, envelope{"payment": payment})
+	return c.JSON(http.StatusOK, payment)
 }
 
 func (app *application) createPaymentHandler(c echo.Context) error {
