@@ -21,7 +21,7 @@ func (app *application) listTenantsHandler(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 	}
 
-	return c.JSON(http.StatusOK, envelope{"tenants": tenants})
+	return c.JSON(http.StatusOK, tenants)
 
 }
 
@@ -47,7 +47,7 @@ func (app *application) showTenantsHandler(c echo.Context) error {
 		}
 	}
 
-	return c.JSON(http.StatusOK, envelope{"tenant": tenant})
+	return c.JSON(http.StatusOK, tenant)
 }
 
 func (app *application) createTenantHandler(c echo.Context) error {
