@@ -4,17 +4,20 @@ export const getUserToken = (event: RequestEvent) => {
 	// get the cookies from the request
 	const { cookies } = event
 
-	// get the user token from the cookie
-	const token = cookies.get("auth")
+	let token: string | null;
+
+    const authCookie = cookies.get("auth");
+    if (authCookie !== undefined) {
+        token = authCookie;
+    } else {
+        token = null;
+    }
 
 
 	if (token != undefined && token?.length > 0) {
 
-        const user = {
-			token: token
-		}
-		
-		return user
+        const Token = token
+		return Token
 	}
 	
 	return null

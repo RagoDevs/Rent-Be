@@ -3,10 +3,10 @@ import { redirect, type Handle } from "@sveltejs/kit"
 
 export const handle: Handle = async ({ event, resolve }) => {
 	
-	event.locals.user = getUserToken(event)
+	event.locals.Token = getUserToken(event)
 
 	if (event.url.pathname.startsWith("/auth")) {
-		if (!event.locals.user?.token){
+		if (!event.locals.Token){
 			throw redirect(303, "/")
 		}
 	

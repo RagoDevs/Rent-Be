@@ -1,15 +1,12 @@
 // See https://kit.svelte.dev/docs/types#app
 // for information about these interfaces
 
-type User = {
-	token: string;
-}
 
 declare global {
 	namespace App {
 		// interface Error {}
 		interface Locals {
-			user: User | null;
+			Token: string | null;
 		}
 		// interface PageData {}
 		// interface PageState {}
