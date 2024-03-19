@@ -30,10 +30,10 @@ export const actions: Actions = {
       }
 
     
-      const token = await response.text();
+      const token = await response.json();
 
       // Set the token in the cookies
-      cookies.set("auth", token, {
+      cookies.set("auth", token.token, {
         path: "/",
         httpOnly: true,
         sameSite: "strict",
