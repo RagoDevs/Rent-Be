@@ -1,0 +1,66 @@
+name: Go Test Build and Deploy
+
+on:
+  push:
+    branches:
+      - main
+
+defaults:
+  run:
+    working-directory: ./backend
+ 
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Go
+      uses: actions/setup-go@v3
+      with:
+        go-version: 1.21.6
+      
+    - name: Test
+      run: go test -v ./...
+      
+    - name: Build
+      run: go build -v -o rmgmt ./cmd/api
+
+    - uses: actions/upload-artifact@v3
+      with:
+          name: rmgmt-artifact
+          path: ./backend/rmgmt
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/download-artifact@v3
+        with:
+          name: rmgmt-artifact
+      - name: Deploy to server
+        uses: appleboy/scp-action@master
+        with:
+           host: ${{ secrets.HOST }}
+           username: ${{ secrets.USERNAME }}
+           password: ${{ secrets.PASSWORD }}
+           port: ${{ secrets.PORT }}
+           source: ./rmgmt
+           target: "/home/${{ secrets.USERNAME }}/rmgmt"
+
+      - name: Start Home Rent Backend service and Reload Nginx
+        uses: appleboy/ssh-action@master
+        with:
+           host: ${{ secrets.HOST }}
+           username: ${{ secrets.USERNAME }}
+           password: ${{ secrets.PASSWORD }}
+           port: ${{ secrets.PORT }}
+           script: |
+               cd /home/${{ secrets.USERNAME }}/rmgmt
+               chmod +x rmgmt
+               echo ${{ secrets.PASSWORD }} | sudo -S systemctl stop rmgmt.service 
+               echo ${{ secrets.PASSWORD }} | sudo -S systemctl start rmgmt.service 
+               echo ${{ secrets.PASSWORD }} | sudo -S systemctl reload nginx
+
+ 
