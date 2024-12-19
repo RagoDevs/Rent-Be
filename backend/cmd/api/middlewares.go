@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	db "github.com/Hopertz/rmgmt/db/sqlc"
+	db "github.com/Hopertz/rent/db/sqlc"
 	"github.com/labstack/echo/v4"
 )
 

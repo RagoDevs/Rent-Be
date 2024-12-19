@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"time"
 
-	db "github.com/Hopertz/rmgmt/db/sqlc"
+	db "github.com/Hopertz/rent/db/sqlc"
 	"github.com/labstack/echo/v4"
 )
 
@@ -32,7 +32,6 @@ func (app *application) registerAdminHandler(c echo.Context) error {
 		return c.JSON(http.StatusUnauthorized, envelope{"error": "phone not allowed"})
 	}
 
-	
 	pwd, err := db.SetPassword(input.Password)
 
 	if err != nil {
@@ -94,7 +93,7 @@ func (app *application) activateAdminHandler(c echo.Context) error {
 	if err := app.validator.Struct(input); err != nil {
 		return c.JSON(http.StatusBadRequest, envelope{"error": err.Error()})
 	}
-	
+
 	tokenHash := sha256.Sum256([]byte(input.TokenPlaintext))
 
 	args := db.GetHashTokenForAdminParams{

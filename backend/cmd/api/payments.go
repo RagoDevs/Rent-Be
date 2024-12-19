@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"time"
 
-	db "github.com/Hopertz/rmgmt/db/sqlc"
+	db "github.com/Hopertz/rent/db/sqlc"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 )

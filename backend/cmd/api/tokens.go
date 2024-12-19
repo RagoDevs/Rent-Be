@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"time"
 
-	db "github.com/Hopertz/rmgmt/db/sqlc"
+	db "github.com/Hopertz/rent/db/sqlc"
 	"github.com/labstack/echo/v4"
 )
 
@@ -70,7 +70,7 @@ func (app *application) createAuthenticationTokenHandler(c echo.Context) error {
 func (app *application) createPasswordResetTokenHandler(c echo.Context) error {
 
 	var input struct {
-		Phone    string `json:"phone" validate:"required,len=10"`
+		Phone string `json:"phone" validate:"required,len=10"`
 	}
 
 	if err := c.Bind(&input); err != nil {
@@ -120,7 +120,7 @@ func (app *application) createPasswordResetTokenHandler(c echo.Context) error {
 func (app *application) createActivationTokenHandler(c echo.Context) error {
 
 	var input struct {
-		Phone    string `json:"phone" validate:"required,len=10"`
+		Phone string `json:"phone" validate:"required,len=10"`
 	}
 
 	if err := c.Bind(&input); err != nil {

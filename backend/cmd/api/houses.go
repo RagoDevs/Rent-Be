@@ -6,7 +6,7 @@ import (
 	"log/slog"
 	"net/http"
 
-	db "github.com/Hopertz/rmgmt/db/sqlc"
+	db "github.com/Hopertz/rent/db/sqlc"
 	"github.com/labstack/echo/v4"
 )
 

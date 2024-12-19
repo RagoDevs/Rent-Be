@@ -12,8 +12,8 @@ import (
 	"sync"
 	"time"
 
-	db "github.com/Hopertz/rmgmt/db/sqlc"
-	"github.com/Hopertz/rmgmt/pkg/beem"
+	db "github.com/Hopertz/rent/db/sqlc"
+	"github.com/Hopertz/rent/pkg/beem"
 	_ "github.com/lib/pq"
 	"gopkg.in/go-playground/validator.v9"
 )
