@@ -35,7 +35,7 @@ func (app *application) registerAdminHandler(c echo.Context) error {
 	pwd, err := db.SetPassword(input.Password)
 
 	if err != nil {
-		slog.Error("error generating hash password", err)
+		slog.Error("error generating hash password", "error", err)
 		return err
 	}
 
@@ -54,7 +54,7 @@ func (app *application) registerAdminHandler(c echo.Context) error {
 			return c.JSON(http.StatusBadRequest, envelope{"error": "phone number is already in use"})
 
 		default:
-			slog.Error("error creating admin", err)
+			slog.Error("error creating admin", "error",  err)
 			return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 		}
 
@@ -62,7 +62,7 @@ func (app *application) registerAdminHandler(c echo.Context) error {
 
 	token, err := app.store.NewToken(a.ID, 3*24*time.Hour, db.ScopeActivation)
 	if err != nil {
-		slog.Error("error generating new token", err)
+		slog.Error("error generating new token", "error" , err)
 		return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 	}
 
@@ -107,10 +107,10 @@ func (app *application) activateAdminHandler(c echo.Context) error {
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			slog.Error("error fetching token user admin", err)
+			slog.Error("error fetching token user admin", "error", err)
 			return c.JSON(http.StatusNotFound, envelope{"error": "invalid token"})
 		default:
-			slog.Error("error fetching token user admin", err)
+			slog.Error("error fetching token user admin", "error", err)
 			return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 		}
 
@@ -131,10 +131,10 @@ func (app *application) activateAdminHandler(c echo.Context) error {
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			slog.Error("error conflict updating admin ", err)
+			slog.Error("error conflict updating admin ","error",  err)
 			return c.JSON(http.StatusConflict, envelope{"error": "unable to complete request due to an edit conflict"})
 		default:
-			slog.Error("error updating admin ", err)
+			slog.Error("error updating admin ", "error", err)
 			return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 		}
 
@@ -147,7 +147,7 @@ func (app *application) activateAdminHandler(c echo.Context) error {
 	err = app.store.DeleteAllToken(c.Request().Context(), a)
 
 	if err != nil {
-		slog.Error("error deleting token", err)
+		slog.Error("error deleting token", "error", err)
 		return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 	}
 
@@ -182,10 +182,10 @@ func (app *application) updateAdminPasswordHandler(c echo.Context) error {
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			slog.Error("error fetching token user admin", err)
+			slog.Error("error fetching token user admin", "error", err)
 			return c.JSON(http.StatusNotFound, envelope{"errors": "invalid token"})
 		default:
-			slog.Error("error fetching token user admin", err)
+			slog.Error("error fetching token user admin", "error", err)
 			return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 		}
 	}
@@ -209,7 +209,7 @@ func (app *application) updateAdminPasswordHandler(c echo.Context) error {
 		case errors.Is(err, sql.ErrNoRows):
 			return c.JSON(http.StatusConflict, envelope{"error": "unable to complete request due to an edit conflict"})
 		default:
-			slog.Error("error updating admin ", err)
+			slog.Error("error updating admin ", "error", err)
 			return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 		}
 	}
@@ -221,7 +221,7 @@ func (app *application) updateAdminPasswordHandler(c echo.Context) error {
 	err = app.store.DeleteAllToken(c.Request().Context(), d)
 
 	if err != nil {
-		slog.Error("error deleting token", err)
+		slog.Error("error deleting token", "error", err)
 		return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 	}
 

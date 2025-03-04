@@ -32,10 +32,10 @@ func (app *application) createAuthenticationTokenHandler(c echo.Context) error {
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			slog.Error("error fetching admin by phone", err)
+			slog.Error("error fetching admin by phone", "error", err)
 			return c.JSON(http.StatusNotFound, envelope{"error": "invalid phone number or password"})
 		default:
-			slog.Error("error fetching admin by phone number", err)
+			slog.Error("error fetching admin by phone number", "error", err)
 			return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 		}
 	}
@@ -48,19 +48,19 @@ func (app *application) createAuthenticationTokenHandler(c echo.Context) error {
 	match, err := db.PasswordMatches(pwd)
 
 	if err != nil {
-		slog.Error("error matching password", err)
+		slog.Error("error matching password", "error", err)
 		return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 
 	}
 
 	if !match {
-		slog.Error("error matching password", err)
+		slog.Error("error matching password", "error", err)
 		return c.JSON(http.StatusUnauthorized, envelope{"error": "invalid phone number or password"})
 	}
 
 	token, err := app.store.NewToken(admin.ID, 3*24*time.Hour, db.ScopeAuthentication)
 	if err != nil {
-		slog.Error("error generating new token", err)
+		slog.Error("error generating new token", "error", err)
 		return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 	}
 
@@ -86,10 +86,10 @@ func (app *application) createPasswordResetTokenHandler(c echo.Context) error {
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			slog.Error("error fetching admin by phone number", err)
+			slog.Error("error fetching admin by phone number", "error", err)
 			return c.JSON(http.StatusNotFound, envelope{"error": "invalid phone number or password"})
 		default:
-			slog.Error("error fetching admin by phone number", err)
+			slog.Error("error fetching admin by phone number", "error", err)
 			return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 		}
 	}
@@ -100,7 +100,7 @@ func (app *application) createPasswordResetTokenHandler(c echo.Context) error {
 
 	token, err := app.store.NewToken(admin.ID, 45*time.Minute, db.ScopePasswordReset)
 	if err != nil {
-		slog.Error("error generating new token", err)
+		slog.Error("error generating new token", "error", err)
 		return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 	}
 
@@ -136,10 +136,10 @@ func (app *application) createActivationTokenHandler(c echo.Context) error {
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			slog.Error("error fetching admin by phone number", err)
+			slog.Error("error fetching admin by phone number", "error", err)
 			return c.JSON(http.StatusNotFound, envelope{"error": "invalid phone number or password"})
 		default:
-			slog.Error("error fetching admin by phone number", err)
+			slog.Error("error fetching admin by phone number", "error", err)
 			return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 		}
 	}
@@ -150,7 +150,7 @@ func (app *application) createActivationTokenHandler(c echo.Context) error {
 
 	token, err := app.store.NewToken(admin.ID, 3*24*time.Hour, db.ScopeActivation)
 	if err != nil {
-		slog.Error("error generating new token", err)
+		slog.Error("error generating new token", "error", err)
 		return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 	}
 

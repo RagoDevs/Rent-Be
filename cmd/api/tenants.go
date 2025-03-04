@@ -42,7 +42,7 @@ func (app *application) showTenantsHandler(c echo.Context) error {
 			return c.JSON(http.StatusNotFound, envelope{"error": "tenant not found"})
 
 		default:
-			slog.Error("error fetching tenant by id", err)
+			slog.Error("error fetching tenant by id", "error", err)
 			return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 		}
 	}

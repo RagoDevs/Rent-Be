@@ -55,10 +55,10 @@ func (app *application) authenticate(next echo.HandlerFunc) echo.HandlerFunc {
 		if err != nil {
 			switch {
 			case errors.Is(err, sql.ErrNoRows):
-				slog.Error("error", err)
+				slog.Error("error", "error", err)
 				return c.JSON(http.StatusNotFound, envelope{"error": "invalid token"})
 			default:
-				slog.Error("error", err)
+				slog.Error("error", "error", err)
 				return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 			}
 		}

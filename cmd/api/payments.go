@@ -111,7 +111,7 @@ func (app *application) updatePaymentHandler(c echo.Context) error {
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			slog.Error("error fetching payment by id on update payment", err)
+			slog.Error("error fetching payment by id on update payment", "error", err)
 			return c.JSON(http.StatusNotFound, envelope{"error": "payment not found"})
 
 		default:
@@ -154,7 +154,7 @@ func (app *application) updatePaymentHandler(c echo.Context) error {
 	err = app.store.UpdatePayment(c.Request().Context(), args)
 
 	if err != nil {
-		slog.Error("error updating payment", err)
+		slog.Error("error updating payment", "error", err)
 		return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 	}
 
@@ -175,11 +175,11 @@ func (app *application) deletePaymentHandler(c echo.Context) error {
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			slog.Error("error fetching payment by id on delete payment", err)
+			slog.Error("error fetching payment by id on delete payment", "error", err)
 			return c.JSON(http.StatusNotFound, envelope{"error": "payment not found"})
 
 		default:
-			slog.Error("error fetching payment by id on delete payment", err)
+			slog.Error("error fetching payment by id on delete payment", "error", err)
 			return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 		}
 
@@ -188,7 +188,7 @@ func (app *application) deletePaymentHandler(c echo.Context) error {
 	err = app.store.DeletePayment(c.Request().Context(), payment.ID)
 
 	if err != nil {
-		slog.Error("error deleting payment", err)
+		slog.Error("error deleting payment", "error", err)
 		return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 	}
 
