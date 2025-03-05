@@ -8,7 +8,7 @@ WHERE id = $1;
 
 -- name: GetDetailedPaymentById :one
 SELECT p.id, CONCAT(t.first_name || ' ' || t.last_name) AS tenant_name,
-t.id AS tenant_id,p.amount, p.start_date, p.end_date, a.email AS admin_email, h.location, h.block, h.partition, 
+t.id AS tenant_id,p.amount, p.start_date, p.end_date, a.phone AS admin_phone, h.location, h.block, h.partition, 
 p.created_at , p.updated_at, p.version  
 FROM payment p
 JOIN tenant t ON p.tenant_id = t.id

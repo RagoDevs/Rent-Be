@@ -16,7 +16,7 @@ import (
 func (app *application) registerAdminHandler(c echo.Context) error {
 
 	var input struct {
-		Email    string `json:"email" validate:"required,email"`
+		Phone    string `json:"phone" validate:"required,len=10"`
 		Password string `json:"password" validate:"required,min=8"`
 	}
 
@@ -28,8 +28,8 @@ func (app *application) registerAdminHandler(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, envelope{"error": err.Error()})
 	}
 
-	if input.Email != app.config.email {
-		return c.JSON(http.StatusUnauthorized, envelope{"error": "email not allowed"})
+	if input.Phone != app.config.phone {
+		return c.JSON(http.StatusUnauthorized, envelope{"error": "phone not allowed"})
 	}
 
 	pwd, err := db.SetPassword(input.Password)
@@ -40,7 +40,7 @@ func (app *application) registerAdminHandler(c echo.Context) error {
 	}
 
 	args := db.CreateAdminParams{
-		Email:        input.Email,
+		Phone:        input.Phone,
 		PasswordHash: pwd.Hash,
 		Activated:    false,
 	}
@@ -118,7 +118,7 @@ func (app *application) activateAdminHandler(c echo.Context) error {
 	param := db.UpdateAdminParams{
 
 		ID:           admin.ID,
-		Email:        admin.Email,
+		Phone:        admin.Phone,
 		Activated:    true,
 		PasswordHash: admin.PasswordHash,
 		Version:      admin.Version,
@@ -194,7 +194,7 @@ func (app *application) updateAdminPasswordHandler(c echo.Context) error {
 	}
 
 	_, err = app.store.UpdateAdmin(c.Request().Context(), db.UpdateAdminParams{
-		Email:        admin.Email,
+		Phone:        admin.Phone,
 		PasswordHash: pwd.Hash,
 		Activated:    true,
 		ID:           admin.ID,

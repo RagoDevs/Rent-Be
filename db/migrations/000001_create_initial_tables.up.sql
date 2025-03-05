@@ -5,7 +5,7 @@ CREATE EXTENSION citext;
 CREATE TABLE IF NOT EXISTS admin (
     id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
     created_at TIMESTAMP(0) WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    email citext UNIQUE NOT NULL,
+    phone TEXT UNIQUE NOT NULL,
     password_hash BYTEA NOT NULL,
     activated BOOL NOT NULL,
     version UUID NOT NULL DEFAULT uuid_generate_v4()
