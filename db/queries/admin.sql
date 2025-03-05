@@ -1,24 +1,24 @@
 -- name: GetAdminByPhone :one
-SELECT id, created_at, phone, password_hash, activated, version
+SELECT id, created_at, email, password_hash, activated, version
 FROM admin
-WHERE phone = $1;
+WHERE email = $1;
 
 
 -- name: CreateAdmin :one
-INSERT INTO admin (phone, password_hash, activated)
+INSERT INTO admin (email, password_hash, activated)
 VALUES ($1, $2, $3 )
 RETURNING id, created_at, version;
 
 
 -- name: UpdateAdmin :one
 UPDATE admin
-SET phone = $1, password_hash = $2, activated = $3, version = uuid_generate_v4()
+SET email = $1, password_hash = $2, activated = $3, version = uuid_generate_v4()
 WHERE id = $4 AND version = $5
 RETURNING version;
 
 
 -- name: GetHashTokenForAdmin :one
-SELECT admin.id, admin.created_at,admin.phone, admin.password_hash,admin.version, admin.activated
+SELECT admin.id, admin.created_at,admin.email, admin.password_hash,admin.version, admin.activated
 FROM admin
 INNER JOIN token
 ON admin.id = token.id
