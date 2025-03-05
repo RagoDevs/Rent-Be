@@ -108,10 +108,9 @@ func (app *application) createPasswordResetTokenHandler(c echo.Context) error {
 
 	app.background(func() {
 
-		err = app.beem.Send(msg, admin.Phone)
-		if err != nil {
-			slog.Error("error sending msg to phone number", "err", err)
-		}
+		// send mail here
+
+		_ = msg
 	})
 
 	return c.JSON(http.StatusAccepted, nil)
@@ -158,10 +157,8 @@ func (app *application) createActivationTokenHandler(c echo.Context) error {
 
 	app.background(func() {
 
-		err = app.beem.Send(msg, admin.Phone)
-		if err != nil {
-			slog.Error("error sending msg to phone number", "err", err)
-		}
+		_ = msg
+		//send mail here
 	})
 
 	return c.JSON(http.StatusAccepted, nil)

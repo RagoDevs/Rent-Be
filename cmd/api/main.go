@@ -13,7 +13,6 @@ import (
 	"time"
 
 	db "github.com/Hopertz/rent/db/sqlc"
-	"github.com/Hopertz/rent/pkg/beem"
 	_ "github.com/lib/pq"
 	"gopkg.in/go-playground/validator.v9"
 )
@@ -31,18 +30,12 @@ type config struct {
 	}
 
 	phone string
-
-	beemSmS struct {
-		apiKey    string
-		secretKey string
-	}
 }
 
 type envelope map[string]interface{}
 
 type application struct {
 	config    config
-	beem      *beem.Beem
 	wg        sync.WaitGroup
 	store     db.Store
 	validator *validator.Validate
@@ -63,14 +56,9 @@ func main() {
 	flag.IntVar(&cfg.port, "port", 5040, "API server port")
 	flag.StringVar(&cfg.env, "env", os.Getenv("ENV_STAGE"), "Environment (development|Staging|production")
 	flag.StringVar(&cfg.db.dsn, "db-dsn", os.Getenv("DB_DSN"), "PostgreSQL DSN")
-
 	flag.IntVar(&cfg.db.maxOpenConns, "db-max-open-conns", 25, "PostgreSQL max open connections")
 	flag.IntVar(&cfg.db.maxIdleConns, "db-max-idle-conns", 25, "PostgreSQL max ilde connections")
 	flag.StringVar(&cfg.db.maxIdleTime, "db-max-idle-time", "15m", "PostgreSQL max connection  connections")
-
-	flag.StringVar(&cfg.beemSmS.apiKey, "beem-apikey", os.Getenv("BEEM_APIKEY"), "beem-apikey")
-	flag.StringVar(&cfg.beemSmS.secretKey, "beem-secretkey", os.Getenv("BEEM_SECRETKEY"), "beem-secretkey")
-
 	flag.StringVar(&cfg.phone, "admin-phone", os.Getenv("ADMIN_PHONE"), "admin phone number")
 
 	flag.Parse()
@@ -100,7 +88,6 @@ func main() {
 
 	app := &application{
 		config:    cfg,
-		beem:      beem.New(cfg.beemSmS.apiKey, cfg.beemSmS.secretKey),
 		store:     db.NewStore(dbConn),
 		validator: validator.New(),
 	}

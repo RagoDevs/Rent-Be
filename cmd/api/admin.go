@@ -54,7 +54,7 @@ func (app *application) registerAdminHandler(c echo.Context) error {
 			return c.JSON(http.StatusBadRequest, envelope{"error": "phone number is already in use"})
 
 		default:
-			slog.Error("error creating admin", "error",  err)
+			slog.Error("error creating admin", "error", err)
 			return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 		}
 
@@ -62,7 +62,7 @@ func (app *application) registerAdminHandler(c echo.Context) error {
 
 	token, err := app.store.NewToken(a.ID, 3*24*time.Hour, db.ScopeActivation)
 	if err != nil {
-		slog.Error("error generating new token", "error" , err)
+		slog.Error("error generating new token", "error", err)
 		return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 	}
 
@@ -70,11 +70,8 @@ func (app *application) registerAdminHandler(c echo.Context) error {
 
 	app.background(func() {
 
-		err = app.beem.Send(msg, input.Phone)
-
-		if err != nil {
-			slog.Error("error sending ", "err", err)
-		}
+		_ = msg
+		//send mail here
 	})
 
 	return c.JSON(http.StatusCreated, nil)
@@ -131,7 +128,7 @@ func (app *application) activateAdminHandler(c echo.Context) error {
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			slog.Error("error conflict updating admin ","error",  err)
+			slog.Error("error conflict updating admin ", "error", err)
 			return c.JSON(http.StatusConflict, envelope{"error": "unable to complete request due to an edit conflict"})
 		default:
 			slog.Error("error updating admin ", "error", err)
