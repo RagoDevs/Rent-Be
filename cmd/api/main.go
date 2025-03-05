@@ -59,7 +59,7 @@ func main() {
 	flag.IntVar(&cfg.db.maxOpenConns, "db-max-open-conns", 25, "PostgreSQL max open connections")
 	flag.IntVar(&cfg.db.maxIdleConns, "db-max-idle-conns", 25, "PostgreSQL max ilde connections")
 	flag.StringVar(&cfg.db.maxIdleTime, "db-max-idle-time", "15m", "PostgreSQL max connection  connections")
-	flag.StringVar(&cfg.email, "admin-phone", os.Getenv("ADMIN_PHONE"), "admin phone number")
+	flag.StringVar(&cfg.email, "admin-email", os.Getenv("ADMIN_EMAIL"), "admin email ")
 
 	flag.Parse()
 
