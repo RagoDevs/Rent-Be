@@ -20,7 +20,7 @@ const (
 )
 
 var (
-	DuplicatePhone = `pq: duplicate key value violates unique constraint "admin_phone_key"`
+	DuplicateEmail = `pq: duplicate key value violates unique constraint "admin_email_key"`
 )
 
 type Password struct {

@@ -28,8 +28,8 @@ type config struct {
 		maxIdleConns int
 		maxIdleTime  string
 	}
-
-	email string
+	mailer_url string
+	emails     string
 }
 
 type envelope map[string]interface{}
@@ -59,7 +59,8 @@ func main() {
 	flag.IntVar(&cfg.db.maxOpenConns, "db-max-open-conns", 25, "PostgreSQL max open connections")
 	flag.IntVar(&cfg.db.maxIdleConns, "db-max-idle-conns", 25, "PostgreSQL max ilde connections")
 	flag.StringVar(&cfg.db.maxIdleTime, "db-max-idle-time", "15m", "PostgreSQL max connection  connections")
-	flag.StringVar(&cfg.email, "admin-email", os.Getenv("ADMIN_EMAIL"), "admin email ")
+	flag.StringVar(&cfg.emails, "admin-emails", os.Getenv("ADMIN_EMAILS"), "admin emails ")
+	flag.StringVar(&cfg.mailer_url, "mail-url", os.Getenv("MAIL_URL"), "mail url ")
 
 	flag.Parse()
 

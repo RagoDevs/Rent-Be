@@ -1,17 +1,28 @@
 package main
 
 import (
+	"bytes"
 	"crypto/sha256"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"log/slog"
 	"net/http"
+	"strings"
 	"time"
 
 	db "github.com/Hopertz/rent/db/sqlc"
 	"github.com/labstack/echo/v4"
+	"slices"
 )
+
+type SignupData struct {
+	ID    string `json:"id"`
+	Email string `json:"email"`
+	Token string `json:"token"`
+}
 
 func (app *application) registerAdminHandler(c echo.Context) error {
 
@@ -28,7 +39,11 @@ func (app *application) registerAdminHandler(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, envelope{"error": err.Error()})
 	}
 
-	if input.Email != app.config.email {
+	emails := strings.Split(app.config.emails, ",")
+
+	found := slices.Contains(emails, input.Email)
+
+	if !found {
 		return c.JSON(http.StatusUnauthorized, envelope{"error": "email not allowed"})
 	}
 
@@ -50,8 +65,8 @@ func (app *application) registerAdminHandler(c echo.Context) error {
 	if err != nil {
 		switch {
 
-		case err.Error() == db.DuplicatePhone:
-			return c.JSON(http.StatusBadRequest, envelope{"error": "phone number is already in use"})
+		case err.Error() == db.DuplicateEmail:
+			return c.JSON(http.StatusBadRequest, envelope{"error": "email is already in use"})
 
 		default:
 			slog.Error("error creating admin", "error", err)
@@ -66,16 +81,52 @@ func (app *application) registerAdminHandler(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 	}
 
-	msg := fmt.Sprintf("Welcome, your activation token is %s", token.Plaintext)
-
 	app.background(func() {
 
-		_ = msg
-		//send mail here
+		dt := SignupData{
+			ID:    a.ID.String(),
+			Email: args.Email,
+			Token: token.Plaintext,
+		}
+
+		jsonData, err := json.Marshal(dt)
+		if err != nil {
+			slog.Error("Error marshaling JSON", "Error", err)
+		}
+
+		client := &http.Client{
+			Timeout: 10 * time.Second,
+		}
+
+		req, err := http.NewRequest("POST", fmt.Sprintf("%s/rent-signup", app.config.mailer_url), bytes.NewBuffer(jsonData))
+		if err != nil {
+			slog.Error("Error creating request", "Error", err)
+		}
+
+		req.Header.Set("Content-Type", "application/json")
+
+		resp, err := client.Do(req)
+		if err != nil {
+			slog.Error("Error sending request", "Error", err)
+		}
+		defer resp.Body.Close()
+
+		respBody, err := io.ReadAll(resp.Body)
+		if err != nil {
+			slog.Error("Error reading response", "Error", err)
+		}
+
+		if resp.StatusCode != http.StatusOK {
+			slog.Error(fmt.Sprintf("Request failed with status code %d: %s", resp.StatusCode, string(respBody)))
+		}
+
+		slog.Info(fmt.Sprintf("Email sent successfully to %s\n", args.Email))
+
 	})
 
 	return c.JSON(http.StatusCreated, nil)
 }
+
 
 func (app *application) activateAdminHandler(c echo.Context) error {
 
