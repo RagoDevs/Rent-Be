@@ -13,10 +13,9 @@ import (
 	"strings"
 	"time"
 
-	"slices"
-
 	db "github.com/Hopertz/rent/db/sqlc"
 	"github.com/labstack/echo/v4"
+	"slices"
 )
 
 type SignupData struct {
@@ -40,10 +39,7 @@ func (app *application) registerAdminHandler(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, envelope{"error": err.Error()})
 	}
 
-	slog.Info("Input Body", "email", input.Email)
 	emails := strings.Split(app.config.emails, ",")
-
-	slog.Info("After split", "emails", emails)
 
 	found := slices.Contains(emails, input.Email)
 
@@ -130,6 +126,7 @@ func (app *application) registerAdminHandler(c echo.Context) error {
 
 	return c.JSON(http.StatusCreated, nil)
 }
+
 
 func (app *application) activateAdminHandler(c echo.Context) error {
 

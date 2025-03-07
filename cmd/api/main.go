@@ -73,8 +73,6 @@ func main() {
 
 	slog.Info("database connection established")
 
-	slog.Info("email after parsed", "emails" , cfg.emails)
-
 	expvar.NewString("version").Set(version)
 
 	expvar.Publish("goroutines", expvar.Func(func() interface{} {
