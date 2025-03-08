@@ -13,9 +13,10 @@ import (
 	"strings"
 	"time"
 
+	"slices"
+
 	db "github.com/Hopertz/rent/db/sqlc"
 	"github.com/labstack/echo/v4"
-	"slices"
 )
 
 type SignupData struct {
@@ -127,7 +128,6 @@ func (app *application) registerAdminHandler(c echo.Context) error {
 	return c.JSON(http.StatusCreated, nil)
 }
 
-
 func (app *application) activateAdminHandler(c echo.Context) error {
 
 	var input struct {
@@ -156,7 +156,7 @@ func (app *application) activateAdminHandler(c echo.Context) error {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
 			slog.Error("error fetching token user admin", "error", err)
-			return c.JSON(http.StatusNotFound, envelope{"error": "invalid token"})
+			return c.JSON(http.StatusNotFound, envelope{"error": "invalid token or expired"})
 		default:
 			slog.Error("error fetching token user admin", "error", err)
 			return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
@@ -164,7 +164,9 @@ func (app *application) activateAdminHandler(c echo.Context) error {
 
 	}
 
-	admin.Activated = true
+	if admin.Activated {
+		return c.JSON(http.StatusBadRequest, envelope{"error": "admin arleady actvated"})
+	}
 
 	param := db.UpdateAdminParams{
 
@@ -186,17 +188,6 @@ func (app *application) activateAdminHandler(c echo.Context) error {
 			return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 		}
 
-	}
-
-	a := db.DeleteAllTokenParams{
-		Scope: db.ScopeActivation,
-		ID:    admin.ID,
-	}
-	err = app.store.DeleteAllToken(c.Request().Context(), a)
-
-	if err != nil {
-		slog.Error("error deleting token", "error", err)
-		return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 	}
 
 	return c.JSON(http.StatusOK, nil)
