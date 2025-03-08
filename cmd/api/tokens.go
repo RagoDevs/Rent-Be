@@ -15,7 +15,7 @@ import (
 func (app *application) createAuthenticationTokenHandler(c echo.Context) error {
 
 	var input struct {
-		Phone    string `json:"phone" validate:"required,len=10"`
+		Email    string `json:"email" validate:"required,email"`
 		Password string `json:"password" validate:"required,min=8"`
 	}
 
@@ -27,19 +27,23 @@ func (app *application) createAuthenticationTokenHandler(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, envelope{"error": err.Error()})
 	}
 
-	admin, err := app.store.GetAdminByPhone(c.Request().Context(), input.Phone)
+	admin, err := app.store.GetAdminByPhone(c.Request().Context(), input.Email)
 
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			slog.Error("error fetching admin by phone", "error", err)
-			return c.JSON(http.StatusNotFound, envelope{"error": "invalid phone number or password"})
+			slog.Error("error fetching admin by email", "error", err)
+			return c.JSON(http.StatusNotFound, envelope{"error": "invalid email number or password"})
 		default:
 			slog.Error("error fetching admin by phone number", "error", err)
 			return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 		}
 	}
 
+	if !admin.Activated {
+		return c.JSON(http.StatusBadRequest, envelope{"error": "admin not activated"})
+	}
+	
 	pwd := db.Password{
 		Hash:      admin.PasswordHash,
 		Plaintext: input.Password,
