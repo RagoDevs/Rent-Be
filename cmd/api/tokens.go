@@ -43,7 +43,7 @@ func (app *application) createAuthenticationTokenHandler(c echo.Context) error {
 	if !admin.Activated {
 		return c.JSON(http.StatusBadRequest, envelope{"error": "admin not activated"})
 	}
-	
+
 	pwd := db.Password{
 		Hash:      admin.PasswordHash,
 		Plaintext: input.Password,
@@ -62,13 +62,14 @@ func (app *application) createAuthenticationTokenHandler(c echo.Context) error {
 		return c.JSON(http.StatusUnauthorized, envelope{"error": "invalid phone number or password"})
 	}
 
-	token, err := app.store.NewToken(admin.ID, 3*24*time.Hour, db.ScopeAuthentication)
+	expiry := time.Now().Add(3 * 24 * time.Hour)
+	token, err := app.store.NewToken(admin.ID, expiry, db.ScopeAuthentication)
 	if err != nil {
 		slog.Error("error generating new token", "error", err)
 		return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 	}
 
-	return c.JSON(http.StatusCreated, envelope{"token": token.Plaintext})
+	return c.JSON(http.StatusCreated, envelope{"token": token.Plaintext, "expiry": expiry})
 }
 
 func (app *application) createPasswordResetTokenHandler(c echo.Context) error {
@@ -102,7 +103,9 @@ func (app *application) createPasswordResetTokenHandler(c echo.Context) error {
 		return c.JSON(http.StatusForbidden, envelope{"errors": "account not activated"})
 	}
 
-	token, err := app.store.NewToken(admin.ID, 45*time.Minute, db.ScopePasswordReset)
+	expiry := time.Now().Add(45 * time.Minute)
+
+	token, err := app.store.NewToken(admin.ID, expiry, db.ScopePasswordReset)
 	if err != nil {
 		slog.Error("error generating new token", "error", err)
 		return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
@@ -151,7 +154,9 @@ func (app *application) createActivationTokenHandler(c echo.Context) error {
 		return c.JSON(http.StatusForbidden, envelope{"errors": "account already activated"})
 	}
 
-	token, err := app.store.NewToken(admin.ID, 3*24*time.Hour, db.ScopeActivation)
+	expiry := time.Now().Add(3 * 24 * time.Hour)
+
+	token, err := app.store.NewToken(admin.ID, expiry, db.ScopeActivation)
 	if err != nil {
 		slog.Error("error generating new token", "error", err)
 		return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})

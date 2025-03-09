@@ -76,7 +76,9 @@ func (app *application) registerAdminHandler(c echo.Context) error {
 
 	}
 
-	token, err := app.store.NewToken(a.ID, 3*24*time.Hour, db.ScopeActivation)
+	expiry := time.Now().Add(3 * 24 * time.Hour)
+
+	token, err := app.store.NewToken(a.ID, expiry, db.ScopeActivation)
 	if err != nil {
 		slog.Error("error generating new token", "error", err)
 		return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})

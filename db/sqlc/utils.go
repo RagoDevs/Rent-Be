@@ -36,11 +36,11 @@ type TokenLoc struct {
 	Scope     string    `json:"-"`
 }
 
-func generateToken(id uuid.UUID, ttl time.Duration, scope string) (*TokenLoc, error) {
+func generateToken(id uuid.UUID, expiry time.Time, scope string) (*TokenLoc, error) {
 
 	token := &TokenLoc{
 		AdminID: id,
-		Expiry:  time.Now().Add(ttl),
+		Expiry:  expiry,
 		Scope:   scope,
 	}
 
@@ -68,8 +68,8 @@ func IsValidTokenPlaintext(tokenPlaintext string) (bool, error) {
 	return true, nil
 }
 
-func (s *SQLStore) NewToken(id uuid.UUID, ttl time.Duration, scope string) (*TokenLoc, error) {
-	token, err := generateToken(id, ttl, scope)
+func (s *SQLStore) NewToken(id uuid.UUID, expiry time.Time, scope string) (*TokenLoc, error) {
+	token, err := generateToken(id, expiry, scope)
 	if err != nil {
 		return nil, err
 	}

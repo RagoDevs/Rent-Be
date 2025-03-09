@@ -10,7 +10,7 @@ import (
 
 type Store interface {
 	Querier
-	NewToken(id uuid.UUID, ttl time.Duration, scope string) (*TokenLoc, error)
+	NewToken(id uuid.UUID, expiry time.Time, scope string) (*TokenLoc, error)
 	BulkInsert(ctx context.Context, houses []HouseBulk) error
 	TxnCreateTenant(ctx context.Context, args CreateTenantParams) error
 	TxnUpdateTenantHouse(ctx context.Context, args UpdateTenantParams, prev_house_id uuid.UUID) error
