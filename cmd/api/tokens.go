@@ -69,7 +69,7 @@ func (app *application) createAuthenticationTokenHandler(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 	}
 
-	return c.JSON(http.StatusCreated, envelope{"token": token.Plaintext, "expiry": expiry})
+	return c.JSON(http.StatusCreated, envelope{"token": token.Plaintext, "expiry": expiry.Unix()})
 }
 
 func (app *application) createPasswordResetTokenHandler(c echo.Context) error {
