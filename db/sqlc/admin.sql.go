@@ -37,14 +37,14 @@ func (q *Queries) CreateAdmin(ctx context.Context, arg CreateAdminParams) (Creat
 	return i, err
 }
 
-const getAdminByPhone = `-- name: GetAdminByPhone :one
+const getAdminByEmail = `-- name: GetAdminByEmail :one
 SELECT id, created_at, email, password_hash, activated, version
 FROM admin
 WHERE email = $1
 `
 
-func (q *Queries) GetAdminByPhone(ctx context.Context, email string) (Admin, error) {
-	row := q.db.QueryRowContext(ctx, getAdminByPhone, email)
+func (q *Queries) GetAdminByEmail(ctx context.Context, email string) (Admin, error) {
+	row := q.db.QueryRowContext(ctx, getAdminByEmail, email)
 	var i Admin
 	err := row.Scan(
 		&i.ID,

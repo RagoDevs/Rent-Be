@@ -27,7 +27,7 @@ func (app *application) createAuthenticationTokenHandler(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, envelope{"error": err.Error()})
 	}
 
-	admin, err := app.store.GetAdminByPhone(c.Request().Context(), input.Email)
+	admin, err := app.store.GetAdminByEmail(c.Request().Context(), input.Email)
 
 	if err != nil {
 		switch {
@@ -86,7 +86,7 @@ func (app *application) createPasswordResetTokenHandler(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, envelope{"error": err.Error()})
 	}
 
-	admin, err := app.store.GetAdminByPhone(c.Request().Context(), input.Phone)
+	admin, err := app.store.GetAdminByEmail(c.Request().Context(), input.Phone)
 
 	if err != nil {
 		switch {
@@ -123,10 +123,10 @@ func (app *application) createPasswordResetTokenHandler(c echo.Context) error {
 	return c.JSON(http.StatusAccepted, nil)
 }
 
-func (app *application) createActivationTokenHandler(c echo.Context) error {
+func (app *application) resendActivationTokenHandler(c echo.Context) error {
 
 	var input struct {
-		Phone string `json:"phone" validate:"required,len=10"`
+		Email    string `json:"email" validate:"required,email"`
 	}
 
 	if err := c.Bind(&input); err != nil {
@@ -137,7 +137,7 @@ func (app *application) createActivationTokenHandler(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, envelope{"error": err.Error()})
 	}
 
-	admin, err := app.store.GetAdminByPhone(c.Request().Context(), input.Phone)
+	admin, err := app.store.GetAdminByEmail(c.Request().Context(), input.Email)
 
 	if err != nil {
 		switch {

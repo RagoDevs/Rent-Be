@@ -1,4 +1,4 @@
--- name: GetAdminByPhone :one
+-- name: GetAdminByEmail :one
 SELECT id, created_at, email, password_hash, activated, version
 FROM admin
 WHERE email = $1;

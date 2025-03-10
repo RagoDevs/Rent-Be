@@ -18,7 +18,7 @@ type Querier interface {
 	CreateToken(ctx context.Context, arg CreateTokenParams) error
 	DeleteAllToken(ctx context.Context, arg DeleteAllTokenParams) error
 	DeletePayment(ctx context.Context, id uuid.UUID) error
-	GetAdminByPhone(ctx context.Context, email string) (Admin, error)
+	GetAdminByEmail(ctx context.Context, email string) (Admin, error)
 	GetAllPayments(ctx context.Context) ([]Payment, error)
 	GetDetailedPaymentById(ctx context.Context, id uuid.UUID) (GetDetailedPaymentByIdRow, error)
 	GetHashTokenForAdmin(ctx context.Context, arg GetHashTokenForAdminParams) (GetHashTokenForAdminRow, error)
