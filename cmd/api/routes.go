@@ -50,7 +50,7 @@ func (app *application) routes() http.Handler {
 	e.POST("/v1/admins", app.registerAdminHandler)
 	e.PUT("/v1/admins/activate", app.activateAdminHandler)
 	e.POST("/v1/login", app.createAuthenticationTokenHandler)
-	e.POST("/v1/tokens/resend/activation", app.createActivationTokenHandler)
+	e.POST("/v1/tokens/resend/activation", app.resendActivationTokenHandler)
 
 	// password management
 	e.POST("/v1/tokens/password/reset", app.createPasswordResetTokenHandler)
