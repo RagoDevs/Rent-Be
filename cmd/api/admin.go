@@ -262,8 +262,7 @@ func (app *application) updateAdminPasswordOnResetHandler(c echo.Context) error 
 	err = app.store.DeleteAllToken(c.Request().Context(), d)
 
 	if err != nil {
-		slog.Error("error deleting token", "error", err)
-		return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
+		slog.Error("error deleting reset password token for user admin", "error", err)
 	}
 
 	return c.JSON(http.StatusOK, nil)
