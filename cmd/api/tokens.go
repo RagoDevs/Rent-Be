@@ -1,9 +1,12 @@
 package main
 
 import (
+	"bytes"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"log/slog"
 	"net/http"
 	"time"
@@ -11,6 +14,11 @@ import (
 	db "github.com/Hopertz/rent/db/sqlc"
 	"github.com/labstack/echo/v4"
 )
+
+type ActivateData struct {
+	Email string `json:"email"`
+	Token string `json:"token"`
+}
 
 func (app *application) createAuthenticationTokenHandler(c echo.Context) error {
 
@@ -126,7 +134,7 @@ func (app *application) createPasswordResetTokenHandler(c echo.Context) error {
 func (app *application) resendActivationTokenHandler(c echo.Context) error {
 
 	var input struct {
-		Email    string `json:"email" validate:"required,email"`
+		Email string `json:"email" validate:"required,email"`
 	}
 
 	if err := c.Bind(&input); err != nil {
@@ -142,10 +150,10 @@ func (app *application) resendActivationTokenHandler(c echo.Context) error {
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			slog.Error("error fetching admin by phone number", "error", err)
-			return c.JSON(http.StatusNotFound, envelope{"error": "invalid phone number or password"})
+			slog.Error("error fetching admin by email", "error", err)
+			return c.JSON(http.StatusNotFound, envelope{"error": "not found"})
 		default:
-			slog.Error("error fetching admin by phone number", "error", err)
+			slog.Error("error fetching admin by email", "error", err)
 			return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 		}
 	}
@@ -162,12 +170,46 @@ func (app *application) resendActivationTokenHandler(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 	}
 
-	msg := fmt.Sprintf("Your account activation token is: %s", token.Plaintext)
-
 	app.background(func() {
 
-		_ = msg
-		//send mail here
+		dt := ActivateData{
+			Email: admin.Email,
+			Token: token.Plaintext,
+		}
+
+		jsonData, err := json.Marshal(dt)
+		if err != nil {
+			slog.Error("Error marshaling JSON", "Error", err)
+		}
+
+		client := &http.Client{
+			Timeout: 10 * time.Second,
+		}
+
+		req, err := http.NewRequest("POST", fmt.Sprintf("%s/rent-activate", app.config.mailer_url), bytes.NewBuffer(jsonData))
+		if err != nil {
+			slog.Error("Error creating request", "Error", err)
+		}
+
+		req.Header.Set("Content-Type", "application/json")
+
+		resp, err := client.Do(req)
+		if err != nil {
+			slog.Error("Error sending request", "Error", err)
+		}
+		defer resp.Body.Close()
+
+		respBody, err := io.ReadAll(resp.Body)
+		if err != nil {
+			slog.Error("Error reading response", "Error", err)
+		}
+
+		if resp.StatusCode != http.StatusOK {
+			slog.Error(fmt.Sprintf("Request failed with status code %d: %s", resp.StatusCode, string(respBody)))
+		}
+
+		slog.Info(fmt.Sprintf("Email sent successfully to %s\n", admin.Email))
+
 	})
 
 	return c.JSON(http.StatusAccepted, nil)
