@@ -20,6 +20,11 @@ type ActivateData struct {
 	Token string `json:"token"`
 }
 
+type ResetData struct {
+	Email string `json:"email"`
+	Token string `json:"token"`
+}
+
 func (app *application) createAuthenticationTokenHandler(c echo.Context) error {
 
 	var input struct {
@@ -83,7 +88,7 @@ func (app *application) createAuthenticationTokenHandler(c echo.Context) error {
 func (app *application) createPasswordResetTokenHandler(c echo.Context) error {
 
 	var input struct {
-		Phone string `json:"phone" validate:"required,len=10"`
+		Email string `json:"email" validate:"required,email"`
 	}
 
 	if err := c.Bind(&input); err != nil {
@@ -94,15 +99,15 @@ func (app *application) createPasswordResetTokenHandler(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, envelope{"error": err.Error()})
 	}
 
-	admin, err := app.store.GetAdminByEmail(c.Request().Context(), input.Phone)
+	admin, err := app.store.GetAdminByEmail(c.Request().Context(), input.Email)
 
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			slog.Error("error fetching admin by phone number", "error", err)
-			return c.JSON(http.StatusNotFound, envelope{"error": "invalid phone number or password"})
+			slog.Error("error fetching admin by email :createPasswordResetTokenHandler", "error", err)
+			return c.JSON(http.StatusNotFound, envelope{"error": "user admin not found"})
 		default:
-			slog.Error("error fetching admin by phone number", "error", err)
+			slog.Error("error fetching admin by email :createPasswordResetTokenHandler", "error", err)
 			return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 		}
 	}
@@ -115,20 +120,53 @@ func (app *application) createPasswordResetTokenHandler(c echo.Context) error {
 
 	token, err := app.store.NewToken(admin.ID, expiry, db.ScopePasswordReset)
 	if err != nil {
-		slog.Error("error generating new token", "error", err)
+		slog.Error("error generating token :createPasswordResetTokenHandler", "error", err)
 		return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 	}
 
-	msg := fmt.Sprintf("Your password reset token is: %s", token.Plaintext)
-
 	app.background(func() {
 
-		// send mail here
+		dt := ResetData{
+			Email: admin.Email,
+			Token: token.Plaintext,
+		}
 
-		_ = msg
+		jsonData, err := json.Marshal(dt)
+		if err != nil {
+			slog.Error("Error marshaling JSON", "Error", err)
+		}
+
+		client := &http.Client{
+			Timeout: 10 * time.Second,
+		}
+
+		req, err := http.NewRequest("POST", fmt.Sprintf("%s/rent-resetpwd", app.config.mailer_url), bytes.NewBuffer(jsonData))
+		if err != nil {
+			slog.Error("Error creating request", "Error", err)
+		}
+
+		req.Header.Set("Content-Type", "application/json")
+
+		resp, err := client.Do(req)
+		if err != nil {
+			slog.Error("Error sending request", "Error", err)
+		}
+		defer resp.Body.Close()
+
+		respBody, err := io.ReadAll(resp.Body)
+		if err != nil {
+			slog.Error("Error reading response", "Error", err)
+		}
+
+		if resp.StatusCode != http.StatusOK {
+			slog.Error(fmt.Sprintf("Request failed with status code %d: %s", resp.StatusCode, string(respBody)))
+		}
+
+		slog.Info(fmt.Sprintf("Email sent successfully to %s\n", admin.Email))
+
 	})
 
-	return c.JSON(http.StatusAccepted, nil)
+	return c.JSON(http.StatusOK, nil)
 }
 
 func (app *application) resendActivationTokenHandler(c echo.Context) error {
