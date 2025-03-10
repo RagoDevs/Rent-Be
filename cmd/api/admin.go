@@ -25,6 +25,10 @@ type SignupData struct {
 	Token string `json:"token"`
 }
 
+type ResetCompleteData struct {
+	Email string `json:"email"`
+}
+
 func (app *application) registerAdminHandler(c echo.Context) error {
 
 	var input struct {
@@ -267,7 +271,7 @@ func (app *application) updateAdminPasswordOnResetHandler(c echo.Context) error 
 
 	app.background(func() {
 
-		dt := ActivateData{
+		dt := ResetCompleteData{
 			Email: admin.Email,
 		}
 
