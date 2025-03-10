@@ -265,5 +265,46 @@ func (app *application) updateAdminPasswordOnResetHandler(c echo.Context) error 
 		slog.Error("error deleting reset password token for user admin", "error", err)
 	}
 
+	app.background(func() {
+
+		dt := ActivateData{
+			Email: admin.Email,
+		}
+
+		jsonData, err := json.Marshal(dt)
+		if err != nil {
+			slog.Error("Error marshaling JSON", "Error", err)
+		}
+
+		client := &http.Client{
+			Timeout: 10 * time.Second,
+		}
+
+		req, err := http.NewRequest("POST", fmt.Sprintf("%s/rent-completedpwdreset", app.config.mailer_url), bytes.NewBuffer(jsonData))
+		if err != nil {
+			slog.Error("Error creating request", "Error", err)
+		}
+
+		req.Header.Set("Content-Type", "application/json")
+
+		resp, err := client.Do(req)
+		if err != nil {
+			slog.Error("Error sending request", "Error", err)
+		}
+		defer resp.Body.Close()
+
+		respBody, err := io.ReadAll(resp.Body)
+		if err != nil {
+			slog.Error("Error reading response", "Error", err)
+		}
+
+		if resp.StatusCode != http.StatusOK {
+			slog.Error(fmt.Sprintf("Request failed with status code %d: %s", resp.StatusCode, string(respBody)))
+		}
+
+		slog.Info(fmt.Sprintf("Email sent successfully to %s", admin.Email))
+
+	})
+
 	return c.JSON(http.StatusOK, nil)
 }
