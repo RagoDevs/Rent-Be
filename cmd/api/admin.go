@@ -195,7 +195,7 @@ func (app *application) activateAdminHandler(c echo.Context) error {
 	return c.JSON(http.StatusOK, nil)
 }
 
-func (app *application) updateAdminPasswordHandler(c echo.Context) error {
+func (app *application) updateAdminPasswordOnResetHandler(c echo.Context) error {
 
 	var input struct {
 		Password       string `json:"password" validate:"required,min=8"`

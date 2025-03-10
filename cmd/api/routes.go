@@ -53,7 +53,7 @@ func (app *application) routes() http.Handler {
 
 	// password management
 	e.POST("/v1/tokens/password/reset", app.createPasswordResetTokenHandler)
-	e.PUT("/v1/admins/password", app.updateAdminPasswordHandler)
+	e.PUT("/v1/admins/password/reset", app.updateAdminPasswordOnResetHandler)
 
 	// metrics
 	e.GET("/v1/metrics", echo.WrapHandler(expvar.Handler()))
