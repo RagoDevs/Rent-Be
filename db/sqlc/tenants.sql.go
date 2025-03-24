@@ -68,7 +68,7 @@ func (q *Queries) GetTenantById(ctx context.Context, id uuid.UUID) (Tenant, erro
 }
 
 const getTenantByIdWithHouse = `-- name: GetTenantByIdWithHouse :one
-SELECT t.id, t.name, t.house_id,h.location, h.block, h.partition, 
+SELECT t.id AS tenant_id, t.name, t.house_id,h.location, h.block, h.partition, 
 t.phone, t.personal_id_type,t.personal_id, t.active, t.sos, t.eos, t.version 
 FROM tenant t
 JOIN house h ON t.house_id = h.id
@@ -76,7 +76,7 @@ WHERE t.id = $1
 `
 
 type GetTenantByIdWithHouseRow struct {
-	ID             uuid.UUID `json:"id"`
+	TenantID       uuid.UUID `json:"tenant_id"`
 	Name           string    `json:"name"`
 	HouseID        uuid.UUID `json:"house_id"`
 	Location       string    `json:"location"`
@@ -95,7 +95,7 @@ func (q *Queries) GetTenantByIdWithHouse(ctx context.Context, id uuid.UUID) (Get
 	row := q.db.QueryRowContext(ctx, getTenantByIdWithHouse, id)
 	var i GetTenantByIdWithHouseRow
 	err := row.Scan(
-		&i.ID,
+		&i.TenantID,
 		&i.Name,
 		&i.HouseID,
 		&i.Location,

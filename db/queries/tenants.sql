@@ -8,7 +8,7 @@ SELECT * FROM tenant
 WHERE id = $1;
 
 -- name: GetTenantByIdWithHouse :one
-SELECT t.id, t.name, t.house_id,h.location, h.block, h.partition, 
+SELECT t.id AS tenant_id, t.name, t.house_id,h.location, h.block, h.partition, 
 t.phone, t.personal_id_type,t.personal_id, t.active, t.sos, t.eos, t.version 
 FROM tenant t
 JOIN house h ON t.house_id = h.id

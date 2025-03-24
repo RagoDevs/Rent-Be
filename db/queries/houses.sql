@@ -14,7 +14,7 @@ WHERE id = $5 AND version = $6;
 SELECT id,location, block, partition , Occupied, version FROM house WHERE id = $1;
 
 -- name: GetHouseByIdWithTenant :one
-SELECT h.id,h.location, h.block, h.partition , h.Occupied, t.name, t.id AS tenant_id
+SELECT h.id AS house_id,h.location, h.block, h.partition , h.Occupied, t.name, t.id AS tenant_id
 FROM house h
 Join tenant t ON h.id = t.house_id
 WHERE h.id = $1;
