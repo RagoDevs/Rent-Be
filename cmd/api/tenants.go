@@ -50,6 +50,31 @@ func (app *application) showTenantsHandler(c echo.Context) error {
 	return c.JSON(http.StatusOK, tenant)
 }
 
+func (app *application) showTenantsHouseHandler(c echo.Context) error {
+
+	uuid, err := db.ReadUUIDParam(c)
+
+	if err != nil {
+		return err
+	}
+
+	tenant, err := app.store.GetTenantByIdWithHouse(c.Request().Context(), uuid)
+
+	if err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			slog.Error("error fetching tenant by id with house", "err", err)
+			return c.JSON(http.StatusNotFound, envelope{"error": "tenant not found"})
+
+		default:
+			slog.Error("error fetching tenant by id with house", "error", err)
+			return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
+		}
+	}
+
+	return c.JSON(http.StatusOK, tenant)
+}
+
 func (app *application) createTenantHandler(c echo.Context) error {
 
 	var input struct {
