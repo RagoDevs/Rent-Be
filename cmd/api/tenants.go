@@ -155,6 +155,7 @@ func (app *application) updateTenantsHandler(c echo.Context) error {
 		PersonalId     *string    `json:"personal_id"`
 		Active         *bool      `json:"active"`
 		Sos            *time.Time `json:"sos"`
+		Eos            *time.Time `json:"eos"`
 	}
 
 	if err := c.Bind(&input); err != nil {
@@ -195,8 +196,11 @@ func (app *application) updateTenantsHandler(c echo.Context) error {
 		tenant.Sos = *input.Sos
 	}
 
-	arg := db.UpdateTenantParams{
+	if input.Eos != nil && (*input.Eos).After(tenant.Sos) {
+		tenant.Eos = *input.Eos
+	}
 
+	arg := db.UpdateTenantParams{
 		FirstName:      tenant.FirstName,
 		LastName:       tenant.LastName,
 		HouseID:        tenant.HouseID,
