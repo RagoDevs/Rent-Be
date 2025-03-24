@@ -24,9 +24,5 @@ UPDATE tenant
 SET name = $1, house_id = $2, phone = $3 ,personal_id_type = $4 ,personal_id = $5 ,active = $6, sos=$7 ,eos = $8, version = uuid_generate_v4()
 WHERE id = $9 AND version = $10;
 
--- name: GetHouseByIdWithTenant :one
-SELECT h.id,h.location, h.block, h.partition , h.Occupied, t.name, t.id AS tenant_id
-FROM tenant t
-Join house h ON h.id = t.house_id
-WHERE h.id = $1;
+
 
