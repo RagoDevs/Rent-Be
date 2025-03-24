@@ -14,13 +14,12 @@ import (
 
 const createTenant = `-- name: CreateTenant :exec
 INSERT INTO TENANT
-(first_name, last_name, house_id, phone, personal_id_type,personal_id, active, sos, eos) 
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+(name, house_id, phone, personal_id_type,personal_id, active, sos, eos) 
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 `
 
 type CreateTenantParams struct {
-	FirstName      string    `json:"first_name"`
-	LastName       string    `json:"last_name"`
+	Name           string    `json:"name"`
 	HouseID        uuid.UUID `json:"house_id"`
 	Phone          string    `json:"phone"`
 	PersonalIDType string    `json:"personal_id_type"`
@@ -32,8 +31,7 @@ type CreateTenantParams struct {
 
 func (q *Queries) CreateTenant(ctx context.Context, arg CreateTenantParams) error {
 	_, err := q.db.ExecContext(ctx, createTenant,
-		arg.FirstName,
-		arg.LastName,
+		arg.Name,
 		arg.HouseID,
 		arg.Phone,
 		arg.PersonalIDType,
@@ -46,21 +44,20 @@ func (q *Queries) CreateTenant(ctx context.Context, arg CreateTenantParams) erro
 }
 
 const getHouseByIdWithTenant = `-- name: GetHouseByIdWithTenant :one
-SELECT h.id,h.location, h.block, h.partition , h.Occupied, 
-CONCAT(t.first_name || ' ' || t.last_name) AS tenant_name, t.id AS tenant_id
+SELECT h.id,h.location, h.block, h.partition , h.Occupied, t.name, t.id AS tenant_id
 FROM tenant t
 Join house h ON h.id = t.house_id
 WHERE h.id = $1
 `
 
 type GetHouseByIdWithTenantRow struct {
-	ID         uuid.UUID   `json:"id"`
-	Location   string      `json:"location"`
-	Block      string      `json:"block"`
-	Partition  int16       `json:"partition"`
-	Occupied   bool        `json:"occupied"`
-	TenantName interface{} `json:"tenant_name"`
-	TenantID   uuid.UUID   `json:"tenant_id"`
+	ID        uuid.UUID `json:"id"`
+	Location  string    `json:"location"`
+	Block     string    `json:"block"`
+	Partition int16     `json:"partition"`
+	Occupied  bool      `json:"occupied"`
+	Name      string    `json:"name"`
+	TenantID  uuid.UUID `json:"tenant_id"`
 }
 
 func (q *Queries) GetHouseByIdWithTenant(ctx context.Context, id uuid.UUID) (GetHouseByIdWithTenantRow, error) {
@@ -72,14 +69,14 @@ func (q *Queries) GetHouseByIdWithTenant(ctx context.Context, id uuid.UUID) (Get
 		&i.Block,
 		&i.Partition,
 		&i.Occupied,
-		&i.TenantName,
+		&i.Name,
 		&i.TenantID,
 	)
 	return i, err
 }
 
 const getTenantById = `-- name: GetTenantById :one
-SELECT id, first_name, last_name, phone, house_id, personal_id_type, personal_id, photo, active, sos, eos, version FROM tenant
+SELECT id, name, phone, house_id, personal_id_type, personal_id, photo, active, sos, eos, version FROM tenant
 WHERE id = $1
 `
 
@@ -88,8 +85,7 @@ func (q *Queries) GetTenantById(ctx context.Context, id uuid.UUID) (Tenant, erro
 	var i Tenant
 	err := row.Scan(
 		&i.ID,
-		&i.FirstName,
-		&i.LastName,
+		&i.Name,
 		&i.Phone,
 		&i.HouseID,
 		&i.PersonalIDType,
@@ -104,8 +100,8 @@ func (q *Queries) GetTenantById(ctx context.Context, id uuid.UUID) (Tenant, erro
 }
 
 const getTenantByIdWithHouse = `-- name: GetTenantByIdWithHouse :one
-SELECT t.id, t.first_name, t.last_name, t.house_id,h.location, h.block, h.partition, 
-t.phone, t.personal_id_type,t.personal_id, t.active, t.sos, t.eos,  t.version 
+SELECT t.id, t.name, t.house_id,h.location, h.block, h.partition, 
+t.phone, t.personal_id_type,t.personal_id, t.active, t.sos, t.eos, t.version 
 FROM tenant t
 JOIN house h ON t.house_id = h.id
 WHERE t.id = $1
@@ -113,8 +109,7 @@ WHERE t.id = $1
 
 type GetTenantByIdWithHouseRow struct {
 	ID             uuid.UUID `json:"id"`
-	FirstName      string    `json:"first_name"`
-	LastName       string    `json:"last_name"`
+	Name           string    `json:"name"`
 	HouseID        uuid.UUID `json:"house_id"`
 	Location       string    `json:"location"`
 	Block          string    `json:"block"`
@@ -133,8 +128,7 @@ func (q *Queries) GetTenantByIdWithHouse(ctx context.Context, id uuid.UUID) (Get
 	var i GetTenantByIdWithHouseRow
 	err := row.Scan(
 		&i.ID,
-		&i.FirstName,
-		&i.LastName,
+		&i.Name,
 		&i.HouseID,
 		&i.Location,
 		&i.Block,
@@ -151,15 +145,14 @@ func (q *Queries) GetTenantByIdWithHouse(ctx context.Context, id uuid.UUID) (Get
 }
 
 const getTenants = `-- name: GetTenants :many
-SELECT id, first_name, last_name, house_id, 
+SELECT id, name, house_id, 
 phone, personal_id_type,personal_id, active, sos, eos
 FROM tenant
 `
 
 type GetTenantsRow struct {
 	ID             uuid.UUID `json:"id"`
-	FirstName      string    `json:"first_name"`
-	LastName       string    `json:"last_name"`
+	Name           string    `json:"name"`
 	HouseID        uuid.UUID `json:"house_id"`
 	Phone          string    `json:"phone"`
 	PersonalIDType string    `json:"personal_id_type"`
@@ -180,8 +173,7 @@ func (q *Queries) GetTenants(ctx context.Context) ([]GetTenantsRow, error) {
 		var i GetTenantsRow
 		if err := rows.Scan(
 			&i.ID,
-			&i.FirstName,
-			&i.LastName,
+			&i.Name,
 			&i.HouseID,
 			&i.Phone,
 			&i.PersonalIDType,
@@ -205,13 +197,12 @@ func (q *Queries) GetTenants(ctx context.Context) ([]GetTenantsRow, error) {
 
 const updateTenant = `-- name: UpdateTenant :exec
 UPDATE tenant 
-SET first_name = $1, last_name = $2 ,house_id = $3, phone = $4 ,personal_id_type = $5 ,personal_id = $6 ,active = $7, sos=$8 ,eos = $9, version = uuid_generate_v4()
-WHERE id = $10 AND version = $11
+SET name = $1, house_id = $2, phone = $3 ,personal_id_type = $4 ,personal_id = $5 ,active = $6, sos=$7 ,eos = $8, version = uuid_generate_v4()
+WHERE id = $9 AND version = $10
 `
 
 type UpdateTenantParams struct {
-	FirstName      string    `json:"first_name"`
-	LastName       string    `json:"last_name"`
+	Name           string    `json:"name"`
 	HouseID        uuid.UUID `json:"house_id"`
 	Phone          string    `json:"phone"`
 	PersonalIDType string    `json:"personal_id_type"`
@@ -225,8 +216,7 @@ type UpdateTenantParams struct {
 
 func (q *Queries) UpdateTenant(ctx context.Context, arg UpdateTenantParams) error {
 	_, err := q.db.ExecContext(ctx, updateTenant,
-		arg.FirstName,
-		arg.LastName,
+		arg.Name,
 		arg.HouseID,
 		arg.Phone,
 		arg.PersonalIDType,

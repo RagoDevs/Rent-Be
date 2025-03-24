@@ -31,8 +31,7 @@ CREATE TABLE IF NOT EXISTS house (
 
 CREATE TABLE IF NOT EXISTS tenant(
     id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
-    first_name TEXT NOT NULL,
-    last_name TEXT NOT NULL,
+    name TEXT NOT NULL,
     phone TEXT NOT NULL,
     house_id UUID NOT NULL REFERENCES house(id) ON DELETE CASCADE,
     personal_id_type TEXT NOT NULL DEFAULT '',

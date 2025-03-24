@@ -53,8 +53,7 @@ func (app *application) showTenantsHandler(c echo.Context) error {
 func (app *application) createTenantHandler(c echo.Context) error {
 
 	var input struct {
-		FirstName      string     `json:"first_name" validate:"required"`
-		LastName       string     `json:"last_name" validate:"required"`
+		Name           string     `json:"name" validate:"required"`
 		Phone          string     `json:"phone" validate:"required,len=10"`
 		HouseId        uuid.UUID  `json:"house_id" validate:"required"`
 		PersonalIdType string     `json:"personal_id_type" validate:"required"`
@@ -102,8 +101,7 @@ func (app *application) createTenantHandler(c echo.Context) error {
 	}
 
 	args := db.CreateTenantParams{
-		FirstName:      input.FirstName,
-		LastName:       input.LastName,
+		Name:           input.Name,
 		HouseID:        input.HouseId,
 		Phone:          input.Phone,
 		PersonalIDType: input.PersonalIdType,
@@ -147,8 +145,7 @@ func (app *application) updateTenantsHandler(c echo.Context) error {
 	}
 
 	var input struct {
-		FirstName      *string    `json:"first_name"`
-		LastName       *string    `json:"last_name"`
+		Name           *string    `json:"name"`
 		Phone          *string    `json:"phone"`
 		HouseId        *uuid.UUID `json:"house_id"`
 		PersonalIdType *string    `json:"personal_id_type"`
@@ -164,12 +161,8 @@ func (app *application) updateTenantsHandler(c echo.Context) error {
 
 	prev_house_id := tenant.HouseID
 
-	if input.FirstName != nil {
-		tenant.FirstName = *input.FirstName
-	}
-
-	if input.LastName != nil {
-		tenant.LastName = *input.LastName
+	if input.Name != nil {
+		tenant.Name = *input.Name
 	}
 
 	if input.Phone != nil {
@@ -201,8 +194,7 @@ func (app *application) updateTenantsHandler(c echo.Context) error {
 	}
 
 	arg := db.UpdateTenantParams{
-		FirstName:      tenant.FirstName,
-		LastName:       tenant.LastName,
+		Name:           tenant.Name,
 		HouseID:        tenant.HouseID,
 		Phone:          tenant.Phone,
 		PersonalIDType: tenant.PersonalIDType,
@@ -249,8 +241,7 @@ func (app *application) removeTenant(c echo.Context) error {
 	tenant.Active = false
 
 	args := db.UpdateTenantParams{
-		FirstName:      tenant.FirstName,
-		LastName:       tenant.LastName,
+		Name:           tenant.Name,
 		HouseID:        tenant.HouseID,
 		Phone:          tenant.Phone,
 		PersonalIDType: tenant.PersonalIDType,

@@ -42,8 +42,7 @@ type Payment struct {
 
 type Tenant struct {
 	ID             uuid.UUID `json:"id"`
-	FirstName      string    `json:"first_name"`
-	LastName       string    `json:"last_name"`
+	Name           string    `json:"name"`
 	Phone          string    `json:"phone"`
 	HouseID        uuid.UUID `json:"house_id"`
 	PersonalIDType string    `json:"personal_id_type"`
