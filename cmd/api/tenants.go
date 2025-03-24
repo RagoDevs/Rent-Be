@@ -53,14 +53,15 @@ func (app *application) showTenantsHandler(c echo.Context) error {
 func (app *application) createTenantHandler(c echo.Context) error {
 
 	var input struct {
-		FirstName      string    `json:"first_name" validate:"required"`
-		LastName       string    `json:"last_name" validate:"required"`
-		Phone          string    `json:"phone" validate:"required,len=10"`
-		HouseId        uuid.UUID `json:"house_id" validate:"required"`
-		PersonalIdType string    `json:"personal_id_type" validate:"required"`
-		PersonalId     string    `json:"personal_id" validate:"required"`
-		Active         bool      `json:"active"`
-		Sos            time.Time `json:"sos" validate:"required"`
+		FirstName      string     `json:"first_name" validate:"required"`
+		LastName       string     `json:"last_name" validate:"required"`
+		Phone          string     `json:"phone" validate:"required,len=10"`
+		HouseId        uuid.UUID  `json:"house_id" validate:"required"`
+		PersonalIdType string     `json:"personal_id_type" validate:"required"`
+		PersonalId     string     `json:"personal_id" validate:"required"`
+		Active         bool       `json:"active"`
+		Sos            time.Time  `json:"sos" validate:"required"`
+		Eos            *time.Time `json:"eos"`
 	}
 
 	if err := c.Bind(&input); err != nil {
@@ -69,6 +70,14 @@ func (app *application) createTenantHandler(c echo.Context) error {
 
 	if err := app.validator.Struct(input); err != nil {
 		return c.JSON(http.StatusBadRequest, envelope{"error": err.Error()})
+	}
+
+	var eos time.Time
+
+	if input.Eos == nil {
+		eos = input.Sos.AddDate(0, 2, 0)
+	} else {
+		eos = *input.Eos
 	}
 
 	house, err := app.store.GetHouseById(c.Request().Context(), input.HouseId)
@@ -101,6 +110,7 @@ func (app *application) createTenantHandler(c echo.Context) error {
 		PersonalID:     input.PersonalId,
 		Active:         input.Active,
 		Sos:            input.Sos,
+		Eos:            eos,
 	}
 
 	err = app.store.TxnCreateTenant(c.Request().Context(), args)
