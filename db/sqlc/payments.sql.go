@@ -45,28 +45,54 @@ func (q *Queries) DeletePayment(ctx context.Context, id uuid.UUID) error {
 }
 
 const getAllPayments = `-- name: GetAllPayments :many
-SELECT id, tenant_id, amount, start_date, end_date, version, created_at, created_by, updated_at FROM payment
+SELECT p.id, t.name AS tenant_name,
+t.id AS tenant_id,p.amount, p.start_date, p.end_date, a.email AS admin_email, h.location, h.block, h.partition, 
+p.created_at , p.updated_at, p.version  
+FROM payment p
+JOIN tenant t ON p.tenant_id = t.id
+JOIN house h ON t.house_id = h.id
+JOIN admin a ON p.created_by = a.id
 `
 
-func (q *Queries) GetAllPayments(ctx context.Context) ([]Payment, error) {
+type GetAllPaymentsRow struct {
+	ID         uuid.UUID `json:"id"`
+	TenantName string    `json:"tenant_name"`
+	TenantID   uuid.UUID `json:"tenant_id"`
+	Amount     int32     `json:"amount"`
+	StartDate  time.Time `json:"start_date"`
+	EndDate    time.Time `json:"end_date"`
+	AdminEmail string    `json:"admin_email"`
+	Location   string    `json:"location"`
+	Block      string    `json:"block"`
+	Partition  int16     `json:"partition"`
+	CreatedAt  time.Time `json:"created_at"`
+	UpdatedAt  time.Time `json:"updated_at"`
+	Version    uuid.UUID `json:"version"`
+}
+
+func (q *Queries) GetAllPayments(ctx context.Context) ([]GetAllPaymentsRow, error) {
 	rows, err := q.db.QueryContext(ctx, getAllPayments)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []Payment{}
+	items := []GetAllPaymentsRow{}
 	for rows.Next() {
-		var i Payment
+		var i GetAllPaymentsRow
 		if err := rows.Scan(
 			&i.ID,
+			&i.TenantName,
 			&i.TenantID,
 			&i.Amount,
 			&i.StartDate,
 			&i.EndDate,
-			&i.Version,
+			&i.AdminEmail,
+			&i.Location,
+			&i.Block,
+			&i.Partition,
 			&i.CreatedAt,
-			&i.CreatedBy,
 			&i.UpdatedAt,
+			&i.Version,
 		); err != nil {
 			return nil, err
 		}
