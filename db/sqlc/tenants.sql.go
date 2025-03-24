@@ -7,7 +7,6 @@ package db
 
 import (
 	"context"
-	"database/sql"
 	"time"
 
 	"github.com/google/uuid"
@@ -15,8 +14,8 @@ import (
 
 const createTenant = `-- name: CreateTenant :exec
 INSERT INTO TENANT
-(first_name, last_name, house_id, phone, personal_id_type,personal_id, active, sos) 
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+(first_name, last_name, house_id, phone, personal_id_type,personal_id, active, sos, eos) 
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 `
 
 type CreateTenantParams struct {
@@ -28,6 +27,7 @@ type CreateTenantParams struct {
 	PersonalID     string    `json:"personal_id"`
 	Active         bool      `json:"active"`
 	Sos            time.Time `json:"sos"`
+	Eos            time.Time `json:"eos"`
 }
 
 func (q *Queries) CreateTenant(ctx context.Context, arg CreateTenantParams) error {
@@ -40,6 +40,7 @@ func (q *Queries) CreateTenant(ctx context.Context, arg CreateTenantParams) erro
 		arg.PersonalID,
 		arg.Active,
 		arg.Sos,
+		arg.Eos,
 	)
 	return err
 }
@@ -104,7 +105,7 @@ func (q *Queries) GetTenantById(ctx context.Context, id uuid.UUID) (Tenant, erro
 
 const getTenantByIdWithHouse = `-- name: GetTenantByIdWithHouse :one
 SELECT t.id, t.first_name, t.last_name, t.house_id,h.location, h.block, h.partition, 
-t.phone, t.personal_id_type,t.personal_id, t.active, t.sos, t.version 
+t.phone, t.personal_id_type,t.personal_id, t.active, t.sos, t.eos,  t.version 
 FROM tenant t
 JOIN house h ON t.house_id = h.id
 WHERE t.id = $1
@@ -123,6 +124,7 @@ type GetTenantByIdWithHouseRow struct {
 	PersonalID     string    `json:"personal_id"`
 	Active         bool      `json:"active"`
 	Sos            time.Time `json:"sos"`
+	Eos            time.Time `json:"eos"`
 	Version        uuid.UUID `json:"version"`
 }
 
@@ -142,6 +144,7 @@ func (q *Queries) GetTenantByIdWithHouse(ctx context.Context, id uuid.UUID) (Get
 		&i.PersonalID,
 		&i.Active,
 		&i.Sos,
+		&i.Eos,
 		&i.Version,
 	)
 	return i, err
@@ -149,7 +152,7 @@ func (q *Queries) GetTenantByIdWithHouse(ctx context.Context, id uuid.UUID) (Get
 
 const getTenants = `-- name: GetTenants :many
 SELECT id, first_name, last_name, house_id, 
-phone, personal_id_type,personal_id, active, sos
+phone, personal_id_type,personal_id, active, sos, eos
 FROM tenant
 `
 
@@ -163,6 +166,7 @@ type GetTenantsRow struct {
 	PersonalID     string    `json:"personal_id"`
 	Active         bool      `json:"active"`
 	Sos            time.Time `json:"sos"`
+	Eos            time.Time `json:"eos"`
 }
 
 func (q *Queries) GetTenants(ctx context.Context) ([]GetTenantsRow, error) {
@@ -184,6 +188,7 @@ func (q *Queries) GetTenants(ctx context.Context) ([]GetTenantsRow, error) {
 			&i.PersonalID,
 			&i.Active,
 			&i.Sos,
+			&i.Eos,
 		); err != nil {
 			return nil, err
 		}
@@ -205,17 +210,17 @@ WHERE id = $10 AND version = $11
 `
 
 type UpdateTenantParams struct {
-	FirstName      string       `json:"first_name"`
-	LastName       string       `json:"last_name"`
-	HouseID        uuid.UUID    `json:"house_id"`
-	Phone          string       `json:"phone"`
-	PersonalIDType string       `json:"personal_id_type"`
-	PersonalID     string       `json:"personal_id"`
-	Active         bool         `json:"active"`
-	Sos            time.Time    `json:"sos"`
-	Eos            sql.NullTime `json:"eos"`
-	ID             uuid.UUID    `json:"id"`
-	Version        uuid.UUID    `json:"version"`
+	FirstName      string    `json:"first_name"`
+	LastName       string    `json:"last_name"`
+	HouseID        uuid.UUID `json:"house_id"`
+	Phone          string    `json:"phone"`
+	PersonalIDType string    `json:"personal_id_type"`
+	PersonalID     string    `json:"personal_id"`
+	Active         bool      `json:"active"`
+	Sos            time.Time `json:"sos"`
+	Eos            time.Time `json:"eos"`
+	ID             uuid.UUID `json:"id"`
+	Version        uuid.UUID `json:"version"`
 }
 
 func (q *Queries) UpdateTenant(ctx context.Context, arg UpdateTenantParams) error {
