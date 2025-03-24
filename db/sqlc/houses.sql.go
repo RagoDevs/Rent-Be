@@ -34,6 +34,15 @@ func (q *Queries) CreateHouse(ctx context.Context, arg CreateHouseParams) (uuid.
 	return id, err
 }
 
+const deleteHouseById = `-- name: DeleteHouseById :exec
+DELETE FROM house WHERE id = $1
+`
+
+func (q *Queries) DeleteHouseById(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.ExecContext(ctx, deleteHouseById, id)
+	return err
+}
+
 const getHouseById = `-- name: GetHouseById :one
 SELECT id,location, block, partition , Occupied, version FROM house WHERE id = $1
 `

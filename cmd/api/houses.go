@@ -48,6 +48,25 @@ func (app *application) showHousesHandler(c echo.Context) error {
 	return c.JSON(http.StatusOK, house)
 }
 
+func (app *application) deleteHousesHandler(c echo.Context) error {
+
+	uuid, err := db.ReadUUIDParam(c)
+
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, envelope{"error": "invalid house id"})
+	}
+
+	err = app.store.DeleteHouseById(c.Request().Context(), uuid)
+
+	if err != nil {
+		slog.Error("error fetching house by id", "err", err)
+		return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
+	}
+
+	return c.JSON(http.StatusOK, nil)
+}
+
+
 func (app *application) createHouseHandler(c echo.Context) error {
 
 	var input struct {

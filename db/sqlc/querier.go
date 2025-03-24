@@ -17,6 +17,7 @@ type Querier interface {
 	CreateTenant(ctx context.Context, arg CreateTenantParams) error
 	CreateToken(ctx context.Context, arg CreateTokenParams) error
 	DeleteAllToken(ctx context.Context, arg DeleteAllTokenParams) error
+	DeleteHouseById(ctx context.Context, id uuid.UUID) error
 	DeletePayment(ctx context.Context, id uuid.UUID) error
 	GetAdminByEmail(ctx context.Context, email string) (Admin, error)
 	GetAllPayments(ctx context.Context) ([]Payment, error)

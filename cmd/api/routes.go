@@ -68,6 +68,7 @@ func (app *application) routes() http.Handler {
 	g.POST("/bulk/houses", app.bulkHousesHandler, app.requireAuthenticatedAdmin)
 	g.GET("/houses/:uuid", app.showHousesHandler, app.requireAuthenticatedAdmin)
 	g.PUT("/houses/:uuid", app.updateHouseHandler, app.requireAuthenticatedAdmin)
+	g.DELETE("/houses/:uuid", app.deleteHousesHandler, app.requireAuthenticatedAdmin)
 
 	// tenants
 	g.GET("/tenants", app.listTenantsHandler, app.requireAuthenticatedAdmin)
