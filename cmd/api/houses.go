@@ -162,7 +162,7 @@ func (app *application) bulkHousesHandler(c echo.Context) error {
 	}
 
 	if err := c.Bind(&input); err != nil {
-		return c.JSON(http.StatusBadRequest, envelope{"error": err})
+		return c.JSON(http.StatusBadRequest, envelope{"error": "invalid request payload"})
 	}
 
 	for _, house := range input {
