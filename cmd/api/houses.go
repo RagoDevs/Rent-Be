@@ -7,8 +7,20 @@ import (
 	"net/http"
 
 	db "github.com/Hopertz/rent/db/sqlc"
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 )
+
+type FormattedHouseData struct {
+	HouseID   uuid.UUID `json:"house_id"`
+	Location  string    `json:"location"`
+	Block     string    `json:"block"`
+	Partition int16     `json:"partition"`
+	Price     int32     `json:"price"`
+	Occupied  bool      `json:"occupied"`
+	Name      string    `json:"name"`
+	TenantID  string    `json:"tenant_id"`
+}
 
 func (app *application) listHousesHandler(c echo.Context) error {
 
@@ -70,7 +82,26 @@ func (app *application) showHousesTenantHandler(c echo.Context) error {
 
 	}
 
-	return c.JSON(http.StatusOK, house)
+	formattedHouse := FormattedHouseData{
+		HouseID:   house.HouseID,
+		Location:  house.Location,
+		Block:     house.Block,
+		Partition: house.Partition,
+		Price:     house.Price,
+		Occupied:  house.Occupied,
+		Name:      "",
+		TenantID:  "",
+	}
+
+	if house.Name.Valid {
+		formattedHouse.Name = house.Name.String
+	}
+
+	if house.TenantID.Valid {
+		formattedHouse.TenantID = house.TenantID.UUID.String()
+	}
+
+	return c.JSON(http.StatusOK, formattedHouse)
 }
 
 func (app *application) deleteHousesHandler(c echo.Context) error {
@@ -182,7 +213,7 @@ func (app *application) updateHouseHandler(c echo.Context) error {
 	args := db.UpdateHouseByIdParams{
 		ID:        house.ID,
 		Occupied:  house.Occupied,
-		Price: house.Price,
+		Price:     house.Price,
 		Location:  house.Location,
 		Block:     house.Block,
 		Partition: house.Partition,
