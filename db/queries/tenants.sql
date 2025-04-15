@@ -15,9 +15,20 @@ JOIN house h ON t.house_id = h.id
 WHERE t.id = $1;
 
 -- name: GetTenants :many
-SELECT id, name, house_id, 
-phone, personal_id_type,personal_id, active, sos, eos
-FROM tenant;
+SELECT 
+    t.id, 
+    t.name, 
+    h.location AS house_location,
+    h.block AS house_block,
+    h.partition AS house_partition,
+    t.phone, 
+    t.personal_id_type,
+    t.personal_id, 
+    t.active, 
+    t.sos, 
+    t.eos
+FROM tenant t
+JOIN house h ON t.house_id = h.id;
 
 -- name: UpdateTenant :exec
 UPDATE tenant 

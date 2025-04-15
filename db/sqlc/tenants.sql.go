@@ -113,15 +113,28 @@ func (q *Queries) GetTenantByIdWithHouse(ctx context.Context, id uuid.UUID) (Get
 }
 
 const getTenants = `-- name: GetTenants :many
-SELECT id, name, house_id, 
-phone, personal_id_type,personal_id, active, sos, eos
-FROM tenant
+SELECT 
+    t.id, 
+    t.name, 
+    h.location AS house_location,
+    h.block AS house_block,
+    h.partition AS house_partition,
+    t.phone, 
+    t.personal_id_type,
+    t.personal_id, 
+    t.active, 
+    t.sos, 
+    t.eos
+FROM tenant t
+JOIN house h ON t.house_id = h.id
 `
 
 type GetTenantsRow struct {
 	ID             uuid.UUID `json:"id"`
 	Name           string    `json:"name"`
-	HouseID        uuid.UUID `json:"house_id"`
+	HouseLocation  string    `json:"house_location"`
+	HouseBlock     string    `json:"house_block"`
+	HousePartition int16     `json:"house_partition"`
 	Phone          string    `json:"phone"`
 	PersonalIDType string    `json:"personal_id_type"`
 	PersonalID     string    `json:"personal_id"`
@@ -142,7 +155,9 @@ func (q *Queries) GetTenants(ctx context.Context) ([]GetTenantsRow, error) {
 		if err := rows.Scan(
 			&i.ID,
 			&i.Name,
-			&i.HouseID,
+			&i.HouseLocation,
+			&i.HouseBlock,
+			&i.HousePartition,
 			&i.Phone,
 			&i.PersonalIDType,
 			&i.PersonalID,
