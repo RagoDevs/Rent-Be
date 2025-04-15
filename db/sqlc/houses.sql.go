@@ -7,6 +7,7 @@ package db
 
 import (
 	"context"
+	"database/sql"
 
 	"github.com/google/uuid"
 )
@@ -75,21 +76,29 @@ func (q *Queries) GetHouseById(ctx context.Context, id uuid.UUID) (GetHouseByIdR
 }
 
 const getHouseByIdWithTenant = `-- name: GetHouseByIdWithTenant :one
-SELECT h.id AS house_id,h.location, h.block, h.partition , h.price,  h.Occupied, t.name, t.id AS tenant_id
+SELECT 
+  h.id AS house_id,
+  h.location, 
+  h.block, 
+  h.partition, 
+  h.price,
+  h.Occupied, 
+  t.name, 
+  t.id AS tenant_id 
 FROM house h
-Join tenant t ON h.id = t.house_id
+LEFT JOIN tenant t ON h.id = t.house_id
 WHERE h.id = $1
 `
 
 type GetHouseByIdWithTenantRow struct {
-	HouseID   uuid.UUID `json:"house_id"`
-	Location  string    `json:"location"`
-	Block     string    `json:"block"`
-	Partition int16     `json:"partition"`
-	Price     int32     `json:"price"`
-	Occupied  bool      `json:"occupied"`
-	Name      string    `json:"name"`
-	TenantID  uuid.UUID `json:"tenant_id"`
+	HouseID   uuid.UUID      `json:"house_id"`
+	Location  string         `json:"location"`
+	Block     string         `json:"block"`
+	Partition int16          `json:"partition"`
+	Price     int32          `json:"price"`
+	Occupied  bool           `json:"occupied"`
+	Name      sql.NullString `json:"name"`
+	TenantID  uuid.NullUUID  `json:"tenant_id"`
 }
 
 func (q *Queries) GetHouseByIdWithTenant(ctx context.Context, id uuid.UUID) (GetHouseByIdWithTenantRow, error) {

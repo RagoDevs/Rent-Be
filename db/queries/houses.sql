@@ -14,9 +14,17 @@ WHERE id = $6 AND version = $7;
 SELECT id,location, block, partition , price, occupied, version FROM house WHERE id = $1;
 
 -- name: GetHouseByIdWithTenant :one
-SELECT h.id AS house_id,h.location, h.block, h.partition , h.price,  h.Occupied, t.name, t.id AS tenant_id
+SELECT 
+  h.id AS house_id,
+  h.location, 
+  h.block, 
+  h.partition, 
+  h.price,
+  h.Occupied, 
+  t.name, 
+  t.id AS tenant_id 
 FROM house h
-Join tenant t ON h.id = t.house_id
+LEFT JOIN tenant t ON h.id = t.house_id
 WHERE h.id = $1;
 
 -- name: DeleteHouseById :exec    
