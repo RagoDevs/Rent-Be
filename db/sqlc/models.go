@@ -16,6 +16,7 @@ type Admin struct {
 	Email        string    `json:"email"`
 	PasswordHash []byte    `json:"password_hash"`
 	Activated    bool      `json:"activated"`
+	IsSuperUser  bool      `json:"is_super_user"`
 	Version      uuid.UUID `json:"version"`
 }
 

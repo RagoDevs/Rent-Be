@@ -38,7 +38,7 @@ func (q *Queries) CreateAdmin(ctx context.Context, arg CreateAdminParams) (Creat
 }
 
 const getAdminByEmail = `-- name: GetAdminByEmail :one
-SELECT id, created_at, email, password_hash, activated, version
+SELECT id, created_at, email, password_hash, activated, is_super_user , version
 FROM admin
 WHERE email = $1
 `
@@ -52,6 +52,7 @@ func (q *Queries) GetAdminByEmail(ctx context.Context, email string) (Admin, err
 		&i.Email,
 		&i.PasswordHash,
 		&i.Activated,
+		&i.IsSuperUser,
 		&i.Version,
 	)
 	return i, err

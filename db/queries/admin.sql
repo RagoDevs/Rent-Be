@@ -1,5 +1,5 @@
 -- name: GetAdminByEmail :one
-SELECT id, created_at, email, password_hash, activated, version
+SELECT id, created_at, email, password_hash, activated, is_super_user , version
 FROM admin
 WHERE email = $1;
 

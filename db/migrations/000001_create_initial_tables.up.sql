@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS admin (
     email citext UNIQUE NOT NULL,
     password_hash BYTEA NOT NULL,
     activated BOOL NOT NULL,
+    is_super_user BOOL NOT NULL,
     version UUID NOT NULL DEFAULT uuid_generate_v4()
 );
 
