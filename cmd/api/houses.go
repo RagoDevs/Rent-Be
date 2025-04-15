@@ -35,7 +35,7 @@ func (app *application) listHousesHandler(c echo.Context) error {
 
 }
 
-func (app *application) showHousesHandler(c echo.Context) error {
+func (app *application) showHouseHandler(c echo.Context) error {
 
 	uuid, err := db.ReadUUIDParam(c)
 
@@ -52,31 +52,6 @@ func (app *application) showHousesHandler(c echo.Context) error {
 			return c.JSON(http.StatusNotFound, envelope{"error": "house not found"})
 		default:
 			slog.Error("error fetching house by id", "err", err)
-			return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
-		}
-
-	}
-
-	return c.JSON(http.StatusOK, house)
-}
-
-func (app *application) showHousesTenantHandler(c echo.Context) error {
-
-	uuid, err := db.ReadUUIDParam(c)
-
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, envelope{"error": "invalid house id"})
-	}
-
-	house, err := app.store.GetHouseByIdWithTenant(c.Request().Context(), uuid)
-
-	if err != nil {
-		switch {
-		case errors.Is(err, sql.ErrNoRows):
-			slog.Error("error fetching house by id with tenant ", "err", err)
-			return c.JSON(http.StatusNotFound, envelope{"error": "house not found"})
-		default:
-			slog.Error("error fetching house by id with tenant", "err", err)
 			return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 		}
 
@@ -211,7 +186,7 @@ func (app *application) updateHouseHandler(c echo.Context) error {
 	}
 
 	args := db.UpdateHouseByIdParams{
-		ID:        house.ID,
+		ID:        house.HouseID,
 		Occupied:  house.Occupied,
 		Price:     house.Price,
 		Location:  house.Location,

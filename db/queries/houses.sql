@@ -11,9 +11,6 @@ version = uuid_generate_v4()
 WHERE id = $6 AND version = $7;
 
 -- name: GetHouseById :one
-SELECT id,location, block, partition , price, occupied, version FROM house WHERE id = $1;
-
--- name: GetHouseByIdWithTenant :one
 SELECT 
   h.id AS house_id,
   h.location, 
@@ -22,7 +19,8 @@ SELECT
   h.price,
   h.Occupied, 
   t.name, 
-  t.id AS tenant_id 
+  t.id AS tenant_id,
+  h.version
 FROM house h
 LEFT JOIN tenant t ON h.id = t.house_id
 WHERE h.id = $1;

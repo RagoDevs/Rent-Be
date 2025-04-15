@@ -47,35 +47,6 @@ func (q *Queries) DeleteHouseById(ctx context.Context, id uuid.UUID) error {
 }
 
 const getHouseById = `-- name: GetHouseById :one
-SELECT id,location, block, partition , price, occupied, version FROM house WHERE id = $1
-`
-
-type GetHouseByIdRow struct {
-	ID        uuid.UUID `json:"id"`
-	Location  string    `json:"location"`
-	Block     string    `json:"block"`
-	Partition int16     `json:"partition"`
-	Price     int32     `json:"price"`
-	Occupied  bool      `json:"occupied"`
-	Version   uuid.UUID `json:"version"`
-}
-
-func (q *Queries) GetHouseById(ctx context.Context, id uuid.UUID) (GetHouseByIdRow, error) {
-	row := q.db.QueryRowContext(ctx, getHouseById, id)
-	var i GetHouseByIdRow
-	err := row.Scan(
-		&i.ID,
-		&i.Location,
-		&i.Block,
-		&i.Partition,
-		&i.Price,
-		&i.Occupied,
-		&i.Version,
-	)
-	return i, err
-}
-
-const getHouseByIdWithTenant = `-- name: GetHouseByIdWithTenant :one
 SELECT 
   h.id AS house_id,
   h.location, 
@@ -84,13 +55,14 @@ SELECT
   h.price,
   h.Occupied, 
   t.name, 
-  t.id AS tenant_id 
+  t.id AS tenant_id,
+  h.version
 FROM house h
 LEFT JOIN tenant t ON h.id = t.house_id
 WHERE h.id = $1
 `
 
-type GetHouseByIdWithTenantRow struct {
+type GetHouseByIdRow struct {
 	HouseID   uuid.UUID      `json:"house_id"`
 	Location  string         `json:"location"`
 	Block     string         `json:"block"`
@@ -99,11 +71,12 @@ type GetHouseByIdWithTenantRow struct {
 	Occupied  bool           `json:"occupied"`
 	Name      sql.NullString `json:"name"`
 	TenantID  uuid.NullUUID  `json:"tenant_id"`
+	Version   uuid.UUID      `json:"version"`
 }
 
-func (q *Queries) GetHouseByIdWithTenant(ctx context.Context, id uuid.UUID) (GetHouseByIdWithTenantRow, error) {
-	row := q.db.QueryRowContext(ctx, getHouseByIdWithTenant, id)
-	var i GetHouseByIdWithTenantRow
+func (q *Queries) GetHouseById(ctx context.Context, id uuid.UUID) (GetHouseByIdRow, error) {
+	row := q.db.QueryRowContext(ctx, getHouseById, id)
+	var i GetHouseByIdRow
 	err := row.Scan(
 		&i.HouseID,
 		&i.Location,
@@ -113,6 +86,7 @@ func (q *Queries) GetHouseByIdWithTenant(ctx context.Context, id uuid.UUID) (Get
 		&i.Occupied,
 		&i.Name,
 		&i.TenantID,
+		&i.Version,
 	)
 	return i, err
 }

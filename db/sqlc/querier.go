@@ -24,7 +24,6 @@ type Querier interface {
 	GetDetailedPaymentById(ctx context.Context, id uuid.UUID) (GetDetailedPaymentByIdRow, error)
 	GetHashTokenForAdmin(ctx context.Context, arg GetHashTokenForAdminParams) (GetHashTokenForAdminRow, error)
 	GetHouseById(ctx context.Context, id uuid.UUID) (GetHouseByIdRow, error)
-	GetHouseByIdWithTenant(ctx context.Context, id uuid.UUID) (GetHouseByIdWithTenantRow, error)
 	GetHouses(ctx context.Context) ([]GetHousesRow, error)
 	GetPaymentById(ctx context.Context, id uuid.UUID) (Payment, error)
 	GetTenantById(ctx context.Context, id uuid.UUID) (Tenant, error)
