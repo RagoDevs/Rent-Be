@@ -83,7 +83,7 @@ func (app *application) createPaymentHandler(c echo.Context) error {
 	}
 
 	err = app.store.CreatePayment(c.Request().Context(), db.CreatePaymentParams{
-		TenantID:  tenant.ID,
+		TenantID:  tenant.HouseID,
 		Amount:    input.Amount,
 		StartDate: input.StartDate,
 		EndDate:   input.EndDate,

@@ -25,7 +25,7 @@ func (app *application) listTenantsHandler(c echo.Context) error {
 
 }
 
-func (app *application) showTenantsHandler(c echo.Context) error {
+func (app *application) showTenantHandler(c echo.Context) error {
 
 	uuid, err := db.ReadUUIDParam(c)
 
@@ -43,31 +43,6 @@ func (app *application) showTenantsHandler(c echo.Context) error {
 
 		default:
 			slog.Error("error fetching tenant by id", "error", err)
-			return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
-		}
-	}
-
-	return c.JSON(http.StatusOK, tenant)
-}
-
-func (app *application) showTenantsHouseHandler(c echo.Context) error {
-
-	uuid, err := db.ReadUUIDParam(c)
-
-	if err != nil {
-		return err
-	}
-
-	tenant, err := app.store.GetTenantByIdWithHouse(c.Request().Context(), uuid)
-
-	if err != nil {
-		switch {
-		case errors.Is(err, sql.ErrNoRows):
-			slog.Error("error fetching tenant by id with house", "err", err)
-			return c.JSON(http.StatusNotFound, envelope{"error": "tenant not found"})
-
-		default:
-			slog.Error("error fetching tenant by id with house", "error", err)
 			return c.JSON(http.StatusInternalServerError, envelope{"error": "internal server error"})
 		}
 	}
@@ -227,7 +202,7 @@ func (app *application) updateTenantsHandler(c echo.Context) error {
 		Active:         tenant.Active,
 		Sos:            tenant.Sos,
 		Eos:            tenant.Eos,
-		ID:             tenant.ID,
+		ID:             tenant.HouseID,
 		Version:        tenant.Version,
 	}
 
@@ -274,7 +249,7 @@ func (app *application) removeTenant(c echo.Context) error {
 		Active:         tenant.Active,
 		Sos:            tenant.Sos,
 		Eos:            tenant.Eos,
-		ID:             tenant.ID,
+		ID:             tenant.HouseID,
 		Version:        tenant.Version,
 	}
 

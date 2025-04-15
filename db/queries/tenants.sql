@@ -4,10 +4,6 @@ INSERT INTO TENANT
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8) ;
 
 -- name: GetTenantById :one
-SELECT * FROM tenant
-WHERE id = $1;
-
--- name: GetTenantByIdWithHouse :one
 SELECT t.id AS tenant_id, t.name, t.house_id,h.location, h.block, h.partition, h.price ,
 t.phone, t.personal_id_type,t.personal_id, t.active, t.sos, t.eos, t.version 
 FROM tenant t

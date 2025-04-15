@@ -44,30 +44,6 @@ func (q *Queries) CreateTenant(ctx context.Context, arg CreateTenantParams) erro
 }
 
 const getTenantById = `-- name: GetTenantById :one
-SELECT id, name, phone, house_id, personal_id_type, personal_id, photo, active, sos, eos, version FROM tenant
-WHERE id = $1
-`
-
-func (q *Queries) GetTenantById(ctx context.Context, id uuid.UUID) (Tenant, error) {
-	row := q.db.QueryRowContext(ctx, getTenantById, id)
-	var i Tenant
-	err := row.Scan(
-		&i.ID,
-		&i.Name,
-		&i.Phone,
-		&i.HouseID,
-		&i.PersonalIDType,
-		&i.PersonalID,
-		&i.Photo,
-		&i.Active,
-		&i.Sos,
-		&i.Eos,
-		&i.Version,
-	)
-	return i, err
-}
-
-const getTenantByIdWithHouse = `-- name: GetTenantByIdWithHouse :one
 SELECT t.id AS tenant_id, t.name, t.house_id,h.location, h.block, h.partition, h.price ,
 t.phone, t.personal_id_type,t.personal_id, t.active, t.sos, t.eos, t.version 
 FROM tenant t
@@ -75,7 +51,7 @@ JOIN house h ON t.house_id = h.id
 WHERE t.id = $1
 `
 
-type GetTenantByIdWithHouseRow struct {
+type GetTenantByIdRow struct {
 	TenantID       uuid.UUID `json:"tenant_id"`
 	Name           string    `json:"name"`
 	HouseID        uuid.UUID `json:"house_id"`
@@ -92,9 +68,9 @@ type GetTenantByIdWithHouseRow struct {
 	Version        uuid.UUID `json:"version"`
 }
 
-func (q *Queries) GetTenantByIdWithHouse(ctx context.Context, id uuid.UUID) (GetTenantByIdWithHouseRow, error) {
-	row := q.db.QueryRowContext(ctx, getTenantByIdWithHouse, id)
-	var i GetTenantByIdWithHouseRow
+func (q *Queries) GetTenantById(ctx context.Context, id uuid.UUID) (GetTenantByIdRow, error) {
+	row := q.db.QueryRowContext(ctx, getTenantById, id)
+	var i GetTenantByIdRow
 	err := row.Scan(
 		&i.TenantID,
 		&i.Name,
