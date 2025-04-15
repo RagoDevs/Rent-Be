@@ -25,6 +25,7 @@ CREATE TABLE IF NOT EXISTS house (
     block CITEXT NOT NULL,
     partition SMALLINT NOT NULL,
     occupied BOOL NOT NULL,
+    price INT NOT NULL,
     version UUID NOT NULL DEFAULT uuid_generate_v4()
 ); 
 

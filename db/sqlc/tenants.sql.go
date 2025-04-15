@@ -68,7 +68,7 @@ func (q *Queries) GetTenantById(ctx context.Context, id uuid.UUID) (Tenant, erro
 }
 
 const getTenantByIdWithHouse = `-- name: GetTenantByIdWithHouse :one
-SELECT t.id AS tenant_id, t.name, t.house_id,h.location, h.block, h.partition, 
+SELECT t.id AS tenant_id, t.name, t.house_id,h.location, h.block, h.partition, h.price ,
 t.phone, t.personal_id_type,t.personal_id, t.active, t.sos, t.eos, t.version 
 FROM tenant t
 JOIN house h ON t.house_id = h.id
@@ -82,6 +82,7 @@ type GetTenantByIdWithHouseRow struct {
 	Location       string    `json:"location"`
 	Block          string    `json:"block"`
 	Partition      int16     `json:"partition"`
+	Price          int32     `json:"price"`
 	Phone          string    `json:"phone"`
 	PersonalIDType string    `json:"personal_id_type"`
 	PersonalID     string    `json:"personal_id"`
@@ -101,6 +102,7 @@ func (q *Queries) GetTenantByIdWithHouse(ctx context.Context, id uuid.UUID) (Get
 		&i.Location,
 		&i.Block,
 		&i.Partition,
+		&i.Price,
 		&i.Phone,
 		&i.PersonalIDType,
 		&i.PersonalID,
@@ -116,9 +118,10 @@ const getTenants = `-- name: GetTenants :many
 SELECT 
     t.id, 
     t.name, 
-    h.location AS house_location,
-    h.block AS house_block,
-    h.partition AS house_partition,
+    h.location ,
+    h.block ,
+    h.partition,
+    h.price,
     t.phone, 
     t.personal_id_type,
     t.personal_id, 
@@ -132,9 +135,10 @@ JOIN house h ON t.house_id = h.id
 type GetTenantsRow struct {
 	ID             uuid.UUID `json:"id"`
 	Name           string    `json:"name"`
-	HouseLocation  string    `json:"house_location"`
-	HouseBlock     string    `json:"house_block"`
-	HousePartition int16     `json:"house_partition"`
+	Location       string    `json:"location"`
+	Block          string    `json:"block"`
+	Partition      int16     `json:"partition"`
+	Price          int32     `json:"price"`
 	Phone          string    `json:"phone"`
 	PersonalIDType string    `json:"personal_id_type"`
 	PersonalID     string    `json:"personal_id"`
@@ -155,9 +159,10 @@ func (q *Queries) GetTenants(ctx context.Context) ([]GetTenantsRow, error) {
 		if err := rows.Scan(
 			&i.ID,
 			&i.Name,
-			&i.HouseLocation,
-			&i.HouseBlock,
-			&i.HousePartition,
+			&i.Location,
+			&i.Block,
+			&i.Partition,
+			&i.Price,
 			&i.Phone,
 			&i.PersonalIDType,
 			&i.PersonalID,

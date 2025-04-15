@@ -12,13 +12,14 @@ import (
 )
 
 const createHouse = `-- name: CreateHouse :one
-INSERT INTO house (location, block, partition, occupied) VALUES ($1,$2,$3,$4) RETURNING id
+INSERT INTO house (location, block, partition, price, occupied) VALUES ($1,$2,$3,$4,$5) RETURNING id
 `
 
 type CreateHouseParams struct {
 	Location  string `json:"location"`
 	Block     string `json:"block"`
 	Partition int16  `json:"partition"`
+	Price     int32  `json:"price"`
 	Occupied  bool   `json:"occupied"`
 }
 
@@ -27,6 +28,7 @@ func (q *Queries) CreateHouse(ctx context.Context, arg CreateHouseParams) (uuid.
 		arg.Location,
 		arg.Block,
 		arg.Partition,
+		arg.Price,
 		arg.Occupied,
 	)
 	var id uuid.UUID
@@ -44,17 +46,28 @@ func (q *Queries) DeleteHouseById(ctx context.Context, id uuid.UUID) error {
 }
 
 const getHouseById = `-- name: GetHouseById :one
-SELECT id,location, block, partition , Occupied, version FROM house WHERE id = $1
+SELECT id,location, block, partition , price, occupied, version FROM house WHERE id = $1
 `
 
-func (q *Queries) GetHouseById(ctx context.Context, id uuid.UUID) (House, error) {
+type GetHouseByIdRow struct {
+	ID        uuid.UUID `json:"id"`
+	Location  string    `json:"location"`
+	Block     string    `json:"block"`
+	Partition int16     `json:"partition"`
+	Price     int32     `json:"price"`
+	Occupied  bool      `json:"occupied"`
+	Version   uuid.UUID `json:"version"`
+}
+
+func (q *Queries) GetHouseById(ctx context.Context, id uuid.UUID) (GetHouseByIdRow, error) {
 	row := q.db.QueryRowContext(ctx, getHouseById, id)
-	var i House
+	var i GetHouseByIdRow
 	err := row.Scan(
 		&i.ID,
 		&i.Location,
 		&i.Block,
 		&i.Partition,
+		&i.Price,
 		&i.Occupied,
 		&i.Version,
 	)
@@ -62,7 +75,7 @@ func (q *Queries) GetHouseById(ctx context.Context, id uuid.UUID) (House, error)
 }
 
 const getHouseByIdWithTenant = `-- name: GetHouseByIdWithTenant :one
-SELECT h.id AS house_id,h.location, h.block, h.partition , h.Occupied, t.name, t.id AS tenant_id
+SELECT h.id AS house_id,h.location, h.block, h.partition , h.price,  h.Occupied, t.name, t.id AS tenant_id
 FROM house h
 Join tenant t ON h.id = t.house_id
 WHERE h.id = $1
@@ -73,6 +86,7 @@ type GetHouseByIdWithTenantRow struct {
 	Location  string    `json:"location"`
 	Block     string    `json:"block"`
 	Partition int16     `json:"partition"`
+	Price     int32     `json:"price"`
 	Occupied  bool      `json:"occupied"`
 	Name      string    `json:"name"`
 	TenantID  uuid.UUID `json:"tenant_id"`
@@ -86,6 +100,7 @@ func (q *Queries) GetHouseByIdWithTenant(ctx context.Context, id uuid.UUID) (Get
 		&i.Location,
 		&i.Block,
 		&i.Partition,
+		&i.Price,
 		&i.Occupied,
 		&i.Name,
 		&i.TenantID,
@@ -94,7 +109,7 @@ func (q *Queries) GetHouseByIdWithTenant(ctx context.Context, id uuid.UUID) (Get
 }
 
 const getHouses = `-- name: GetHouses :many
-SELECT id,location, block, partition , occupied FROM house
+SELECT id,location, block, partition, price , occupied FROM house
 `
 
 type GetHousesRow struct {
@@ -102,6 +117,7 @@ type GetHousesRow struct {
 	Location  string    `json:"location"`
 	Block     string    `json:"block"`
 	Partition int16     `json:"partition"`
+	Price     int32     `json:"price"`
 	Occupied  bool      `json:"occupied"`
 }
 
@@ -119,6 +135,7 @@ func (q *Queries) GetHouses(ctx context.Context) ([]GetHousesRow, error) {
 			&i.Location,
 			&i.Block,
 			&i.Partition,
+			&i.Price,
 			&i.Occupied,
 		); err != nil {
 			return nil, err
@@ -136,9 +153,9 @@ func (q *Queries) GetHouses(ctx context.Context) ([]GetHousesRow, error) {
 
 const updateHouseById = `-- name: UpdateHouseById :exec
 UPDATE house
-SET location = $1, block = $2, partition = $3, occupied = $4, 
+SET location = $1, block = $2, partition = $3, occupied = $4, price = $5, 
 version = uuid_generate_v4()
-WHERE id = $5 AND version = $6
+WHERE id = $6 AND version = $7
 `
 
 type UpdateHouseByIdParams struct {
@@ -146,6 +163,7 @@ type UpdateHouseByIdParams struct {
 	Block     string    `json:"block"`
 	Partition int16     `json:"partition"`
 	Occupied  bool      `json:"occupied"`
+	Price     int32     `json:"price"`
 	ID        uuid.UUID `json:"id"`
 	Version   uuid.UUID `json:"version"`
 }
@@ -156,6 +174,7 @@ func (q *Queries) UpdateHouseById(ctx context.Context, arg UpdateHouseByIdParams
 		arg.Block,
 		arg.Partition,
 		arg.Occupied,
+		arg.Price,
 		arg.ID,
 		arg.Version,
 	)

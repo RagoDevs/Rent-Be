@@ -25,6 +25,7 @@ type House struct {
 	Block     string    `json:"block"`
 	Partition int16     `json:"partition"`
 	Occupied  bool      `json:"occupied"`
+	Price     int32     `json:"price"`
 	Version   uuid.UUID `json:"version"`
 }
 

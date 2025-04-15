@@ -73,7 +73,6 @@ func (app *application) showHousesTenantHandler(c echo.Context) error {
 	return c.JSON(http.StatusOK, house)
 }
 
-
 func (app *application) deleteHousesHandler(c echo.Context) error {
 
 	uuid, err := db.ReadUUIDParam(c)
@@ -98,6 +97,7 @@ func (app *application) createHouseHandler(c echo.Context) error {
 		Location  string `json:"location" validate:"required"`
 		Block     string `json:"block" validate:"required,len=1"`
 		Partition int16  `json:"partition" validate:"required,min=1,max=9"`
+		Price     int32  `json:"amount" validate:"required"`
 		Occupied  bool   `json:"occupied"`
 	}
 
@@ -113,6 +113,7 @@ func (app *application) createHouseHandler(c echo.Context) error {
 		Location:  input.Location,
 		Block:     input.Block,
 		Partition: input.Partition,
+		Price:     input.Price,
 		Occupied:  input.Occupied})
 
 	if err != nil {
@@ -150,6 +151,7 @@ func (app *application) updateHouseHandler(c echo.Context) error {
 		Location  *string `json:"location"`
 		Block     *string `json:"block"`
 		Partition *int16  `json:"partition"`
+		Price     *int32  `json:"price"`
 		Occupied  *bool   `json:"occupied"`
 	}
 
@@ -173,9 +175,14 @@ func (app *application) updateHouseHandler(c echo.Context) error {
 		house.Occupied = *input.Occupied
 	}
 
+	if input.Price != nil {
+		house.Price = *input.Price
+	}
+
 	args := db.UpdateHouseByIdParams{
 		ID:        house.ID,
 		Occupied:  house.Occupied,
+		Price: house.Price,
 		Location:  house.Location,
 		Block:     house.Block,
 		Partition: house.Partition,
